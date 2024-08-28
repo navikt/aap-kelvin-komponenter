@@ -64,6 +64,3 @@ jobs:
               run: gradle -Pversion=${{ steps.tag.outputs.version }} publish
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-            - name: Generate API documentation
-              run: gradle -Pversion=${{ steps.tag.outputs.version }} dokkaHtml
