@@ -7,8 +7,6 @@ plugins {
     `java-library`
 }
 
-group = "no.nav.aap.kelvin"
-
 allprojects {
     repositories {
         mavenCentral()
@@ -17,6 +15,8 @@ allprojects {
 }
 
 subprojects {
+    group = "no.nav.aap.kelvin"
+
     apply(plugin = "org.jetbrains.kotlin.jvm")
     apply(plugin = "maven-publish")
     apply(plugin = "java-library")
@@ -46,7 +46,6 @@ subprojects {
     publishing {
         publications {
             create<MavenPublication>("mavenJava") {
-                groupId = "no.nav.aap.kelvin"
                 artifactId = project.name
                 version = project.findProperty("version")?.toString() ?: "0.0.0"
                 from(components["java"])
