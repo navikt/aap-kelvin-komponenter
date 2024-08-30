@@ -9,6 +9,7 @@ import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.OidcToken
 import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.TokenProvider
 import no.nav.aap.komponenter.httpklient.json.DefaultJsonMapper
 import org.slf4j.MDC
+import java.io.InputStream
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpHeaders
@@ -18,12 +19,12 @@ import java.util.*
 class RestClient<K>(
     private val config: ClientConfig,
     private val tokenProvider: TokenProvider,
-    private val errorHandler: RestResponseHandler<K>,
+    private val responseHandler: RestResponseHandler<K>,
     httpClient: HttpClient? = null
 ) {
 
     companion object {
-        fun withDefaultResponseHandler(config: ClientConfig, tokenProvider: TokenProvider): RestClient<String> {
+        fun withDefaultResponseHandler(config: ClientConfig, tokenProvider: TokenProvider): RestClient<InputStream> {
             return RestClient(config, tokenProvider, DefaultResponseHandler())
         }
     }
@@ -58,16 +59,16 @@ class RestClient<K>(
     }
 
     private fun <R> executeRequestAndHandleResponse(request: HttpRequest, mapper: (K, HttpHeaders) -> R): R? {
-        val response = client.send(request, errorHandler.bodyHandler())
-        return errorHandler.håndter(request, response, mapper)
+        val response = client.send(request, responseHandler.bodyHandler())
+        return responseHandler.håndter(request, response, mapper)
     }
 }
 
-inline fun <reified R> RestClient<String>.get(uri: URI, request: GetRequest): R? {
+inline fun <reified R> RestClient<InputStream>.get(uri: URI, request: GetRequest): R? {
     return get(uri, request) { body, _ -> DefaultJsonMapper.fromJson(body) }
 }
 
-inline fun <T : Any, reified R> RestClient<String>.post(uri: URI, request: PostRequest<T>): R? {
+inline fun <T : Any, reified R> RestClient<InputStream>.post(uri: URI, request: PostRequest<T>): R? {
     return post(uri, request) { body, _ -> DefaultJsonMapper.fromJson(body) }
 }
 
