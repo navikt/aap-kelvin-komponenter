@@ -1,4 +1,4 @@
-package no.nav.aap.komponenter.httpklient
+package no.nav.aap.komponenter.config
 
 fun requiredConfigForKey(key: String): String {
     val property = configForKey(key)

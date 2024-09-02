@@ -1,6 +1,6 @@
 package no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.azurecc
 
-import no.nav.aap.komponenter.httpklient.requiredConfigForKey
+import no.nav.aap.komponenter.config.requiredConfigForKey
 import java.net.URI
 
 class AzureConfig(
