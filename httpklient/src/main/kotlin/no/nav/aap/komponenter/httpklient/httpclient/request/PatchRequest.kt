@@ -4,7 +4,7 @@ import no.nav.aap.komponenter.httpklient.httpclient.Header
 import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.OidcToken
 import java.time.Duration
 
-class PutRequest<T : Any>(
+class PatchRequest<T : Any>(
     body: T,
     contentType: ContentType = ContentType.APPLICATION_JSON,
     additionalHeaders: List<Header> = emptyList(),
