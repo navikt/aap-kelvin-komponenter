@@ -4,6 +4,7 @@ import no.nav.aap.komponenter.httpklient.httpclient.error.DefaultResponseHandler
 import no.nav.aap.komponenter.httpklient.httpclient.error.RestResponseHandler
 import no.nav.aap.komponenter.httpklient.httpclient.request.GetRequest
 import no.nav.aap.komponenter.httpklient.httpclient.request.PostRequest
+import no.nav.aap.komponenter.httpklient.httpclient.request.PutRequest
 import no.nav.aap.komponenter.httpklient.httpclient.request.Request
 import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.OidcToken
 import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.TokenProvider
@@ -47,6 +48,18 @@ class RestClient<K>(
         return executeRequestAndHandleResponse(httpRequest, mapper)
     }
 
+    fun <T : Any, R> put(uri: URI, request: PutRequest<T>, mapper: (K, HttpHeaders) -> R): R? {
+        val httpRequest = HttpRequest.newBuilder(uri)
+            .timeout(request.timeout())
+            .header("Content-Type", request.contentType())
+            .addHeaders(request)
+            .addHeaders(config, tokenProvider, request.currentToken())
+            .PUT(HttpRequest.BodyPublishers.ofString(request.convertBodyToString()))
+            .build()
+
+        return executeRequestAndHandleResponse(httpRequest, mapper)
+    }
+
     fun <R> get(uri: URI, request: GetRequest, mapper: (K, HttpHeaders) -> R): R? {
         val httpRequest = HttpRequest.newBuilder(uri)
             .addHeaders(request)
@@ -70,6 +83,10 @@ inline fun <reified R> RestClient<InputStream>.get(uri: URI, request: GetRequest
 
 inline fun <T : Any, reified R> RestClient<InputStream>.post(uri: URI, request: PostRequest<T>): R? {
     return post(uri, request) { body, _ -> DefaultJsonMapper.fromJson(body) }
+}
+
+inline fun <T : Any, reified R> RestClient<InputStream>.put(uri: URI, request: PutRequest<T>): R? {
+    return put(uri, request) { body, _ -> DefaultJsonMapper.fromJson(body) }
 }
 
 private fun HttpRequest.Builder.addHeaders(restRequest: Request): HttpRequest.Builder {
