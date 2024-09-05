@@ -1,15 +1,14 @@
 package no.nav.aap.komponenter.httpklient.httpclient
 
-import io.ktor.http.*
 import no.nav.aap.komponenter.httpklient.httpclient.error.DefaultResponseHandler
 import no.nav.aap.komponenter.httpklient.httpclient.error.RestResponseHandler
+import no.nav.aap.komponenter.httpklient.httpclient.request.BodyConverter
+import no.nav.aap.komponenter.httpklient.httpclient.request.DeleteRequest
 import no.nav.aap.komponenter.httpklient.httpclient.request.GetRequest
 import no.nav.aap.komponenter.httpklient.httpclient.request.PatchRequest
 import no.nav.aap.komponenter.httpklient.httpclient.request.PostRequest
 import no.nav.aap.komponenter.httpklient.httpclient.request.PutRequest
 import no.nav.aap.komponenter.httpklient.httpclient.request.Request
-import no.nav.aap.komponenter.httpklient.httpclient.request.RequestWithBody
-import no.nav.aap.komponenter.httpklient.httpclient.request.RequestWithBodyImpl
 import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.OidcToken
 import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.TokenProvider
 import no.nav.aap.komponenter.httpklient.json.DefaultJsonMapper
@@ -19,6 +18,7 @@ import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpHeaders
 import java.net.http.HttpRequest
+import java.net.http.HttpRequest.BodyPublisher
 import java.util.*
 
 class RestClient<K>(
@@ -34,48 +34,67 @@ class RestClient<K>(
         }
     }
 
-    private val client = httpClient ?: HttpClient.newBuilder()
-        .connectTimeout(config.connectionTimeout)
-        .proxy(HttpClient.Builder.NO_PROXY)
-        .followRedirects(HttpClient.Redirect.NEVER)
-        .build()
+    private val client = httpClient ?: HttpClient.newBuilder().connectTimeout(config.connectionTimeout)
+        .proxy(HttpClient.Builder.NO_PROXY).followRedirects(HttpClient.Redirect.NEVER).build()
 
-    fun <R> request(httpMethod: HttpMethod, uri: URI, request: Request, mapper: (K, HttpHeaders) -> R): R? {
-        val httpRequest = HttpRequest.newBuilder(uri)
-            .timeout(request.timeout())
-            .addHeaders(request)
-            .addHeaders(config, tokenProvider, request.currentToken())
-            .method(httpMethod.value, HttpRequest.BodyPublishers.noBody())
-            .build()
+    fun <T : Any, R> post(uri: URI, request: PostRequest<T>, mapper: (K, HttpHeaders) -> R): R? {
+        val httpRequest = buildRequest(uri, request)
 
         return executeRequestAndHandleResponse(httpRequest, mapper)
     }
 
-    fun <T : Any, R> request(httpMethod: HttpMethod, uri: URI, request: RequestWithBody<T>, mapper: (K, HttpHeaders) -> R): R? {
-        val httpRequest = HttpRequest.newBuilder(uri)
-            .timeout(request.timeout())
-            .header("Content-Type", request.contentType())
-            .addHeaders(request)
-            .addHeaders(config, tokenProvider, request.currentToken())
-            .method(httpMethod.value ,HttpRequest.BodyPublishers.ofString(request.convertBodyToString()))
-            .build()
+    fun <T : Any, R> put(uri: URI, request: PutRequest<T>, mapper: (K, HttpHeaders) -> R): R? {
+        val httpRequest = buildRequest(uri, request)
 
         return executeRequestAndHandleResponse(httpRequest, mapper)
     }
 
-    fun <T : Any, R> post(uri: URI, request: PostRequest<T>, mapper: (K, HttpHeaders) -> R): R? =
-        request(HttpMethod.Post, uri, request, mapper)
+    fun <T : Any, R> patch(uri: URI, request: PatchRequest<T>, mapper: (K, HttpHeaders) -> R): R? {
+        val httpRequest = buildRequest(uri, request)
 
+        return executeRequestAndHandleResponse(httpRequest, mapper)
+    }
 
-    fun <T : Any, R> patch(uri: URI, request: PatchRequest<T>, mapper: (K, HttpHeaders) -> R): R? =
-        request(HttpMethod.Patch, uri, request, mapper)
+    fun <R> get(uri: URI, request: GetRequest, mapper: (K, HttpHeaders) -> R): R? {
+        val httpRequest = buildRequest(uri, request)
 
+        return executeRequestAndHandleResponse(httpRequest, mapper)
+    }
 
-    fun <T : Any, R> put(uri: URI, request: PutRequest<T>, mapper: (K, HttpHeaders) -> R): R? =
-        request(HttpMethod.Put, uri, request, mapper)
+    fun <R> delete(uri: URI, request: DeleteRequest, mapper: (K, HttpHeaders) -> R): R? {
+        val httpRequest = buildRequest(uri, request)
 
-    fun <R> get(uri: URI, request: GetRequest, mapper: (K, HttpHeaders) -> R): R? =
-        request(HttpMethod.Get, uri, request, mapper)
+        return executeRequestAndHandleResponse(httpRequest, mapper)
+    }
+
+    private fun buildRequest(uri: URI, request: Request): HttpRequest {
+        val (metod, bodyPublisher) = utledMethod(request)
+        val httpRequest =
+            HttpRequest.newBuilder(uri).addHeaders(request).addHeaders(config, tokenProvider, request.currentToken())
+                .timeout(request.timeout()).method(metod, bodyPublisher).build()
+
+        return httpRequest
+    }
+
+    private fun utledMethod(request: Request): Pair<String, BodyPublisher> {
+        return when (request) {
+            is GetRequest -> Pair("GET", HttpRequest.BodyPublishers.noBody())
+            is DeleteRequest -> Pair("DELETE", HttpRequest.BodyPublishers.noBody())
+            is PatchRequest<*> -> Pair(
+                "PATCH",
+                HttpRequest.BodyPublishers.ofString(BodyConverter.convert(request.body(), request.contentType()))
+            )
+
+            is PostRequest<*> -> Pair(
+                "POST",
+                HttpRequest.BodyPublishers.ofString(BodyConverter.convert(request.body(), request.contentType()))
+            )
+
+            is PutRequest<*> -> Pair(
+                "PUT", HttpRequest.BodyPublishers.ofString(BodyConverter.convert(request.body(), request.contentType()))
+            )
+        }
+    }
 
     private fun <R> executeRequestAndHandleResponse(request: HttpRequest, mapper: (K, HttpHeaders) -> R): R? {
         val response = client.send(request, responseHandler.bodyHandler())
@@ -95,19 +114,13 @@ inline fun <T : Any, reified R> RestClient<InputStream>.put(uri: URI, request: P
     return put(uri, request) { body, _ -> DefaultJsonMapper.fromJson(body) }
 }
 
-inline fun <T : Any, reified R> RestClient<InputStream>.patch(uri: URI, request: PatchRequest<T>): R? {
-    return patch(uri, request) { body, _ -> DefaultJsonMapper.fromJson(body) }
-}
-
 private fun HttpRequest.Builder.addHeaders(restRequest: Request): HttpRequest.Builder {
     restRequest.additionalHeaders().forEach(this::addHeader)
     return this
 }
 
 private fun HttpRequest.Builder.addHeaders(
-    clientConfig: ClientConfig,
-    tokenProvider: TokenProvider,
-    currentToken: OidcToken?
+    clientConfig: ClientConfig, tokenProvider: TokenProvider, currentToken: OidcToken?
 ): HttpRequest.Builder {
     clientConfig.additionalHeaders.forEach(this::addHeader)
     clientConfig.additionalFunctionalHeaders.forEach(this::addHeader)

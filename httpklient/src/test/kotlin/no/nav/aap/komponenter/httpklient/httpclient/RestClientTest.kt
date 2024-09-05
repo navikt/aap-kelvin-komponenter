@@ -1,6 +1,5 @@
 package no.nav.aap.komponenter.httpklient.httpclient
 
-import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
@@ -10,37 +9,36 @@ import io.ktor.server.routing.*
 import kotlinx.coroutines.runBlocking
 import no.nav.aap.komponenter.httpklient.httpclient.error.DefaultResponseHandler
 import no.nav.aap.komponenter.httpklient.httpclient.request.ContentType
+import no.nav.aap.komponenter.httpklient.httpclient.request.DeleteRequest
 import no.nav.aap.komponenter.httpklient.httpclient.request.GetRequest
 import no.nav.aap.komponenter.httpklient.httpclient.request.PatchRequest
 import no.nav.aap.komponenter.httpklient.httpclient.request.PostRequest
 import no.nav.aap.komponenter.httpklient.httpclient.request.PutRequest
-import no.nav.aap.komponenter.httpklient.httpclient.request.Request
 import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.NoTokenTokenProvider
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.io.InputStream
 import java.net.URI
 import java.net.http.HttpHeaders
-import java.time.Duration
 
 class RestClientTest {
 
-    val mapper = {body: InputStream, _: HttpHeaders -> body.bufferedReader(Charsets.UTF_8).use { it.readText() } }
+    val mapper = { body: InputStream, _: HttpHeaders -> body.bufferedReader(Charsets.UTF_8).use { it.readText() } }
     val server = embeddedServer(Netty, port = 0) {
         routing {
             get("/test") {
                 call.respondText("you got me")
             }
-            post ("/test") {
+            post("/test") {
                 call.respondText(call.receiveText())
             }
-            put ("/test") {
+            put("/test") {
                 call.respondText(call.receiveText())
             }
-            patch ("/test") {
+            patch("/test") {
                 call.respondText(call.receiveText())
             }
-            delete ("/test") {
+            delete("/test") {
                 call.respondText("y u delete me?")
             }
         }
@@ -79,11 +77,7 @@ class RestClientTest {
     @Test
     fun `tester at delete requester funker`() {
         val response: String? =
-            client.request(HttpMethod.Delete, URI(url), object :Request {
-                override fun additionalHeaders() = emptyList<Header>()
-                override fun timeout() = Duration.ofSeconds(1)
-                override fun currentToken() = null
-            }, mapper)
+            client.delete(URI(url), DeleteRequest(), mapper)
         assertThat(response).isEqualTo("y u delete me?")
     }
 

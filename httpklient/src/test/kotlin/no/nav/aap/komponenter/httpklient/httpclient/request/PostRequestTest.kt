@@ -9,6 +9,6 @@ class PostRequestTest {
     fun contenttypestring() {
         val request = PostRequest(body = "asdf")
 
-        assertThat(request.contentType()).isEqualTo("application/json")
+        assertThat(request.contentType()).isEqualTo(ContentType.APPLICATION_JSON)
     }
 }
