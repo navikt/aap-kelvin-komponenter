@@ -7,7 +7,6 @@ import io.ktor.server.netty.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import no.nav.aap.komponenter.httpklient.httpclient.error.DefaultResponseHandler
 import no.nav.aap.komponenter.httpklient.httpclient.request.ContentType
@@ -16,8 +15,7 @@ import no.nav.aap.komponenter.httpklient.httpclient.request.PatchRequest
 import no.nav.aap.komponenter.httpklient.httpclient.request.PostRequest
 import no.nav.aap.komponenter.httpklient.httpclient.request.PutRequest
 import no.nav.aap.komponenter.httpklient.httpclient.request.Request
-import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.OidcToken
-import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.TokenProvider
+import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.NoTokenTokenProvider
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.io.InputStream
@@ -47,8 +45,7 @@ class RestClientTest {
             }
         }
     }.apply { start() }
-    val tokenProvider = mockk<TokenProvider>(relaxed = true)
-    val client = RestClient(ClientConfig(), tokenProvider, DefaultResponseHandler())
+    val client = RestClient(ClientConfig(), NoTokenTokenProvider(), DefaultResponseHandler())
     val url = "http://localhost:${server.port()}/test"
 
     @Test
