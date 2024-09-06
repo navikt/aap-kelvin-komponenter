@@ -1,7 +1,7 @@
 package no.nav.aap.komponenter.httpklient.httpclient.error
 
-import no.nav.aap.komponenter.dbflyway.Miljø
-import no.nav.aap.komponenter.dbflyway.MiljøKode
+import no.nav.aap.komponenter.miljo.Miljø
+import no.nav.aap.komponenter.miljo.MiljøKode
 import no.nav.aap.komponenter.httpklient.httpclient.håndterStatus
 import org.slf4j.LoggerFactory
 import java.net.http.HttpHeaders

@@ -1,5 +1,7 @@
 package no.nav.aap.komponenter.dbflyway
 
+import no.nav.aap.komponenter.miljo.Miljø
+import no.nav.aap.komponenter.miljo.MiljøKode
 import org.flywaydb.core.Flyway
 import javax.sql.DataSource
 

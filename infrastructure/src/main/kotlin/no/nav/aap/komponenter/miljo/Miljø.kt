@@ -1,4 +1,4 @@
-package no.nav.aap.komponenter.dbflyway
+package no.nav.aap.komponenter.miljo
 
 object Miljø {
     fun er(): MiljøKode {
