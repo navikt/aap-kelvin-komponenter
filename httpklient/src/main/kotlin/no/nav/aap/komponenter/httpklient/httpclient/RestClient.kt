@@ -68,34 +68,35 @@ class RestClient<K>(
     }
 
     private fun buildRequest(uri: URI, request: Request): HttpRequest {
-        val (metod, bodyPublisher) = utledMethod(request)
         val httpRequest =
-            HttpRequest.newBuilder(uri)
-                .addHeaders(request)
-                .addHeaders(config, tokenProvider, request.currentToken())
-                .timeout(request.timeout()).method(metod, bodyPublisher).build()
-
-        return httpRequest
-    }
-
-    private fun utledMethod(request: Request): Pair<String, BodyPublisher> {
-        return when (request) {
-            is GetRequest -> Pair("GET", HttpRequest.BodyPublishers.noBody())
-            is DeleteRequest -> Pair("DELETE", HttpRequest.BodyPublishers.noBody())
-            is PatchRequest<*> -> Pair(
+            HttpRequest.newBuilder(uri).addHeaders(request).addHeaders(config, tokenProvider, request.currentToken())
+                .timeout(request.timeout());
+        when (request) {
+            is GetRequest -> httpRequest.GET()
+            is DeleteRequest -> httpRequest.DELETE()
+            is PatchRequest<*> -> httpRequest.method(
                 "PATCH",
                 HttpRequest.BodyPublishers.ofString(BodyConverter.convert(request.body(), request.contentType()))
-            )
+            ).header("Content-Type", request.contentType().toString())
 
-            is PostRequest<*> -> Pair(
-                "POST",
-                HttpRequest.BodyPublishers.ofString(BodyConverter.convert(request.body(), request.contentType()))
-            )
+            is PostRequest<*> -> httpRequest.POST(
+                HttpRequest.BodyPublishers.ofString(
+                    BodyConverter.convert(
+                        request.body(), request.contentType()
+                    )
+                )
+            ).header("Content-Type", request.contentType().toString())
 
-            is PutRequest<*> -> Pair(
-                "PUT", HttpRequest.BodyPublishers.ofString(BodyConverter.convert(request.body(), request.contentType()))
-            )
+            is PutRequest<*> -> httpRequest.PUT(
+                HttpRequest.BodyPublishers.ofString(
+                    BodyConverter.convert(
+                        request.body(), request.contentType()
+                    )
+                )
+            ).header("Content-Type", request.contentType().toString())
         }
+
+        return httpRequest.build()
     }
 
     private fun <R> executeRequestAndHandleResponse(request: HttpRequest, mapper: (K, HttpHeaders) -> R): R? {
@@ -117,7 +118,6 @@ inline fun <T : Any, reified R> RestClient<InputStream>.put(uri: URI, request: P
 }
 
 private fun HttpRequest.Builder.addHeaders(restRequest: Request): HttpRequest.Builder {
-    this.header("Content-Type", restRequest.contentType().toString())
     restRequest.additionalHeaders().forEach(this::addHeader)
     return this
 }
