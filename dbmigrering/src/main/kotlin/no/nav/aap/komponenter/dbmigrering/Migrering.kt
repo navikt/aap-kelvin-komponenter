@@ -1,4 +1,4 @@
-package no.nav.aap.komponenter.dbflyway
+package no.nav.aap.komponenter.dbmigrering
 
 import no.nav.aap.komponenter.miljo.Miljø
 import no.nav.aap.komponenter.miljo.MiljøKode
