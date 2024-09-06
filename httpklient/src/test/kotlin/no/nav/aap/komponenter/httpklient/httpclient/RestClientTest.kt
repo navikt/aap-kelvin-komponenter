@@ -1,8 +1,11 @@
 package no.nav.aap.komponenter.httpklient.httpclient
 
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import io.ktor.serialization.jackson.jackson
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
+import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -23,14 +26,26 @@ import java.net.http.HttpHeaders
 
 class RestClientTest {
 
+    data class MyCustomRequest(val id: String)
+
     val mapper = { body: InputStream, _: HttpHeaders -> body.bufferedReader(Charsets.UTF_8).use { it.readText() } }
     val server = embeddedServer(Netty, port = 0) {
+        install(ContentNegotiation) {
+            jackson {
+                registerModule(JavaTimeModule())
+            }
+        }
         routing {
             get("/test") {
                 call.respondText("you got me")
             }
             post("/test") {
                 call.respondText(call.receiveText())
+            }
+            post("/test2") {
+                val req = call.receive<MyCustomRequest>()
+
+                call.respondText(req.id)
             }
             put("/test") {
                 call.respondText(call.receiveText())
@@ -58,6 +73,17 @@ class RestClientTest {
         val response: String? =
             client.post(URI(url), PostRequest("post me", ContentType.TEXT_PLAIN), mapper)
         assertThat(response).isEqualTo("post me")
+    }
+
+    @Test
+    fun `å få custom datatype bør funke`() {
+        val resp = client.post(
+            URI("http://localhost:${server.port()}/test2"),
+            PostRequest(MyCustomRequest("post me"), ContentType.APPLICATION_JSON),
+            mapper
+        )
+
+        assertThat(resp).isEqualTo("post me")
     }
 
     @Test

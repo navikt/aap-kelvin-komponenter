@@ -70,7 +70,9 @@ class RestClient<K>(
     private fun buildRequest(uri: URI, request: Request): HttpRequest {
         val (metod, bodyPublisher) = utledMethod(request)
         val httpRequest =
-            HttpRequest.newBuilder(uri).addHeaders(request).addHeaders(config, tokenProvider, request.currentToken())
+            HttpRequest.newBuilder(uri)
+                .addHeaders(request)
+                .addHeaders(config, tokenProvider, request.currentToken())
                 .timeout(request.timeout()).method(metod, bodyPublisher).build()
 
         return httpRequest
@@ -115,6 +117,7 @@ inline fun <T : Any, reified R> RestClient<InputStream>.put(uri: URI, request: P
 }
 
 private fun HttpRequest.Builder.addHeaders(restRequest: Request): HttpRequest.Builder {
+    this.header("Content-Type", restRequest.contentType().toString())
     restRequest.additionalHeaders().forEach(this::addHeader)
     return this
 }
