@@ -3,27 +3,27 @@ package no.nav.aap.motor
 import no.nav.aap.komponenter.dbconnect.DBConnection
 import no.nav.aap.motor.cron.CronExpression
 
-interface Jobb {
+public interface Jobb {
 
-    fun konstruer(connection: DBConnection): JobbUtfører
+    public fun konstruer(connection: DBConnection): JobbUtfører
 
-    fun type(): String
+    public fun type(): String
 
-    fun navn(): String
+    public fun navn(): String
 
-    fun beskrivelse(): String
+    public fun beskrivelse(): String
 
     /**
      * Antall ganger oppgaven prøves før den settes til feilet
      */
-    fun retries(): Int {
+    public fun retries(): Int {
         return 3
     }
 
     /**
      * ved fullføring vil oppgaven schedulere seg selv etter dette mønsteret
      */
-    fun cron(): CronExpression? {
+    public fun cron(): CronExpression? {
         return null
     }
 }

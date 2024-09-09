@@ -1,12 +1,12 @@
 package no.nav.aap.motor.retry
 
 import no.nav.aap.komponenter.dbconnect.DBConnection
+import no.nav.aap.komponenter.dbconnect.Row
 import no.nav.aap.motor.JobbInput
 import no.nav.aap.motor.JobbRepository
 import no.nav.aap.motor.JobbStatus
 import no.nav.aap.motor.JobbType
 import no.nav.aap.motor.mapJobb
-import no.nav.aap.motor.mapJobbInklusivFeilmelding
 import java.time.LocalDateTime
 
 internal class RetryFeiledeJobberRepository(private val connection: DBConnection) {
@@ -169,4 +169,8 @@ internal class RetryFeiledeJobberRepository(private val connection: DBConnection
     }
 
     inner class FeilhåndteringOppgaveStatus(val id: Long, val type: String, val status: JobbStatus)
+}
+
+internal fun mapJobbInklusivFeilmelding(row: Row): Pair<JobbInput, String?> {
+    return mapJobb(row) to row.getStringOrNull("feilmelding")
 }

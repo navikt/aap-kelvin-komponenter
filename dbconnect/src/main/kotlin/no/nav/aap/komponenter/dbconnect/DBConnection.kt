@@ -7,10 +7,10 @@ import java.sql.Statement
 
 private const val QUERY_TIMEOUT_IN_SECONDS = 30
 
-class DBConnection internal constructor(private val connection: Connection) {
+public class DBConnection internal constructor(private val connection: Connection) {
     private var savepoint: Savepoint? = null
 
-    fun execute(
+    public fun execute(
         @Language("PostgreSQL")
         query: String,
         block: Execute.() -> Unit = {}
@@ -23,7 +23,7 @@ class DBConnection internal constructor(private val connection: Connection) {
         }
     }
 
-    fun <T> executeBatch(
+    public fun <T> executeBatch(
         @Language("PostgreSQL")
         query: String,
         elements: Iterable<T>,
@@ -42,7 +42,27 @@ class DBConnection internal constructor(private val connection: Connection) {
         }
     }
 
-    fun executeReturnKey(
+    /**
+     * Executes the given SQL query and returns the generated key.
+     *
+     * @sample
+     * val key = connection.executeReturnKey(query) {
+     *     setParams {
+     *         setLong(1, avklaringsbehovId)
+     *         setEnumName(2, endring.status)
+     *         setString(3, endring.begrunnelse)
+     *         setLocalDate(4, endring.frist)
+     *         setString(5, opprettetAv)
+     *         setLocalDateTime(6, LocalDateTime.now())
+     *         setEnumName(7, endring.grunn)
+     *     }
+     * }
+     *
+     * @param query The SQL query to execute.
+     * @param block Lambda function to configure the execution parameters and result validation.
+     * @return The generated key as a Long.
+     */
+    public fun executeReturnKey(
         @Language("PostgreSQL")
         query: String,
         block: Execute.() -> Unit = {}
@@ -55,7 +75,7 @@ class DBConnection internal constructor(private val connection: Connection) {
         }
     }
 
-    fun executeReturnKeys(
+    public fun executeReturnKeys(
         @Language("PostgreSQL")
         query: String,
         block: Execute.() -> Unit = {}
@@ -68,7 +88,7 @@ class DBConnection internal constructor(private val connection: Connection) {
         }
     }
 
-    fun <T> queryFirstOrNull(
+    public fun <T> queryFirstOrNull(
         @Language("PostgreSQL")
         query: String,
         block: Query<T>.() -> Unit
@@ -84,7 +104,7 @@ class DBConnection internal constructor(private val connection: Connection) {
      * @return The first result of the query.
      * @throws java.util.NoSuchElementException If there are zero results.
      */
-    fun <T : Any> queryFirst(
+    public fun <T : Any> queryFirst(
         @Language("PostgreSQL")
         query: String,
         block: Query<T>.() -> Unit
@@ -92,7 +112,7 @@ class DBConnection internal constructor(private val connection: Connection) {
         return querySeq(query, block, Sequence<T>::first)
     }
 
-    fun <T : Any> queryList(
+    public fun <T : Any> queryList(
         @Language("PostgreSQL")
         query: String,
         block: Query<T>.() -> Unit
@@ -100,7 +120,7 @@ class DBConnection internal constructor(private val connection: Connection) {
         return querySeq(query, block, Sequence<T>::toList)
     }
 
-    fun <T : Any> querySet(
+    public fun <T : Any> querySet(
         @Language("PostgreSQL")
         query: String,
         block: Query<T>.() -> Unit
@@ -124,7 +144,7 @@ class DBConnection internal constructor(private val connection: Connection) {
         }
     }
 
-    fun markerSavepoint() {
+    public fun markerSavepoint() {
         savepoint = this.connection.setSavepoint()
     }
 

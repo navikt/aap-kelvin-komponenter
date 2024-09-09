@@ -3,7 +3,7 @@ package no.nav.aap.motor
 import no.nav.aap.komponenter.dbconnect.DBConnection
 import no.nav.aap.komponenter.dbconnect.Row
 
-fun mapJobb(row: Row): JobbInput {
+internal fun mapJobb(row: Row): JobbInput {
     return JobbInput(JobbType.parse(row.getString("type")))
         .medId(row.getLong("id"))
         .medStatus(row.getEnum("status"))
@@ -15,18 +15,14 @@ fun mapJobb(row: Row): JobbInput {
         .medAntallFeil(row.getLong("antall_feil"))
 }
 
-fun mapJobbInklusivFeilmelding(row: Row): Pair<JobbInput, String?> {
-    return mapJobb(row) to row.getStringOrNull("feilmelding")
-}
-
-class FlytJobbRepository(private val connection: DBConnection) {
+public class FlytJobbRepository(private val connection: DBConnection) {
     private val jobbRepository = JobbRepository(connection)
 
-    fun leggTil(jobbInput: JobbInput) {
+    public fun leggTil(jobbInput: JobbInput) {
         jobbRepository.leggTil(jobbInput)
     }
 
-    fun hentJobberForBehandling(id: Long): List<JobbInput> {
+    public fun hentJobberForBehandling(id: Long): List<JobbInput> {
         val query = """
             SELECT *, (SELECT count(1) FROM JOBB_HISTORIKK h WHERE h.jobb_id = op.id AND h.status = '${JobbStatus.FEILET.name}') as antall_feil
                  FROM JOBB op
@@ -44,7 +40,7 @@ class FlytJobbRepository(private val connection: DBConnection) {
         }
     }
 
-    fun hentFeilmeldingForOppgave(id: Long): String {
+    public fun hentFeilmeldingForOppgave(id: Long): String {
         val query = """
             SELECT * 
             FROM JOBB_HISTORIKK 

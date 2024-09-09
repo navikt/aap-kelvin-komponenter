@@ -4,11 +4,11 @@ import no.nav.aap.komponenter.dbconnect.DBConnection
 import no.nav.aap.motor.JobbStatus
 import org.slf4j.LoggerFactory
 
-class RetryService(connection: DBConnection) {
+public class RetryService(connection: DBConnection) {
     private val log = LoggerFactory.getLogger(RetryService::class.java)
     private val repository = RetryFeiledeJobberRepository(connection)
 
-    fun enable() {
+    public fun enable() {
         val planlagteFeilhåndteringOppgaver = repository.planlagteCronOppgaver()
 
         planlagteFeilhåndteringOppgaver.forEach { oppgave ->

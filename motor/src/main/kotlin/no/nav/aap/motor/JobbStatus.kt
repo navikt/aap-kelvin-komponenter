@@ -1,6 +1,6 @@
 package no.nav.aap.motor
 
-enum class JobbStatus {
+public enum class JobbStatus {
     KLAR,
     PLUKKET,
     FERDIG,

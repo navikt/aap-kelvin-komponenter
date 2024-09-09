@@ -15,7 +15,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import javax.sql.DataSource
 
-class Motor(
+public class Motor(
     private val dataSource: DataSource,
     private val antallKammer: Int = 8,
     logInfoProvider: JobbLogInfoProvider = NoExtraLogInfoProvider,
@@ -44,7 +44,7 @@ class Motor(
     private val workers = HashMap<Int, Future<*>>()
     private var lastWatchdogLog = LocalDateTime.now()
 
-    fun start() {
+    public fun start() {
         log.info("Starter prosessering av jobber")
         IntRange(1, antallKammer).forEach { i ->
             val kammer = Forbrenningskammer(dataSource)
@@ -58,18 +58,18 @@ class Motor(
         started = true
     }
 
-    fun stop() {
+    public fun stop() {
         log.info("Avslutter prosessering av jobber")
         stopped = true
         watchdogExecutor.shutdownNow()
         executor.awaitTermination(10L, TimeUnit.SECONDS)
     }
 
-    fun kjører(): Boolean {
+    public fun kjører(): Boolean {
         return started && !stopped
     }
 
-    inner class Forbrenningskammer(private val dataSource: DataSource) : Runnable {
+    private inner class Forbrenningskammer(private val dataSource: DataSource) : Runnable {
         private val log = LoggerFactory.getLogger(Forbrenningskammer::class.java)
 
         private var plukker = true
@@ -155,7 +155,7 @@ class Motor(
     /**
      * Watchdog som sjekker om alle workers kjører
      */
-    inner class Watchdog : Runnable {
+    private inner class Watchdog : Runnable {
         private val logger = LoggerFactory.getLogger(Watchdog::class.java)
         override fun run() {
             logger.debug("Sjekker status på workers")

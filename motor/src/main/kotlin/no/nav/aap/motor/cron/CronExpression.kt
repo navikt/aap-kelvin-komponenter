@@ -12,7 +12,7 @@ import java.util.regex.Matcher
 import java.util.regex.Pattern
 import kotlin.math.max
 
-class CronExpression private constructor(private val expr: String, withSeconds: Boolean = true) {
+public class CronExpression private constructor(private val expr: String, withSeconds: Boolean = true) {
     internal enum class CronFieldType(val from: Int, val to: Int, val names: List<String>?) {
         SECOND(0, 59, null) {
             override fun getValue(dateTime: ZonedDateTime): Int {
@@ -149,16 +149,16 @@ class CronExpression private constructor(private val expr: String, withSeconds: 
         this.dayOfWeekField = DayOfWeekField(parts[ix++])
     }
 
-    fun nextLocalDateTimeAfter(dateTime: LocalDateTime): LocalDateTime {
+    internal fun nextLocalDateTimeAfter(dateTime: LocalDateTime): LocalDateTime {
         return nextTimeAfter(ZonedDateTime.of(dateTime, ZoneId.systemDefault())).toLocalDateTime()
     }
 
-    fun nextTimeAfter(afterTime: ZonedDateTime, durationInMillis: Long): ZonedDateTime {
+    internal fun nextTimeAfter(afterTime: ZonedDateTime, durationInMillis: Long): ZonedDateTime {
         return nextTimeAfter(afterTime, afterTime.plus(Duration.ofMillis(durationInMillis)))
     }
 
     @JvmOverloads
-    fun nextTimeAfter(
+    internal fun nextTimeAfter(
         afterTime: ZonedDateTime,
         dateTimeBarrier: ZonedDateTime = afterTime.plusYears(4)
     ): ZonedDateTime {
@@ -479,12 +479,12 @@ class CronExpression private constructor(private val expr: String, withSeconds: 
         }
     }
 
-    companion object {
-        fun create(expr: String): CronExpression {
+    public companion object {
+        public fun create(expr: String): CronExpression {
             return CronExpression(expr, true)
         }
 
-        fun createWithoutSeconds(expr: String): CronExpression {
+        public fun createWithoutSeconds(expr: String): CronExpression {
             return CronExpression(expr, false)
         }
 

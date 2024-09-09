@@ -3,11 +3,11 @@ package no.nav.aap.komponenter.featuretoggle
 import no.nav.aap.komponenter.config.configForKey
 import java.util.HashMap
 
-object FeatureToggle {
+public object FeatureToggle {
 
     private val toggles = HashMap<String, Boolean>()
 
-    fun erAktivert(key: String, default: Boolean): Boolean {
+    public fun erAktivert(key: String, default: Boolean): Boolean {
         if (toggles.containsKey(key)) {
             return toggles.getValue(key)
         }
@@ -19,7 +19,7 @@ object FeatureToggle {
         return default
     }
 
-    fun aktiver(key: String, value: Boolean) {
+    public fun aktiver(key: String, value: Boolean) {
         toggles[key] = value
     }
 }

@@ -1,3 +1,3 @@
 package no.nav.aap.motor.mdc
 
-class LogInformasjon(val felterMedVerdi: Map<String, String>)
+public class LogInformasjon(public val felterMedVerdi: Map<String, String>)
