@@ -1,14 +1,19 @@
 val ktorVersion = "2.3.12"
 
+
 dependencies {
-    implementation(project(":dbmigrering"))
-    implementation(project(":dbconnect"))
+    api(project(":dbconnect"))
     implementation("org.slf4j:slf4j-api:2.0.16")
 
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.11.0")
     testImplementation(project(":dbtest"))
+
+    testImplementation("io.micrometer:micrometer-registry-prometheus:1.13.3")
+    testImplementation("ch.qos.logback:logback-classic:1.5.7")
+    testImplementation("net.logstash.logback:logstash-logback-encoder:8.0")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.11.0")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.11.0")
     testImplementation("org.assertj:assertj-core:3.26.3")
     testImplementation("org.testcontainers:postgresql:1.20.1")
+
     testImplementation(kotlin("test"))
 }

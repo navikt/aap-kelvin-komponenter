@@ -5,8 +5,8 @@ import no.nav.aap.komponenter.miljo.MiljøKode
 import org.flywaydb.core.Flyway
 import javax.sql.DataSource
 
-object Migrering {
-    fun migrate(dataSource: DataSource) {
+public object Migrering {
+    public fun migrate(dataSource: DataSource) {
         val flyway = Flyway
             .configure()
             .cleanDisabled(!cleanDb())

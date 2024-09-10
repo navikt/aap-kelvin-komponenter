@@ -37,7 +37,7 @@ public class Motor(
             .name("forbrenningskammer-", 1L)
             .factory()
     )
-    private val watchdogExecutor = Executors.newScheduledThreadPool(1) as ScheduledThreadPoolExecutor
+    private val watchdogExecutor = Executors.newScheduledThreadPool(1)
 
     private var stopped = false
     private var started = false
@@ -62,7 +62,11 @@ public class Motor(
         log.info("Avslutter prosessering av jobber")
         stopped = true
         watchdogExecutor.shutdownNow()
-        executor.awaitTermination(10L, TimeUnit.SECONDS)
+        val res = executor.awaitTermination(10L, TimeUnit.SECONDS)
+        if (!res) {
+            log.warn("Forbrenningskammer kunne ikke avsluttes innen 10 sekunder.")
+        }
+        log.info("Avsluttet prosessering av jobber")
     }
 
     public fun kjører(): Boolean {

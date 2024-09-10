@@ -4,15 +4,25 @@ import no.nav.aap.komponenter.dbconnect.DBConnection
 import no.nav.aap.motor.Jobb
 import no.nav.aap.motor.JobbInput
 import no.nav.aap.motor.JobbUtfører
+import org.slf4j.LoggerFactory
 
-class TullTestJobbUtfører() : JobbUtfører {
+class TullTestJobbUtfører(private val connection: DBConnection) : JobbUtfører {
+
+    private val logger = LoggerFactory.getLogger(TullTestJobbUtfører::class.java)
+
 
     override fun utfør(input: JobbInput) {
+        connection.execute("INSERT INTO TEST_TABLE (VALUE) VALUES (?)") {
+            setParams {
+                setString(1, input.payload)
+            }
+        };
+        logger.info("Wrote into table.")
     }
 
     companion object : Jobb {
         override fun konstruer(connection: DBConnection): JobbUtfører {
-            return TullTestJobbUtfører()
+            return TullTestJobbUtfører(connection)
         }
 
         override fun type(): String {
