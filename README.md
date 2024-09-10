@@ -6,15 +6,10 @@ Felles-bibliotek for apper for AAP.
 
 For oppdatert oppskrift for å kjøre koden, se stegene i Github Actions.
 
----
-
 # Henvendelser
 
 Enten:
 Spørsmål knyttet til koden eller prosjektet kan stilles som issues her på GitHub
-
-Eller:
-Spørsmål knyttet til koden eller prosjektet kan stilles til teamalias@nav.no
 
 
 ## For NAV-ansatte

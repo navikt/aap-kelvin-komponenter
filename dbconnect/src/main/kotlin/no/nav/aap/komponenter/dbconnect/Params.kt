@@ -39,6 +39,14 @@ class Params(private val preparedStatement: PreparedStatement) {
         }
     }
 
+    public fun setDouble(index: Int, value: Double?) {
+        if (value == null) {
+            preparedStatement.setNull(index, Types.NUMERIC)
+        } else {
+            preparedStatement.setDouble(index, value)
+        }
+    }
+
     fun setBigDecimal(index: Int, value: BigDecimal?) {
         if (value == null) {
             preparedStatement.setNull(index, Types.NUMERIC)
