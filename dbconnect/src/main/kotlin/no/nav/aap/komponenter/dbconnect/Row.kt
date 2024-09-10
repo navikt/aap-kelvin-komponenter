@@ -71,6 +71,26 @@ class Row(private val resultSet: ResultSet) {
         return long
     }
 
+    fun getDoubleOrNull(columnLabel: String): Double? {
+        val double = resultSet.getDouble(columnLabel)
+        if (double != 0.0) {
+            return double
+        }
+
+        val any: Any? = resultSet.getObject(columnLabel)
+        if (any == null) {
+            return null
+        }
+
+        return 0.0
+    }
+
+    fun getDouble(columnLabel: String): Double {
+        val double: Double? = getDoubleOrNull(columnLabel)
+        requireNotNull(double)
+        return double
+    }
+
     fun getLongOrNull(columnLabel: String): Long? {
         val long = resultSet.getLong(columnLabel)
         if (long != 0L) {
