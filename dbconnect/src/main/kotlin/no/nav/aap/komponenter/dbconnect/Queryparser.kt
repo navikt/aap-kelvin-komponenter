@@ -1,12 +1,16 @@
 package no.nav.aap.komponenter.dbconnect
 
 internal class Queryparser(private val query: String) {
-    private companion object {
-        private val REGEX = "(?:(\\?|:([a-zA-ZæøåÆØÅ0-9_]*))(?:::[^,]+)?)+".toRegex()
+    private val namedIndices: Map<String, Set<Int>>
+    private val preparedQuery: String
+
+    init {
+        val (preparedQuery, indices) = findNames(query)
+        this.namedIndices = indices.toMap()
+        this.preparedQuery = preparedQuery
     }
 
-    private val namedIndices = getNameIndices()
-    private val isIndexed = group1Value().any("?"::equals)
+    private val isIndexed = query.contains('?')
     private val isNamed = namedIndices.isNotEmpty()
 
     init {
@@ -26,41 +30,57 @@ internal class Queryparser(private val query: String) {
         if (isIndexed) {
             return query
         }
-        return group1()
-            .asIterable()
-            .reversed()
-            .fold(query) { acc, group ->
-                acc.replaceRange(group.range, "?")
-            }
+        return preparedQuery
     }
 
-    internal fun getIndices(name: String): List<Int>? {
+    internal fun getIndices(name: String): Set<Int>? {
         return namedIndices[name]
     }
 
-    private fun getNameIndices(): Map<String, List<Int>> {
-        return group2Value()
-            .mapIndexed { index, name -> name to index + 1 }
-            .groupBy(Pair<String, Int>::first, Pair<String, Int>::second)
-    }
+    private companion object {
+        private fun findNames(query: String, index: Int = 1): Pair<String, Map<String, Set<Int>>> {
+            if (query.isEmpty()) {
+                return query to emptyMap()
+            }
 
-    private fun group1(): Sequence<MatchGroup> {
-        return groups().mapNotNull { it[1] }
-    }
+            val i = query.indexOf(':')
+            if (query.lastIndex == i) {
+                //Siste tegn i query. Uansett ikke en parameter
+                return query to emptyMap()
+            }
+            if (i == -1) {
+                //Finner ingen flere parametre
+                return query to emptyMap()
+            }
 
-    private fun group1Value(): Sequence<String> {
-        return group1().map(MatchGroup::value)
-    }
+            val førsteDel = query.substring(0, i)
+            val sisteDel = query.substring(i)
 
-    private fun group2(): Sequence<MatchGroup> {
-        return groups().mapNotNull { it[2] }
-    }
+            if (sisteDel.length <= 1) {
+                //Delen fra og med index er for kort til å være et parameter
+                //Denne vil aldri være sann pga `if (query.lastIndex == i)`
+                return query to emptyMap()
+            }
 
-    private fun group2Value(): Sequence<String> {
-        return group2().map(MatchGroup::value)
-    }
+            val navn = sisteDel.drop(1).takeWhile(Char::gyldig)
+            val resten = sisteDel.drop(2).dropWhile(Char::gyldig)
 
-    private fun groups(): Sequence<MatchGroupCollection> {
-        return generateSequence(REGEX.find(query), MatchResult::next).map(MatchResult::groups)
+            if (navn.isEmpty()) {
+                val erstattning = sisteDel.take(2) + sisteDel.drop(2).takeWhile(Char::gyldig)
+                val (resQuery, mappet) = findNames(resten, index)
+                return (erstattning + resQuery) to mappet
+            }
+
+            val (resQuery, mappet) = findNames(resten, index + 1)
+            val nyDelquery = "$førsteDel?$resQuery"
+            val nyttMap = mappet.toMutableMap()
+            nyttMap.merge(navn, setOf(index)) { ints, elements -> elements.plus(ints) }
+
+            return nyDelquery to nyttMap.toMap()
+        }
     }
+}
+
+private fun Char.gyldig(): Boolean {
+    return isLetter() || this in "_"
 }
