@@ -34,6 +34,10 @@ class ParamsAutoIndex(preparedStatement: PreparedStatement) {
         params.setLong(nextIndex(), value)
     }
 
+    fun setDouble(value: Double?) {
+        params.setDouble(nextIndex(), value)
+    }
+
     fun setBigDecimal(value: BigDecimal?) {
         params.setBigDecimal(nextIndex(), value)
     }

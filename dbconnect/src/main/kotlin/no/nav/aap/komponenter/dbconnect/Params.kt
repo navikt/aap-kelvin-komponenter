@@ -39,9 +39,9 @@ class Params(private val preparedStatement: PreparedStatement) {
         }
     }
 
-    public fun setDouble(index: Int, value: Double?) {
+    fun setDouble(index: Int, value: Double?) {
         if (value == null) {
-            preparedStatement.setNull(index, Types.NUMERIC)
+            preparedStatement.setNull(index, Types.DOUBLE)
         } else {
             preparedStatement.setDouble(index, value)
         }

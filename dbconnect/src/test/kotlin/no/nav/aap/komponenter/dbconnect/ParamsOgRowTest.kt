@@ -157,6 +157,34 @@ internal class ParamsOgRowTest {
     }
 
     @Test
+    fun `Skriver og leser Double og null-verdi riktig`() {
+        InitTestDatabase.dataSource.transaction { connection ->
+            connection.execute(
+                """
+                    INSERT INTO TEST_DOUBLE (TEST_0, TEST_1, TEST_NULL)
+                    VALUES (?, ?, ?)
+                """.trimMargin()
+            ) {
+                setParams {
+                    setDouble(1, 0.0)
+                    setDouble(2, 1.4)
+                    setDouble(3, null)
+                }
+            }
+            connection.queryFirst("SELECT * FROM TEST_DOUBLE") {
+                setRowMapper { row ->
+                    assertThat(row.getDoubleOrNull("TEST_0")).isEqualTo(0.0)
+                    assertThat(row.getDouble("TEST_0")).isEqualTo(0.0)
+                    assertThat(row.getDoubleOrNull("TEST_1")).isEqualTo(1.4)
+                    assertThat(row.getDouble("TEST_1")).isEqualTo(1.4)
+                    assertThat(row.getDoubleOrNull("TEST_NULL")).isNull()
+                    assertThrows<IllegalArgumentException> { row.getLong("TEST_NULL") }
+                }
+            }
+        }
+    }
+
+    @Test
     fun `Skriver og leser BigDecimal og null-verdi riktig`() {
         InitTestDatabase.dataSource.transaction { connection ->
             connection.execute(

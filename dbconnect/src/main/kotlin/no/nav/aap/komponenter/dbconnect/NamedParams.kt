@@ -43,6 +43,12 @@ class NamedParams internal constructor(
         }
     }
 
+    fun setDouble(name: String, value: Double?) {
+        queryparser.getIndices(name)?.forEach { index ->
+            params.setDouble(index, value)
+        }
+    }
+
     fun setBigDecimal(name: String, value: BigDecimal?) {
         queryparser.getIndices(name)?.forEach { index ->
             params.setBigDecimal(index, value)
