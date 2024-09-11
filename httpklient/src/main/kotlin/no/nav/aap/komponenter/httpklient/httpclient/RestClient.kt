@@ -117,6 +117,10 @@ inline fun <T : Any, reified R> RestClient<InputStream>.put(uri: URI, request: P
     return put(uri, request) { body, _ -> DefaultJsonMapper.fromJson(body) }
 }
 
+inline fun <T : Any, reified R> RestClient<InputStream>.patch(uri: URI, request: PatchRequest<T>): R? {
+    return patch(uri, request) { body, _ -> DefaultJsonMapper.fromJson(body) }
+}
+
 private fun HttpRequest.Builder.addHeaders(restRequest: Request): HttpRequest.Builder {
     restRequest.additionalHeaders().forEach(this::addHeader)
     return this
