@@ -60,6 +60,7 @@ public class Motor(
     public fun stop() {
         log.info("Avslutter prosessering av jobber")
         stopped = true
+        executor.shutdown()
         watchdogExecutor.shutdownNow()
         val res = executor.awaitTermination(10L, TimeUnit.SECONDS)
         if (!res) {
