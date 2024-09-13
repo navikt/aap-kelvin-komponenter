@@ -2,7 +2,7 @@ package no.nav.aap.komponenter.httpklient.httpclient.request
 
 import no.nav.aap.komponenter.httpklient.json.DefaultJsonMapper
 
-object BodyConverter {
+internal object BodyConverter {
     fun convert(body: Any, contentType: ContentType): String {
         return when (contentType) {
             ContentType.APPLICATION_JSON -> DefaultJsonMapper.toJson(body)
@@ -12,7 +12,7 @@ object BodyConverter {
     }
 
     private fun requireString(body: Any, contentType: ContentType): String {
-        require(body is String) {"Definert '${contentType}' men body er ikke av type String"}
+        require(body is String) { "Definert '${contentType}' men body er ikke av type String" }
         return body
     }
 }

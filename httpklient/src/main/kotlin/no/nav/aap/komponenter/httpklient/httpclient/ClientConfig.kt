@@ -1,13 +1,11 @@
 package no.nav.aap.komponenter.httpklient.httpclient
 
-import no.nav.aap.komponenter.httpklient.httpclient.FunctionalHeader
-import no.nav.aap.komponenter.httpklient.httpclient.Header
 import java.time.Duration
 
 
-class ClientConfig(
-    val scope: String? = null,
-    val connectionTimeout: Duration = Duration.ofSeconds(15),
-    val additionalHeaders: List<Header> = emptyList(),
-    val additionalFunctionalHeaders: List<FunctionalHeader> = emptyList()
+public class ClientConfig(
+    internal val scope: String? = null,
+    internal val connectionTimeout: Duration = Duration.ofSeconds(15),
+    internal val additionalHeaders: List<Header> = emptyList(),
+    internal val additionalFunctionalHeaders: List<FunctionalHeader> = emptyList()
 )

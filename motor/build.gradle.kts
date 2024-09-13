@@ -1,5 +1,6 @@
-val ktorVersion = "2.3.12"
+import org.jetbrains.kotlin.gradle.dsl.ExplicitApiMode
 
+kotlin.explicitApi = ExplicitApiMode.Warning
 
 dependencies {
     api(project(":dbconnect"))

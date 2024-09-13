@@ -5,7 +5,7 @@ import no.nav.aap.komponenter.httpklient.httpclient.error.UhåndtertHttpResponsE
 import java.net.HttpURLConnection
 import java.net.http.HttpResponse
 
-fun <E, R> håndterStatus(response: HttpResponse<E>, block: () -> R?): R? {
+internal fun <E, R> håndterStatus(response: HttpResponse<E>, block: () -> R?): R? {
     val status: Int = response.statusCode()
     if (status == HttpURLConnection.HTTP_NO_CONTENT) {
         return null

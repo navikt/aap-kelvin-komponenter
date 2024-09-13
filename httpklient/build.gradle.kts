@@ -1,4 +1,9 @@
+import org.jetbrains.kotlin.gradle.dsl.ExplicitApiMode
+
 val ktorVersion = "2.3.12"
+
+kotlin.explicitApi = ExplicitApiMode.Warning
+
 
 dependencies {
     implementation(project(":infrastructure"))

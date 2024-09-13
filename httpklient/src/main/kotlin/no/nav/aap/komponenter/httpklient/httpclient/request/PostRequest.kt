@@ -4,7 +4,7 @@ import no.nav.aap.komponenter.httpklient.httpclient.Header
 import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.OidcToken
 import java.time.Duration
 
-class PostRequest<T : Any>(
+public class PostRequest<T : Any>(
     private val body: T,
     private val contentType: ContentType = ContentType.APPLICATION_JSON,
     private val additionalHeaders: List<Header> = emptyList(),

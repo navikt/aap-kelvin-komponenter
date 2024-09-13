@@ -4,19 +4,19 @@ import com.auth0.jwt.JWT
 import java.time.LocalDateTime
 import java.time.ZoneId
 
-class OidcToken(accessToken: String) {
+public class OidcToken(accessToken: String) {
 
     private val accessToken = JWT.decode(accessToken)
 
-    fun token(): String {
+    public fun token(): String {
         return accessToken.token
     }
 
-    fun expires(): LocalDateTime {
+    public fun expires(): LocalDateTime {
         return LocalDateTime.ofInstant(accessToken.expiresAt.toInstant(), ZoneId.systemDefault())
     }
 
-    fun isNotExpired(): Boolean {
+    public fun isNotExpired(): Boolean {
         val now = LocalDateTime.now().plusSeconds(30)
         return now.isBefore(expires())
     }

@@ -6,7 +6,7 @@ import java.net.http.HttpHeaders
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 
-class DefaultResponseHandler() : RestResponseHandler<InputStream> {
+public class DefaultResponseHandler() : RestResponseHandler<InputStream> {
     override fun <R> håndter(
         request: HttpRequest,
         response: HttpResponse<InputStream>,

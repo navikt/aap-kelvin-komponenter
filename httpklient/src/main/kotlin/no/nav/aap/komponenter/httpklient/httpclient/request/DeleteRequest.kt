@@ -4,7 +4,7 @@ import no.nav.aap.komponenter.httpklient.httpclient.Header
 import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.OidcToken
 import java.time.Duration
 
-class DeleteRequest(
+public class DeleteRequest(
     private val additionalHeaders: List<Header> = emptyList(),
     private val timeout: Duration = Duration.ofSeconds(60),
     private val currentToken: OidcToken? = null

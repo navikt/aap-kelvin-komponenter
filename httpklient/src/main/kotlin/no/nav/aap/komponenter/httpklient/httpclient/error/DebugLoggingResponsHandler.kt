@@ -9,7 +9,7 @@ import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 
 
-class DebugLoggingResponsHandler() : RestResponseHandler<String> {
+public class DebugLoggingResponsHandler() : RestResponseHandler<String> {
     private val SECURE_LOGGER = LoggerFactory.getLogger("secureLog")
     private val log = LoggerFactory.getLogger(DebugLoggingResponsHandler::class.java)
 

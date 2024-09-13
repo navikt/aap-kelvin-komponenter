@@ -1,7 +1,7 @@
 package no.nav.aap.motor
 
-interface JobbUtfører {
+public interface JobbUtfører {
 
-    fun utfør(input: JobbInput)
+    public fun utfør(input: JobbInput)
 
 }

@@ -17,7 +17,7 @@ import java.time.Duration
 import java.time.LocalDateTime
 import kotlin.text.Charsets.UTF_8
 
-object ClientCredentialsTokenProvider : TokenProvider {
+public object ClientCredentialsTokenProvider : TokenProvider {
 
     private val log: Logger = LoggerFactory.getLogger(ClientCredentialsTokenProvider::class.java)
 

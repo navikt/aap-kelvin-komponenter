@@ -21,15 +21,15 @@ import java.net.http.HttpRequest
 import java.net.http.HttpRequest.BodyPublisher
 import java.util.*
 
-class RestClient<K>(
+public class RestClient<K>(
     private val config: ClientConfig,
     private val tokenProvider: TokenProvider,
     private val responseHandler: RestResponseHandler<K>,
     httpClient: HttpClient? = null
 ) {
 
-    companion object {
-        fun withDefaultResponseHandler(config: ClientConfig, tokenProvider: TokenProvider): RestClient<InputStream> {
+    public companion object {
+        public fun withDefaultResponseHandler(config: ClientConfig, tokenProvider: TokenProvider): RestClient<InputStream> {
             return RestClient(config, tokenProvider, DefaultResponseHandler())
         }
     }
@@ -37,31 +37,31 @@ class RestClient<K>(
     private val client = httpClient ?: HttpClient.newBuilder().connectTimeout(config.connectionTimeout)
         .proxy(HttpClient.Builder.NO_PROXY).followRedirects(HttpClient.Redirect.NEVER).build()
 
-    fun <T : Any, R> post(uri: URI, request: PostRequest<T>, mapper: (K, HttpHeaders) -> R): R? {
+    public fun <T : Any, R> post(uri: URI, request: PostRequest<T>, mapper: (K, HttpHeaders) -> R): R? {
         val httpRequest = buildRequest(uri, request)
 
         return executeRequestAndHandleResponse(httpRequest, mapper)
     }
 
-    fun <T : Any, R> put(uri: URI, request: PutRequest<T>, mapper: (K, HttpHeaders) -> R): R? {
+    public fun <T : Any, R> put(uri: URI, request: PutRequest<T>, mapper: (K, HttpHeaders) -> R): R? {
         val httpRequest = buildRequest(uri, request)
 
         return executeRequestAndHandleResponse(httpRequest, mapper)
     }
 
-    fun <T : Any, R> patch(uri: URI, request: PatchRequest<T>, mapper: (K, HttpHeaders) -> R): R? {
+    public fun <T : Any, R> patch(uri: URI, request: PatchRequest<T>, mapper: (K, HttpHeaders) -> R): R? {
         val httpRequest = buildRequest(uri, request)
 
         return executeRequestAndHandleResponse(httpRequest, mapper)
     }
 
-    fun <R> get(uri: URI, request: GetRequest, mapper: (K, HttpHeaders) -> R): R? {
+    public fun <R> get(uri: URI, request: GetRequest, mapper: (K, HttpHeaders) -> R): R? {
         val httpRequest = buildRequest(uri, request)
 
         return executeRequestAndHandleResponse(httpRequest, mapper)
     }
 
-    fun <R> delete(uri: URI, request: DeleteRequest, mapper: (K, HttpHeaders) -> R): R? {
+    public fun <R> delete(uri: URI, request: DeleteRequest, mapper: (K, HttpHeaders) -> R): R? {
         val httpRequest = buildRequest(uri, request)
 
         return executeRequestAndHandleResponse(httpRequest, mapper)
@@ -105,19 +105,19 @@ class RestClient<K>(
     }
 }
 
-inline fun <reified R> RestClient<InputStream>.get(uri: URI, request: GetRequest): R? {
+public inline fun <reified R> RestClient<InputStream>.get(uri: URI, request: GetRequest): R? {
     return get(uri, request) { body, _ -> DefaultJsonMapper.fromJson(body) }
 }
 
-inline fun <T : Any, reified R> RestClient<InputStream>.post(uri: URI, request: PostRequest<T>): R? {
+public inline fun <T : Any, reified R> RestClient<InputStream>.post(uri: URI, request: PostRequest<T>): R? {
     return post(uri, request) { body, _ -> DefaultJsonMapper.fromJson(body) }
 }
 
-inline fun <T : Any, reified R> RestClient<InputStream>.put(uri: URI, request: PutRequest<T>): R? {
+public inline fun <T : Any, reified R> RestClient<InputStream>.put(uri: URI, request: PutRequest<T>): R? {
     return put(uri, request) { body, _ -> DefaultJsonMapper.fromJson(body) }
 }
 
-inline fun <T : Any, reified R> RestClient<InputStream>.patch(uri: URI, request: PatchRequest<T>): R? {
+public inline fun <T : Any, reified R> RestClient<InputStream>.patch(uri: URI, request: PatchRequest<T>): R? {
     return patch(uri, request) { body, _ -> DefaultJsonMapper.fromJson(body) }
 }
 
@@ -151,7 +151,7 @@ private fun HttpRequest.Builder.addHeader(header: FunctionalHeader) {
     this.header(header.key, header.supplier())
 }
 
-fun sikreCorrelationId(): String {
+private fun sikreCorrelationId(): String {
     var callid = MDC.get("callId")
     if (callid == null) {
         val uuid = UUID.randomUUID()

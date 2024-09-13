@@ -4,15 +4,15 @@ import no.nav.aap.komponenter.httpklient.httpclient.Header
 import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.OidcToken
 import java.time.Duration
 
-sealed interface Request {
+public sealed interface Request {
 
-    fun body(): Any
+    public fun body(): Any
 
-    fun contentType(): ContentType
+    public fun contentType(): ContentType
 
-    fun additionalHeaders(): List<Header>
+    public fun additionalHeaders(): List<Header>
 
-    fun timeout(): Duration
+    public fun timeout(): Duration
 
-    fun currentToken(): OidcToken?
+    public fun currentToken(): OidcToken?
 }

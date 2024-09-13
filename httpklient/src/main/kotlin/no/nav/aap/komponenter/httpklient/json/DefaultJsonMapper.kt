@@ -11,7 +11,7 @@ import java.io.InputStream
 import java.util.*
 
 
-object DefaultJsonMapper {
+public object DefaultJsonMapper {
 
     private val mapper = ObjectMapper()
         .registerModule(KotlinModule.Builder().build())
@@ -23,7 +23,7 @@ object DefaultJsonMapper {
         .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
         .enable(DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_USING_DEFAULT_VALUE)
 
-    fun toJson(value: Any): String {
+    public fun toJson(value: Any): String {
         try {
             return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(value)
         } catch (e: IOException) {
@@ -31,7 +31,7 @@ object DefaultJsonMapper {
         }
     }
 
-    fun <T> fromJson(value: String, toClass: Class<T>): T {
+    public fun <T> fromJson(value: String, toClass: Class<T>): T {
         try {
             return mapper.readValue(value, toClass)
         } catch (e: IOException) {
@@ -39,14 +39,14 @@ object DefaultJsonMapper {
         }
     }
 
-   inline fun <reified T> fromJson(value: String): T {
+   public inline fun <reified T> fromJson(value: String): T {
         try {
             return objectMapper().readValue<T>(value)
         } catch (e: IOException) {
             throw DeserializationException(e)
         }
     }
-   inline fun <reified T> fromJson(value: InputStream): T {
+   public inline fun <reified T> fromJson(value: InputStream): T {
         try {
             return objectMapper().readValue<T>(value)
         } catch (e: IOException) {
@@ -54,7 +54,7 @@ object DefaultJsonMapper {
         }
     }
 
-    fun objectMapper(): ObjectMapper {
+    public fun objectMapper(): ObjectMapper {
         return mapper
     }
 }

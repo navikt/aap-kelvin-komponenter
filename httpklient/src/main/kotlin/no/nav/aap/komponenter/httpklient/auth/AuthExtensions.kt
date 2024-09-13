@@ -8,7 +8,7 @@ import io.ktor.server.auth.jwt.*
 import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.OidcToken
 
 
-fun ApplicationCall.bruker(): Bruker {
+public fun ApplicationCall.bruker(): Bruker {
     val navIdent = principal<JWTPrincipal>()?.getClaim("NAVident", String::class)
     if (navIdent == null) {
         error("NAVident mangler i AzureAD claims")
@@ -16,16 +16,16 @@ fun ApplicationCall.bruker(): Bruker {
     return Bruker(navIdent)
 }
 
-fun ApplicationCall.token(): OidcToken {
+public fun ApplicationCall.token(): OidcToken {
     val token: String = requireNotNull(this.request.headers[HttpHeaders.Authorization]).split(" ")[1]
 
     return OidcToken(token)
 }
 
-fun <TResponse> OpenAPIPipelineResponseContext<TResponse>.token(): OidcToken {
+public fun <TResponse> OpenAPIPipelineResponseContext<TResponse>.token(): OidcToken {
     return pipeline.context.token()
 }
 
-fun <TResponse> OpenAPIPipelineResponseContext<TResponse>.bruker(): Bruker {
+public fun <TResponse> OpenAPIPipelineResponseContext<TResponse>.bruker(): Bruker {
     return pipeline.context.bruker()
 }

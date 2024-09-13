@@ -14,7 +14,7 @@ import java.net.URLEncoder
 import java.time.Duration
 import kotlin.text.Charsets.UTF_8
 
-object OnBehalfOfTokenProvider : TokenProvider {
+public object OnBehalfOfTokenProvider : TokenProvider {
 
     private val client = RestClient.withDefaultResponseHandler(
         config = ClientConfig(),
