@@ -61,6 +61,7 @@ public class Motor(
         log.info("Avslutter prosessering av jobber")
         stopped = true
         watchdogExecutor.shutdownNow()
+        executor.shutdown()
         val res = executor.awaitTermination(10L, TimeUnit.SECONDS)
         if (!res) {
             log.warn("Forbrenningskammer kunne ikke avsluttes innen 10 sekunder.")
@@ -80,7 +81,7 @@ public class Motor(
             while (!stopped) {
                 log.debug("Starter plukking av jobber")
                 try {
-                    while (plukker) {
+                    while (plukker && !stopped) {
                         dataSource.transaction { connection ->
                             val repository = JobbRepository(connection)
                             val plukketJobb = repository.plukkJobb()
@@ -97,7 +98,9 @@ public class Motor(
                     log.warn("Feil under plukking av jobber", excetion)
                 }
                 log.debug("Ingen flere jobber å plukke, hviler litt")
-                Thread.sleep(500)
+                if (!stopped) {
+                    Thread.sleep(500)
+                }
                 plukker = true
             }
         }
