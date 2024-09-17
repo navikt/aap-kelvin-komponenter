@@ -157,7 +157,7 @@ public class JobbInput(internal val jobb: Jobb) {
      * Henter CallId fra MDC og viderefører denne i planlagt jobb
      */
     public fun medCallId(): JobbInput {
-        val value = MDC.get(CALL_ID_KEY)
+        val value = MDC.get("callId")
         if (value != null) {
             medParameter(CALL_ID_KEY, value)
         }
