@@ -2,6 +2,7 @@ package no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.azurecc
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.time.Duration
 import java.time.LocalDateTime
 
 class ClientCredentialsTokenProviderTest {
@@ -15,4 +16,11 @@ class ClientCredentialsTokenProviderTest {
         assertThat(inTheFuture).isBefore(expiresTime)
         assertThat(evenMoreinTheFuture).isAfter(expiresTime)
     }
+}
+
+internal fun calculateExpiresTime(expiresInSec: Int): LocalDateTime {
+    val expiresIn =
+        Duration.ofSeconds(expiresInSec.toLong()).minus(Duration.ofSeconds(30))
+
+    return LocalDateTime.now().plus(expiresIn);
 }
