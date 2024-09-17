@@ -14,12 +14,13 @@ import java.net.URLEncoder
 import java.time.Duration
 import kotlin.text.Charsets.UTF_8
 
-public class OnBehalfOfTokenProvider(private val config: AzureConfig = AzureConfig()) : TokenProvider {
+public object OnBehalfOfTokenProvider : TokenProvider {
 
     private val client = RestClient.withDefaultResponseHandler(
         config = ClientConfig(),
         tokenProvider = NoTokenTokenProvider(),
     )
+    private val config = AzureConfig() // Laster config on-demand
 
     override fun getToken(scope: String?, currentToken: OidcToken?): OidcToken? {
         if (scope == null) {

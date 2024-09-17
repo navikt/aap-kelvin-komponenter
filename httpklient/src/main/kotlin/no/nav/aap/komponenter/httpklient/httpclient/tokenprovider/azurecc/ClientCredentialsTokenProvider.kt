@@ -14,9 +14,10 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.net.URLEncoder
 import java.time.Duration
+import java.time.LocalDateTime
 import kotlin.text.Charsets.UTF_8
 
-public class ClientCredentialsTokenProvider(private val config: AzureConfig = AzureConfig()) : TokenProvider {
+public object ClientCredentialsTokenProvider : TokenProvider {
 
     private val log: Logger = LoggerFactory.getLogger(ClientCredentialsTokenProvider::class.java)
 
@@ -24,6 +25,7 @@ public class ClientCredentialsTokenProvider(private val config: AzureConfig = Az
         config = ClientConfig(),
         tokenProvider = NoTokenTokenProvider(),
     )
+    private val config = AzureConfig() // Laster config on-demand
 
     private val cache = HashMap<String, OidcToken>()
 
@@ -61,4 +63,11 @@ public class ClientCredentialsTokenProvider(private val config: AzureConfig = Az
         val encodedScope = URLEncoder.encode(scope, UTF_8)
         return "client_id=" + config.clientId + "&client_secret=" + config.clientSecret + "&scope=" + encodedScope + "&grant_type=client_credentials"
     }
+}
+
+internal fun calculateExpiresTime(expiresInSec: Int): LocalDateTime {
+    val expiresIn =
+        Duration.ofSeconds(expiresInSec.toLong()).minus(Duration.ofSeconds(30))
+
+    return LocalDateTime.now().plus(expiresIn);
 }
