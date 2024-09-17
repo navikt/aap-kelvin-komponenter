@@ -26,6 +26,7 @@ import kotlin.collections.plus
  *  - ContentNegotiation
  *  - CallLogging
  *  - Sets up JWT authentication against Azure.
+ *  - Genererer Swagger-dokumentasjon
  */
 public fun Application.commonKtorModule(
     prometheus: PrometheusMeterRegistry, azureConfig: AzureConfig, swaggerTitle: String
