@@ -10,5 +10,6 @@ include(
     "dbtest",
     "motor",
     "motor-api",
-    "httpklient"
+    "httpklient",
+    "server"
 )
