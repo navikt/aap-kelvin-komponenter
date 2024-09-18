@@ -61,6 +61,33 @@ internal class RetryFeiledeJobberRepository(private val connection: DBConnection
 
         return antallRader
     }
+    internal fun markerSomAvbrutt(jobbId: Long): Int {
+        val historikk = """
+            INSERT INTO JOBB_HISTORIKK (jobb_id, status)
+            SELECT id, 'AVBRUTT' FROM JOBB WHERE status = 'FEILET' AND id = ?
+        """.trimIndent()
+
+        connection.execute(historikk) {
+            setParams {
+                setLong(1, jobbId)
+            }
+        }
+
+        val query = """
+                UPDATE JOBB SET status = 'AVBRUTT' WHERE status = 'FEILET' AND id = ?
+            """.trimIndent()
+        var antallRader = 0
+        connection.execute(query) {
+            setParams {
+                setLong(1, jobbId)
+            }
+            setResultValidator {
+                antallRader = it
+            }
+        }
+
+        return antallRader
+    }
 
     internal fun planlagteCronOppgaver(): List<FeilhåndteringOppgaveStatus> {
         return JobbType.cronTypes().flatMap { type -> hentStatusPåOppgave(type) }

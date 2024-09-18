@@ -4,5 +4,6 @@ public enum class JobbStatus {
     KLAR,
     PLUKKET,
     FERDIG,
-    FEILET
+    FEILET,
+    AVBRUTT
 }
