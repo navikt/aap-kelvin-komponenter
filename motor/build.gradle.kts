@@ -1,7 +1,3 @@
-import org.jetbrains.kotlin.gradle.dsl.ExplicitApiMode
-
-kotlin.explicitApi = ExplicitApiMode.Warning
-
 dependencies {
     api(project(":dbconnect"))
     implementation("org.slf4j:slf4j-api:2.0.16")

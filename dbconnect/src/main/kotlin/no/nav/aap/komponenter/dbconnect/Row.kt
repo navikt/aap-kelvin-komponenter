@@ -9,28 +9,28 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.*
 
-class Row(private val resultSet: ResultSet) {
-    fun getBytes(columnLabel: String): ByteArray {
+public class Row internal constructor(private val resultSet: ResultSet) {
+    public fun getBytes(columnLabel: String): ByteArray {
         val bytes: ByteArray? = getBytesOrNull(columnLabel)
         requireNotNull(bytes)
         return bytes
     }
 
-    fun getBytesOrNull(columnLabel: String): ByteArray? {
+    public fun getBytesOrNull(columnLabel: String): ByteArray? {
         return resultSet.getBytes(columnLabel)
     }
 
-    fun getString(columnLabel: String): String {
+    public fun getString(columnLabel: String): String {
         val string: String? = getStringOrNull(columnLabel)
         requireNotNull(string)
         return string
     }
 
-    fun getStringOrNull(columnLabel: String): String? {
+    public fun getStringOrNull(columnLabel: String): String? {
         return resultSet.getString(columnLabel)
     }
 
-    inline fun <reified T : Enum<T>> getEnum(columnLabel: String): T {
+    public inline fun <reified T : Enum<T>> getEnum(columnLabel: String): T {
         return enumValueOf(getString(columnLabel))
     }
 
@@ -39,19 +39,19 @@ class Row(private val resultSet: ResultSet) {
      * og compileren ikke kan forstå at typen ikke er null når databaseverdien er null,
      * så innføres [T] for å gi compileren hint om at returtypen kan være null
      */
-    inline fun <reified T, reified E> getEnumOrNull(columnLabel: String): E?
+    public inline fun <reified T, reified E> getEnumOrNull(columnLabel: String): E?
             where T : E?,
                   E : Enum<E> {
         return getStringOrNull(columnLabel)?.let<String, E>(::enumValueOf)
     }
 
-    fun getInt(columnLabel: String): Int {
+    public fun getInt(columnLabel: String): Int {
         val int: Int? = getIntOrNull(columnLabel)
         requireNotNull(int)
         return int
     }
 
-    fun getIntOrNull(columnLabel: String): Int? {
+    public fun getIntOrNull(columnLabel: String): Int? {
         val int = resultSet.getInt(columnLabel)
         if (int != 0) {
             return int
@@ -65,13 +65,13 @@ class Row(private val resultSet: ResultSet) {
         return 0
     }
 
-    fun getLong(columnLabel: String): Long {
+    public fun getLong(columnLabel: String): Long {
         val long: Long? = getLongOrNull(columnLabel)
         requireNotNull(long)
         return long
     }
 
-    fun getDoubleOrNull(columnLabel: String): Double? {
+    public fun getDoubleOrNull(columnLabel: String): Double? {
         val double = resultSet.getDouble(columnLabel)
         if (double != 0.0) {
             return double
@@ -85,13 +85,13 @@ class Row(private val resultSet: ResultSet) {
         return 0.0
     }
 
-    fun getDouble(columnLabel: String): Double {
+    public fun getDouble(columnLabel: String): Double {
         val double: Double? = getDoubleOrNull(columnLabel)
         requireNotNull(double)
         return double
     }
 
-    fun getLongOrNull(columnLabel: String): Long? {
+    public fun getLongOrNull(columnLabel: String): Long? {
         val long = resultSet.getLong(columnLabel)
         if (long != 0L) {
             return long
@@ -105,22 +105,22 @@ class Row(private val resultSet: ResultSet) {
         return 0L
     }
 
-    fun getBigDecimal(columnLabel: String): BigDecimal {
+    public fun getBigDecimal(columnLabel: String): BigDecimal {
         val bigDecimal = getBigDecimalOrNull(columnLabel)
         requireNotNull(bigDecimal)
         return bigDecimal
     }
 
-    fun getBigDecimalOrNull(columnLabel: String): BigDecimal? {
+    public fun getBigDecimalOrNull(columnLabel: String): BigDecimal? {
         val bigDecimal: BigDecimal? = resultSet.getBigDecimal(columnLabel)
         return bigDecimal
     }
 
-    fun getUUID(columnLabel: String): UUID {
+    public fun getUUID(columnLabel: String): UUID {
         return UUID.fromString(getString(columnLabel))
     }
 
-    fun getUUIDOrNull(columnLabel: String): UUID? {
+    public fun getUUIDOrNull(columnLabel: String): UUID? {
         val string = getStringOrNull(columnLabel)
         if (string == null) {
             return null
@@ -128,13 +128,13 @@ class Row(private val resultSet: ResultSet) {
         return UUID.fromString(string)
     }
 
-    fun getBoolean(columnLabel: String): Boolean {
+    public fun getBoolean(columnLabel: String): Boolean {
         val boolean = getBooleanOrNull(columnLabel)
         requireNotNull(boolean)
         return boolean
     }
 
-    fun getBooleanOrNull(columnLabel: String): Boolean? {
+    public fun getBooleanOrNull(columnLabel: String): Boolean? {
         val boolean = resultSet.getBoolean(columnLabel)
         if (boolean) {
             return true
@@ -148,11 +148,11 @@ class Row(private val resultSet: ResultSet) {
         return false
     }
 
-    fun getPeriode(columnLabel: String): Periode {
+    public fun getPeriode(columnLabel: String): Periode {
         return DaterangeParser.fromSQL(getString(columnLabel))
     }
 
-    fun getPeriodeOrNull(columnLabel: String): Periode? {
+    public fun getPeriodeOrNull(columnLabel: String): Periode? {
         val dateRange = getStringOrNull(columnLabel)
         if (dateRange == null) {
             return null
@@ -160,34 +160,34 @@ class Row(private val resultSet: ResultSet) {
         return DaterangeParser.fromSQL(dateRange)
     }
 
-    fun getLocalDate(columnLabel: String): LocalDate {
+    public fun getLocalDate(columnLabel: String): LocalDate {
         val localDate = getLocalDateOrNull(columnLabel)
         requireNotNull(localDate)
         return localDate
     }
 
-    fun getLocalDateOrNull(columnLabel: String): LocalDate? {
+    public fun getLocalDateOrNull(columnLabel: String): LocalDate? {
         val date: Date? = resultSet.getDate(columnLabel)
         return date?.toLocalDate()
     }
 
-    fun getLocalDateTime(columnLabel: String): LocalDateTime {
+    public fun getLocalDateTime(columnLabel: String): LocalDateTime {
         val localDateTime = getLocalDateTimeOrNull(columnLabel)
         requireNotNull(localDateTime)
         return localDateTime
     }
 
-    fun getLocalDateTimeOrNull(columnLabel: String): LocalDateTime? {
+    public fun getLocalDateTimeOrNull(columnLabel: String): LocalDateTime? {
         val timestamp: Timestamp? = resultSet.getTimestamp(columnLabel)
         return timestamp?.toLocalDateTime()
     }
 
-    fun getPropertiesOrNull(columnLabel: String): Properties? {
+    public fun getPropertiesOrNull(columnLabel: String): Properties? {
         val dbData = resultSet.getString(columnLabel)
         return PropertiesParser.fromSql(dbData)
     }
 
-    fun getProperties(columnLabel: String): Properties {
+    public fun getProperties(columnLabel: String): Properties {
         val propertiesOrNull = getPropertiesOrNull(columnLabel)
         requireNotNull(propertiesOrNull)
         return propertiesOrNull

@@ -71,7 +71,7 @@ internal class ParamsOgRowTest {
         }
     }
 
-    enum class TestEnum {
+    private enum class TestEnum {
         TEST
     }
 

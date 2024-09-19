@@ -2,14 +2,16 @@ package no.nav.aap.komponenter.dbconnect
 
 import java.sql.PreparedStatement
 
-class Execute(private val preparedStatement: PreparedStatement) {
+public class Execute internal constructor(
+    private val preparedStatement: PreparedStatement
+) {
     private var resultValidator: (Int) -> Unit = {}
 
-    fun setParams(block: Params.() -> Unit) {
+    public fun setParams(block: Params.() -> Unit) {
         Params(preparedStatement).block()
     }
 
-    fun setResultValidator(block: (Int) -> Unit) {
+    public fun setResultValidator(block: (Int) -> Unit) {
         resultValidator = block
     }
 

@@ -7,85 +7,85 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.*
 
-class NamedParams internal constructor(
+public class NamedParams internal constructor(
     preparedStatement: PreparedStatement,
     private val queryparser: Queryparser
 ) {
     private val params = Params(preparedStatement)
 
-    fun setBytes(name: String, bytes: ByteArray?) {
+    public fun setBytes(name: String, bytes: ByteArray?) {
         queryparser.getIndices(name)?.forEach { index ->
             params.setBytes(index, bytes)
         }
     }
 
-    fun setString(name: String, value: String?) {
+    public fun setString(name: String, value: String?) {
         queryparser.getIndices(name)?.forEach { index ->
             params.setString(index, value)
         }
     }
 
-    fun setEnumName(name: String, value: Enum<*>?) {
+    public fun setEnumName(name: String, value: Enum<*>?) {
         queryparser.getIndices(name)?.forEach { index ->
             params.setEnumName(index, value)
         }
     }
 
-    fun setInt(name: String, value: Int?) {
+    public fun setInt(name: String, value: Int?) {
         queryparser.getIndices(name)?.forEach { index ->
             params.setInt(index, value)
         }
     }
 
-    fun setLong(name: String, value: Long?) {
+    public fun setLong(name: String, value: Long?) {
         queryparser.getIndices(name)?.forEach { index ->
             params.setLong(index, value)
         }
     }
 
-    fun setDouble(name: String, value: Double?) {
+    public fun setDouble(name: String, value: Double?) {
         queryparser.getIndices(name)?.forEach { index ->
             params.setDouble(index, value)
         }
     }
 
-    fun setBigDecimal(name: String, value: BigDecimal?) {
+    public fun setBigDecimal(name: String, value: BigDecimal?) {
         queryparser.getIndices(name)?.forEach { index ->
             params.setBigDecimal(index, value)
         }
     }
 
-    fun setUUID(name: String, uuid: UUID?) {
+    public fun setUUID(name: String, uuid: UUID?) {
         queryparser.getIndices(name)?.forEach { index ->
             params.setUUID(index, uuid)
         }
     }
 
-    fun setBoolean(name: String, value: Boolean?) {
+    public fun setBoolean(name: String, value: Boolean?) {
         queryparser.getIndices(name)?.forEach { index ->
             params.setBoolean(index, value)
         }
     }
 
-    fun setPeriode(name: String, periode: Periode?) {
+    public fun setPeriode(name: String, periode: Periode?) {
         queryparser.getIndices(name)?.forEach { index ->
             params.setPeriode(index, periode)
         }
     }
 
-    fun setLocalDate(name: String, localDate: LocalDate?) {
+    public fun setLocalDate(name: String, localDate: LocalDate?) {
         queryparser.getIndices(name)?.forEach { index ->
             params.setLocalDate(index, localDate)
         }
     }
 
-    fun setLocalDateTime(name: String, localDateTime: LocalDateTime?) {
+    public fun setLocalDateTime(name: String, localDateTime: LocalDateTime?) {
         queryparser.getIndices(name)?.forEach { index ->
             params.setLocalDateTime(index, localDateTime)
         }
     }
 
-    fun setProperties(name: String, properties: Properties?) {
+    public fun setProperties(name: String, properties: Properties?) {
         queryparser.getIndices(name)?.forEach { index ->
             params.setProperties(index, properties)
         }

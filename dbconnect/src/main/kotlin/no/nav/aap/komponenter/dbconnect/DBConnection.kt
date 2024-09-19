@@ -7,7 +7,9 @@ import java.sql.Statement
 
 private const val QUERY_TIMEOUT_IN_SECONDS = 30
 
-public class DBConnection internal constructor(private val connection: Connection) {
+public class DBConnection internal constructor(
+    private val connection: Connection
+) {
     private var savepoint: Savepoint? = null
 
     public fun execute(

@@ -2,7 +2,7 @@ package no.nav.aap.komponenter.dbconnect
 
 import java.sql.PreparedStatement
 
-class Query<T> internal constructor(
+public class Query<T> internal constructor(
     private val preparedStatement: PreparedStatement,
     private val queryparser: Queryparser
 ) {
@@ -15,29 +15,29 @@ class Query<T> internal constructor(
         paramsSet = true
     }
 
-    fun setParams(block: Params.() -> Unit) {
+    public fun setParams(block: Params.() -> Unit) {
         assertParams()
         require(queryparser.isIndexed())
         Params(preparedStatement).block()
     }
 
-    fun setParamsAutoIndex(block: ParamsAutoIndex.() -> Unit) {
+    public fun setParamsAutoIndex(block: ParamsAutoIndex.() -> Unit) {
         assertParams()
         require(queryparser.isIndexed())
         ParamsAutoIndex(preparedStatement).block()
     }
 
-    fun setNamedParams(block: NamedParams.() -> Unit) {
+    public fun setNamedParams(block: NamedParams.() -> Unit) {
         assertParams()
         require(queryparser.isNamed())
         NamedParams(preparedStatement, queryparser).block()
     }
 
-    fun setRowMapper(block: (Row) -> T) {
+    public fun setRowMapper(block: (Row) -> T) {
         rowMapper = block
     }
 
-    fun setQueryTimeout(sekunder: Int) {
+    public fun setQueryTimeout(sekunder: Int) {
         validering(sekunder)
         queryTimeout = sekunder
     }

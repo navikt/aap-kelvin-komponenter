@@ -4,21 +4,24 @@ import java.time.LocalDate
 import java.time.Period
 import java.util.*
 
-class Periode(val fom: LocalDate, val tom: LocalDate) : Comparable<Periode> {
+public class Periode(
+    public val fom: LocalDate,
+    public val tom: LocalDate
+) : Comparable<Periode> {
 
     init {
         require(fom <= tom) { "tom($tom) er før fom($fom)" }
     }
 
-    fun overlapper(other: Periode): Boolean {
+    public fun overlapper(other: Periode): Boolean {
         return this.fom <= other.tom && other.fom <= this.tom
     }
 
-    fun inneholder(dato: LocalDate): Boolean {
+    public fun inneholder(dato: LocalDate): Boolean {
         return dato in fom..tom
     }
 
-    fun antallDager(): Int {
+    public fun antallDager(): Int {
         return Period.between(fom, tom.plusDays(1)).days
     }
 
@@ -52,21 +55,21 @@ class Periode(val fom: LocalDate, val tom: LocalDate) : Comparable<Periode> {
         return "Periode(fom=$fom, tom=$tom)"
     }
 
-    fun jsonValue(): String {
+    public fun jsonValue(): String {
         return "$fom/$tom"
     }
 
-    fun overlapp(other: Periode): Periode? {
-        return if (!this.overlapper(other)) {
-            null
-        } else if (this == other) {
-            this
-        } else {
-            Periode(maxOf(fom, other.fom), minOf(tom, other.tom))
+    public fun overlapp(other: Periode): Periode? {
+        if (!this.overlapper(other)) {
+            return null
         }
+        if (this == other) {
+            return this
+        }
+        return Periode(maxOf(fom, other.fom), minOf(tom, other.tom))
     }
 
-    fun minus(other: Periode): NavigableSet<Periode> {
+    public fun minus(other: Periode): NavigableSet<Periode> {
         if (!this.overlapper(other)) {
             return TreeSet(listOf(this))
         }
@@ -80,11 +83,11 @@ class Periode(val fom: LocalDate, val tom: LocalDate) : Comparable<Periode> {
         return resultat
     }
 
-    fun utvid(other: Periode): Periode {
+    public fun utvid(other: Periode): Periode {
         return Periode(minOf(this.fom, other.fom), maxOf(this.tom, other.tom))
     }
 
-    fun inntil(other: Periode): Boolean {
+    public fun inntil(other: Periode): Boolean {
         return this.tom == other.fom.minusDays(1) || other.tom == this.fom.minusDays(1)
     }
 }

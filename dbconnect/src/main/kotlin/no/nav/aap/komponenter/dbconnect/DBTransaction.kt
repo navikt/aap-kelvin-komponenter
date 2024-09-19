@@ -4,9 +4,11 @@ import org.slf4j.LoggerFactory
 import java.sql.Connection
 
 internal class DBTransaction(connection: Connection) {
-    private val dbConnection: DBConnection =
-        DBConnection(connection)
-    private val log = LoggerFactory.getLogger(DBTransaction::class.java)
+    private val dbConnection: DBConnection = DBConnection(connection)
+
+    private companion object {
+        private val log = LoggerFactory.getLogger(DBTransaction::class.java)
+    }
 
     internal fun <T> transaction(block: (DBConnection) -> T): T {
         try {

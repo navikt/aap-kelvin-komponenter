@@ -10,20 +10,22 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.*
 
-class Params(private val preparedStatement: PreparedStatement) {
-    fun setBytes(index: Int, bytes: ByteArray?) {
+public class Params internal constructor(
+    private val preparedStatement: PreparedStatement
+) {
+    public fun setBytes(index: Int, bytes: ByteArray?) {
         preparedStatement.setBytes(index, bytes)
     }
 
-    fun setString(index: Int, value: String?) {
+    public fun setString(index: Int, value: String?) {
         preparedStatement.setString(index, value)
     }
 
-    fun setEnumName(index: Int, value: Enum<*>?) {
+    public fun setEnumName(index: Int, value: Enum<*>?) {
         preparedStatement.setString(index, value?.name)
     }
 
-    fun setInt(index: Int, value: Int?) {
+    public fun setInt(index: Int, value: Int?) {
         if (value == null) {
             preparedStatement.setNull(index, Types.SMALLINT)
         } else {
@@ -31,7 +33,7 @@ class Params(private val preparedStatement: PreparedStatement) {
         }
     }
 
-    fun setLong(index: Int, value: Long?) {
+    public fun setLong(index: Int, value: Long?) {
         if (value == null) {
             preparedStatement.setNull(index, Types.NUMERIC)
         } else {
@@ -39,7 +41,7 @@ class Params(private val preparedStatement: PreparedStatement) {
         }
     }
 
-    fun setDouble(index: Int, value: Double?) {
+    public fun setDouble(index: Int, value: Double?) {
         if (value == null) {
             preparedStatement.setNull(index, Types.DOUBLE)
         } else {
@@ -47,7 +49,7 @@ class Params(private val preparedStatement: PreparedStatement) {
         }
     }
 
-    fun setBigDecimal(index: Int, value: BigDecimal?) {
+    public fun setBigDecimal(index: Int, value: BigDecimal?) {
         if (value == null) {
             preparedStatement.setNull(index, Types.NUMERIC)
         } else {
@@ -55,11 +57,11 @@ class Params(private val preparedStatement: PreparedStatement) {
         }
     }
 
-    fun setUUID(index: Int, uuid: UUID?) {
+    public fun setUUID(index: Int, uuid: UUID?) {
         preparedStatement.setObject(index, uuid)
     }
 
-    fun setBoolean(index: Int, value: Boolean?) {
+    public fun setBoolean(index: Int, value: Boolean?) {
         if (value == null) {
             preparedStatement.setNull(index, Types.BOOLEAN)
         } else {
@@ -67,19 +69,19 @@ class Params(private val preparedStatement: PreparedStatement) {
         }
     }
 
-    fun setPeriode(index: Int, periode: Periode?) {
+    public fun setPeriode(index: Int, periode: Periode?) {
         preparedStatement.setString(index, periode?.let(DaterangeParser::toSQL))
     }
 
-    fun setLocalDate(index: Int, localDate: LocalDate?) {
+    public fun setLocalDate(index: Int, localDate: LocalDate?) {
         preparedStatement.setDate(index, localDate?.let(Date::valueOf))
     }
 
-    fun setLocalDateTime(index: Int, localDateTime: LocalDateTime?) {
+    public fun setLocalDateTime(index: Int, localDateTime: LocalDateTime?) {
         preparedStatement.setTimestamp(index, localDateTime?.let(Timestamp::valueOf))
     }
 
-    fun setProperties(index: Int, properties: Properties?) {
+    public fun setProperties(index: Int, properties: Properties?) {
         preparedStatement.setString(index, PropertiesParser.toSql(properties))
     }
 }

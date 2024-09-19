@@ -1,4 +1,5 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import org.jetbrains.kotlin.gradle.dsl.ExplicitApiMode
 
 plugins {
     kotlin("jvm") version "2.0.20"
@@ -21,6 +22,7 @@ subprojects {
     apply(plugin = "maven-publish")
     apply(plugin = "java-library")
     kotlin {
+        explicitApi = ExplicitApiMode.Warning
         compilerOptions {
             apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_0)
         }
