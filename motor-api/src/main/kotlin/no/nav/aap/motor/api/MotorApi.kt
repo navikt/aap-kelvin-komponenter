@@ -11,7 +11,7 @@ import no.nav.aap.motor.mdc.JobbLogInfoProviderHolder
 import no.nav.aap.motor.retry.DriftJobbRepositoryExposed
 import javax.sql.DataSource
 
-fun NormalOpenAPIRoute.motorApi(dataSource: DataSource) {
+public fun NormalOpenAPIRoute.motorApi(dataSource: DataSource) {
     route("/drift/api/jobb") {
         route("/feilende") {
             get<Unit, List<JobbInfoDto>> { _ ->

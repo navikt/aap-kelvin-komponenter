@@ -6,8 +6,8 @@ import org.flywaydb.core.Flyway
 import org.testcontainers.containers.PostgreSQLContainer
 import javax.sql.DataSource
 
-object InitTestDatabase {
-    val dataSource: DataSource
+public object InitTestDatabase {
+    public val dataSource: DataSource
 
     init {
         // Postgres 15 korresponderer til versjon i nais.yaml

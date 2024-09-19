@@ -40,6 +40,8 @@ public fun Application.commonKtorModule(
     }
     install(CallLogging) {
         callIdMdc("callId")
+        // For å unngå rare tegn i loggene
+        disableDefaultColors()
         filter { call -> call.request.path().startsWith("/actuator").not() }
     }
     install(CallId) {

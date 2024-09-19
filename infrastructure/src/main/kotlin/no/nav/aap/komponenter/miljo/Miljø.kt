@@ -4,8 +4,8 @@ import no.nav.aap.komponenter.config.configForKey
 
 internal val ENV_VAR_NAME = "NAIS_CLUSTER_NAME"
 
-object Miljø {
-    fun er(): MiljøKode {
+public object Miljø {
+    public fun er(): MiljøKode {
         val cluster = configForKey(ENV_VAR_NAME)
         if (cluster == "LOCAL") {
             return MiljøKode.LOKALT

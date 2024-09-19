@@ -1,6 +1,6 @@
 package no.nav.aap.komponenter.config
 
-fun requiredConfigForKey(key: String): String {
+public fun requiredConfigForKey(key: String): String {
     val property = configForKey(key)
     if (property != null) {
         return property
@@ -8,7 +8,7 @@ fun requiredConfigForKey(key: String): String {
     throw IllegalStateException("Mangler påkrevd config verdi $key")
 }
 
-fun configForKey(key: String): String? {
+public fun configForKey(key: String): String? {
     var property = System.getProperty(key)
     if (property != null) {
         return property
