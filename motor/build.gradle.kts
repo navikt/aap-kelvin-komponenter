@@ -5,7 +5,7 @@ dependencies {
     testImplementation(project(":dbtest"))
 
     testImplementation("io.micrometer:micrometer-registry-prometheus:1.13.4")
-    testImplementation("ch.qos.logback:logback-classic:1.5.7")
+    testImplementation("ch.qos.logback:logback-classic:1.5.8")
     testImplementation("net.logstash.logback:logstash-logback-encoder:8.0")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.11.0")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.11.0")
