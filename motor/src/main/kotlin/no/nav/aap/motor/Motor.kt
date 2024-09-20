@@ -143,7 +143,7 @@ public class Motor(
             connection: DBConnection,
             jobbInput: JobbInput
         ) {
-            MDC.put("jobbid", "" + jobbInput.id)
+            MDC.put("jobbid", jobbInput.id?.toString())
             MDC.put("jobbType", jobbInput.type())
             MDC.put("sakId", jobbInput.sakIdOrNull().toString())
             MDC.put("behandlingId", jobbInput.behandlingIdOrNull().toString())

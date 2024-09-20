@@ -1,15 +1,14 @@
 package no.nav.aap.motor.mdc
 
-public object JobbLogInfoProviderHolder {
+internal object JobbLogInfoProviderHolder {
 
     private var infoProvider: JobbLogInfoProvider = NoExtraLogInfoProvider
 
-    public fun set(provider: JobbLogInfoProvider) {
+    fun set(provider: JobbLogInfoProvider) {
         infoProvider = provider
     }
 
-
-    public fun get(): JobbLogInfoProvider {
+    fun get(): JobbLogInfoProvider {
         return infoProvider
     }
 }
