@@ -344,4 +344,31 @@ internal class ParamsOgRowTest {
             }
         }
     }
+
+    @Test
+    fun `Skriver og leser med listeparametre`() {
+        InitTestDatabase.dataSource.transaction { connection ->
+            connection.executeBatch(
+                """
+                    INSERT INTO TEST_ARRAY_QUERY (TEST)
+                    VALUES (?)
+                """,
+                listOf("1", "2", "3", "4")
+            ) {
+                setParams { string ->
+                    setString(1, string)
+                }
+            }
+            val strings = connection.queryList("SELECT * FROM TEST_ARRAY_QUERY WHERE TEST = ANY(?::text[])") {
+                setParams {
+                    setArray(1, listOf("2", "3"))
+                }
+                setRowMapper { row ->
+                    row.getString("TEST")
+                }
+            }
+            assertThat(strings).hasSize(2)
+                .containsExactly("2", "3")
+        }
+    }
 }

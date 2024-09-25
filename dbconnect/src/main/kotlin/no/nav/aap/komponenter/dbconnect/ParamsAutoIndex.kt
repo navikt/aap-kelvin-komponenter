@@ -2,15 +2,17 @@ package no.nav.aap.komponenter.dbconnect
 
 import no.nav.aap.komponenter.type.Periode
 import java.math.BigDecimal
+import java.sql.Connection
 import java.sql.PreparedStatement
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.*
 
 public class ParamsAutoIndex internal constructor(
-    preparedStatement: PreparedStatement
+    preparedStatement: PreparedStatement,
+    connection: Connection
 ) {
-    private val params = Params(preparedStatement)
+    private val params = Params(preparedStatement, connection)
     private var index = 1
     private fun nextIndex(): Int {
         return index++

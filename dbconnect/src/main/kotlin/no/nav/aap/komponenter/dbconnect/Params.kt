@@ -2,6 +2,7 @@ package no.nav.aap.komponenter.dbconnect
 
 import no.nav.aap.komponenter.type.Periode
 import java.math.BigDecimal
+import java.sql.Connection
 import java.sql.Date
 import java.sql.PreparedStatement
 import java.sql.Timestamp
@@ -11,7 +12,8 @@ import java.time.LocalDateTime
 import java.util.*
 
 public class Params internal constructor(
-    private val preparedStatement: PreparedStatement
+    private val preparedStatement: PreparedStatement,
+    private val connection: Connection
 ) {
     public fun setBytes(index: Int, bytes: ByteArray?) {
         preparedStatement.setBytes(index, bytes)
@@ -83,5 +85,14 @@ public class Params internal constructor(
 
     public fun setProperties(index: Int, properties: Properties?) {
         preparedStatement.setString(index, PropertiesParser.toSql(properties))
+    }
+
+    /**
+     * Bruk følgende syntaks i queryen
+     * eks: WHERE TEST = ANY(?::text[])
+     * */
+    public fun setArray(index: Int, strings: List<String>) {
+        val array = connection.createArrayOf("VARCHAR", strings.toTypedArray())
+        preparedStatement.setArray(index, array)
     }
 }

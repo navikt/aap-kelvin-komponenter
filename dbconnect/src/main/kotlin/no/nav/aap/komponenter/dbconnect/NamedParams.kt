@@ -2,6 +2,7 @@ package no.nav.aap.komponenter.dbconnect
 
 import no.nav.aap.komponenter.type.Periode
 import java.math.BigDecimal
+import java.sql.Connection
 import java.sql.PreparedStatement
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -9,9 +10,10 @@ import java.util.*
 
 public class NamedParams internal constructor(
     preparedStatement: PreparedStatement,
+    connection: Connection,
     private val queryparser: Queryparser
 ) {
-    private val params = Params(preparedStatement)
+    private val params = Params(preparedStatement, connection)
 
     public fun setBytes(name: String, bytes: ByteArray?) {
         queryparser.getIndices(name)?.forEach { index ->

@@ -1,9 +1,11 @@
 package no.nav.aap.komponenter.dbconnect
 
+import java.sql.Connection
 import java.sql.PreparedStatement
 
 public class Query<T> internal constructor(
     private val preparedStatement: PreparedStatement,
+    private val connection: Connection,
     private val queryparser: Queryparser
 ) {
     private lateinit var rowMapper: (Row) -> T
@@ -18,19 +20,19 @@ public class Query<T> internal constructor(
     public fun setParams(block: Params.() -> Unit) {
         assertParams()
         require(queryparser.isIndexed())
-        Params(preparedStatement).block()
+        Params(preparedStatement, connection).block()
     }
 
     public fun setParamsAutoIndex(block: ParamsAutoIndex.() -> Unit) {
         assertParams()
         require(queryparser.isIndexed())
-        ParamsAutoIndex(preparedStatement).block()
+        ParamsAutoIndex(preparedStatement, connection).block()
     }
 
     public fun setNamedParams(block: NamedParams.() -> Unit) {
         assertParams()
         require(queryparser.isNamed())
-        NamedParams(preparedStatement, queryparser).block()
+        NamedParams(preparedStatement, connection, queryparser).block()
     }
 
     public fun setRowMapper(block: (Row) -> T) {

@@ -19,7 +19,7 @@ public class DBConnection internal constructor(
     ) {
         return this.connection.prepareStatement(query).use { preparedStatement ->
             preparedStatement.queryTimeout = QUERY_TIMEOUT_IN_SECONDS
-            val executeStatement = Execute(preparedStatement)
+            val executeStatement = Execute(preparedStatement, this.connection)
             executeStatement.block()
             executeStatement.execute()
         }
@@ -37,7 +37,7 @@ public class DBConnection internal constructor(
         elements.chunked(8000).forEach { subelement ->
             this.connection.prepareStatement(query).use { preparedStatement ->
                 preparedStatement.queryTimeout = QUERY_TIMEOUT_IN_SECONDS
-                val executeStatement = ExecuteBatch(preparedStatement, subelement)
+                val executeStatement = ExecuteBatch(preparedStatement, this.connection, subelement)
                 executeStatement.block()
                 executeStatement.execute()
             }
@@ -71,7 +71,7 @@ public class DBConnection internal constructor(
     ): Long {
         return this.connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS).use { preparedStatement ->
             preparedStatement.queryTimeout = QUERY_TIMEOUT_IN_SECONDS
-            val executeStatement = Execute(preparedStatement)
+            val executeStatement = Execute(preparedStatement, this.connection)
             executeStatement.block()
             return@use executeStatement.executeReturnKey()
         }
@@ -84,7 +84,7 @@ public class DBConnection internal constructor(
     ): List<Long> {
         return this.connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS).use { preparedStatement ->
             preparedStatement.queryTimeout = QUERY_TIMEOUT_IN_SECONDS
-            val executeStatement = Execute(preparedStatement)
+            val executeStatement = Execute(preparedStatement, this.connection)
             executeStatement.block()
             return@use executeStatement.executeReturnKeys()
         }
@@ -139,7 +139,7 @@ public class DBConnection internal constructor(
         val queryparser = Queryparser(query)
         return this.connection.prepareStatement(queryparser.getPreparedQuery()).use { preparedStatement ->
             preparedStatement.queryTimeout = QUERY_TIMEOUT_IN_SECONDS
-            val queryStatement = Query<T>(preparedStatement, queryparser)
+            val queryStatement = Query<T>(preparedStatement, this.connection, queryparser)
             queryStatement.block()
             val result = queryStatement.executeQuery()
             return@use result.extractor()
