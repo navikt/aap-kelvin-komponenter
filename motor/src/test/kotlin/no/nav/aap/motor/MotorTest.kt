@@ -8,6 +8,7 @@ import no.nav.aap.motor.mdc.NoExtraLogInfoProvider
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
 import org.slf4j.LoggerFactory
 import java.time.LocalDateTime
 import java.util.*
@@ -52,6 +53,8 @@ class MotorTest {
         motor.stop()
     }
 
+    // Har timeout her for å feile om ting begynner å ta tid
+    @Timeout(value = 10, unit = java.util.concurrent.TimeUnit.SECONDS)
     @Test
     fun `naiv last-test for motor`() {
         val motor = Motor(
