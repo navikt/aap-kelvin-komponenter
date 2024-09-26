@@ -38,6 +38,7 @@ public class Motor(
     )
     private val watchdogExecutor = Executors.newScheduledThreadPool(1)
 
+    @Volatile
     private var stopped = false
     private var started = false
     private val workers = HashMap<Int, Future<*>>()
