@@ -8,6 +8,7 @@ import javax.sql.DataSource
 
 public object InitTestDatabase {
     public val dataSource: DataSource
+    private var flyway: Flyway
 
     init {
         // Postgres 15 korresponderer til versjon i nais.yaml
@@ -28,7 +29,7 @@ public object InitTestDatabase {
             connectionTestQuery = "SELECT 1"
         })
 
-        Flyway
+        flyway = Flyway
             .configure()
             .cleanDisabled(false)
             .cleanOnValidationError(true)
@@ -36,6 +37,14 @@ public object InitTestDatabase {
             .locations("flyway")
             .validateMigrationNaming(true)
             .load()
-            .migrate()
+        migrate()
+    }
+
+    public fun migrate() {
+        flyway.migrate()
+    }
+
+    public fun clean() {
+        flyway.clean()
     }
 }
