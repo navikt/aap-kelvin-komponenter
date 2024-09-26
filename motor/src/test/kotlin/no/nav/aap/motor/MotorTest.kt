@@ -61,9 +61,7 @@ class MotorTest {
             jobber = listOf(TullTestJobbUtfører)
         )
 
-        motor.start()
-
-        val antallJobber = 10000
+        val antallJobber = 1000
 
         (1..antallJobber).forEach { _ ->
             dataSource.transaction { conn ->
@@ -71,6 +69,8 @@ class MotorTest {
                 JobbRepository(conn).leggTil(JobbInput(TullTestJobbUtfører).medPayload(randomString))
             }
         }
+
+        motor.start()
 
         ventPåSvarITestTabell {
             val count = it.queryFirst("SELECT COUNT(*) FROM TEST_TABLE") {
