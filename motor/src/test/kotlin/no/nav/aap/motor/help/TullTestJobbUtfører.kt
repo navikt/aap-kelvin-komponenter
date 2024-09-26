@@ -17,7 +17,7 @@ class TullTestJobbUtfører(private val connection: DBConnection) : JobbUtfører 
                 setString(1, input.payload)
             }
         };
-        logger.info("Wrote into table.")
+        logger.info("Wrote ${input.payload} into table.")
     }
 
     companion object : Jobb {
