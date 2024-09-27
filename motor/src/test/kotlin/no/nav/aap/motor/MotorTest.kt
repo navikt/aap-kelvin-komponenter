@@ -66,8 +66,8 @@ class MotorTest {
 
         val antallJobber = 1000
 
-        (1..antallJobber).forEach { _ ->
-            dataSource.transaction { conn ->
+        dataSource.transaction { conn ->
+            (1..antallJobber).forEach { _ ->
                 val randomString = UUID.randomUUID().toString()
                 JobbRepository(conn).leggTil(JobbInput(TullTestJobbUtfører).medPayload(randomString))
             }
