@@ -5,8 +5,7 @@ import java.sql.PreparedStatement
 
 public class Query<T> internal constructor(
     private val preparedStatement: PreparedStatement,
-    private val connection: Connection,
-    private val queryparser: Queryparser
+    private val connection: Connection
 ) {
     private lateinit var rowMapper: (Row) -> T
     private var queryTimeout = 30
@@ -19,20 +18,7 @@ public class Query<T> internal constructor(
 
     public fun setParams(block: Params.() -> Unit) {
         assertParams()
-        require(queryparser.isIndexed())
         Params(preparedStatement, connection).block()
-    }
-
-    public fun setParamsAutoIndex(block: ParamsAutoIndex.() -> Unit) {
-        assertParams()
-        require(queryparser.isIndexed())
-        ParamsAutoIndex(preparedStatement, connection).block()
-    }
-
-    public fun setNamedParams(block: NamedParams.() -> Unit) {
-        assertParams()
-        require(queryparser.isNamed())
-        NamedParams(preparedStatement, connection, queryparser).block()
     }
 
     public fun setRowMapper(block: (Row) -> T) {
