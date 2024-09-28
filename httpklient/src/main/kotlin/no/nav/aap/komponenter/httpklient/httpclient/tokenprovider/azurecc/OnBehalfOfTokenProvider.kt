@@ -29,6 +29,10 @@ public object OnBehalfOfTokenProvider : TokenProvider {
         if (currentToken == null) {
             throw IllegalArgumentException("Kan ikke be om OBO-token uten å ha et token å be om det for")
         }
+        // Ved clientcredentials inn skal vi ikke veksle om til on-behalf-of token, men heller kalle videre som system
+        if (currentToken.isClientCredentials()) {
+            return ClientCredentialsTokenProvider.getToken(scope, currentToken)
+        }
 
         val postRequest = PostRequest(
             body = formPost(scope, currentToken),
