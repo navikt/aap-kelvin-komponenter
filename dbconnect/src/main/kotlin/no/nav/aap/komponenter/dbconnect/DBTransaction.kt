@@ -10,8 +10,11 @@ internal class DBTransaction(connection: Connection) {
         private val log = LoggerFactory.getLogger(DBTransaction::class.java)
     }
 
-    internal fun <T> transaction(block: (DBConnection) -> T): T {
+    internal fun <T> transaction(internal: Boolean, block: (DBConnection) -> T): T {
         try {
+            if (!internal) {
+                ConnectionProvider.setConnection(dbConnection)
+            }
             dbConnection.autoCommitOff()
             val result = block(dbConnection)
             dbConnection.commit()
@@ -22,6 +25,9 @@ internal class DBTransaction(connection: Connection) {
             throw e
         } finally {
             dbConnection.autoCommitOn()
+            if (!internal) {
+                ConnectionProvider.clearConnection()
+            }
         }
     }
 }

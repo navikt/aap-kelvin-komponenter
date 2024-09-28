@@ -1,11 +1,12 @@
 package no.nav.aap.motor
 
+import no.nav.aap.komponenter.dbconnect.ConnectionProvider
 import no.nav.aap.komponenter.dbconnect.DBConnection
 import no.nav.aap.komponenter.dbconnect.Row
 import org.slf4j.LoggerFactory
 import java.time.LocalDateTime
 
-internal class JobbRepository(private val connection: DBConnection) {
+internal class JobbRepository(private val connection: DBConnection = ConnectionProvider.activeConnection()) {
     private val log = LoggerFactory.getLogger(JobbRepository::class.java)
 
     fun leggTil(jobbInput: JobbInput) {

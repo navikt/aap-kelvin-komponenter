@@ -21,6 +21,7 @@ public object InitTestDatabase {
             this.jdbcUrl = jdbcUrl
             this.username = username
             this.password = password
+            maximumPoolSize = 25
             minimumIdle = 1
             initializationFailTimeout = 30000
             idleTimeout = 10000

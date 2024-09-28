@@ -83,7 +83,7 @@ public class Motor(
                 log.debug("Starter plukking av jobber")
                 try {
                     while (plukker && !stopped) {
-                        dataSource.transaction { connection ->
+                        dataSource.transaction(internal = true) { connection ->
                             val repository = JobbRepository(connection)
                             val plukketJobb = repository.plukkJobb()
                             if (plukketJobb != null) {
@@ -117,7 +117,7 @@ public class Motor(
 
                     log.info("Fullført jobb :: {}", jobbInput.toString())
                     if (jobbInput.erScheduledOppgave()) {
-                        JobbRepository(nyConnection).leggTil(
+                        JobbRepository().leggTil(
                             jobbInput.medNesteKjøring(
                                 jobbInput.cron()!!.nextLocalDateTimeAfter(
                                     LocalDateTime.now()
