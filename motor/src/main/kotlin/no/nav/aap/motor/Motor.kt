@@ -5,6 +5,8 @@ import no.nav.aap.komponenter.dbconnect.transaction
 import no.nav.aap.motor.mdc.JobbLogInfoProvider
 import no.nav.aap.motor.mdc.JobbLogInfoProviderHolder
 import no.nav.aap.motor.mdc.NoExtraLogInfoProvider
+import no.nav.aap.motor.trace.JobbInfoSpanBuilder
+import no.nav.aap.motor.trace.OpentelemetryUtil
 import org.slf4j.LoggerFactory
 import org.slf4j.MDC
 import java.time.LocalDateTime
@@ -87,7 +89,12 @@ public class Motor(
                             val repository = JobbRepository(connection)
                             val plukketJobb = repository.plukkJobb()
                             if (plukketJobb != null) {
-                                utfør(plukketJobb, connection)
+                                OpentelemetryUtil.span(
+                                    "jobb + ${plukketJobb.type()}",
+                                    JobbInfoSpanBuilder.jobbAttributter(plukketJobb)
+                                ) {
+                                    utfør(plukketJobb, connection)
+                                }
                             }
 
                             if (plukker && plukketJobb == null) {
