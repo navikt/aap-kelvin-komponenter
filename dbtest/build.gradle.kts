@@ -3,5 +3,5 @@ dependencies {
     implementation("org.flywaydb:flyway-database-postgresql:10.18.1")
     runtimeOnly("org.postgresql:postgresql:42.7.4")
 
-    implementation("org.testcontainers:postgresql:1.20.1")
+    implementation("org.testcontainers:postgresql:1.20.2")
 }
