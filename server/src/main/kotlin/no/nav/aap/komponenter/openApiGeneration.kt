@@ -2,6 +2,7 @@ package no.nav.aap.behandlingsflyt
 
 import com.papsign.ktor.openapigen.OpenAPIGen
 import com.papsign.ktor.openapigen.model.Described
+import com.papsign.ktor.openapigen.model.info.ContactModel
 import com.papsign.ktor.openapigen.model.security.HttpSecurityScheme
 import com.papsign.ktor.openapigen.model.security.SecuritySchemeModel
 import com.papsign.ktor.openapigen.model.security.SecuritySchemeType
@@ -41,7 +42,11 @@ internal class JwtProvider : AuthProvider<JWTPrincipal> {
     }
 }
 
-internal fun Application.generateOpenAPI(swaggerTitle: String) {
+internal fun Application.generateOpenAPI(
+    swaggerTitle: String,
+    swaggerDescription: String? = null,
+    swaggerContact: ContactModel? = null
+) {
     install(OpenAPIGen) {
         // this serves OpenAPI definition on /openapi.json
         serveOpenApiJson = true
@@ -49,6 +54,9 @@ internal fun Application.generateOpenAPI(swaggerTitle: String) {
         serveSwaggerUi = true
         info {
             title = swaggerTitle
+            version = "1.0.0"
+            description = swaggerDescription
+            contact = swaggerContact
         }
         addModules(JwtProvider())
     }
