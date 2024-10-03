@@ -1,4 +1,4 @@
-package no.nav.aap.komponenter
+package no.nav.aap.komponenter.server
 
 import com.papsign.ktor.openapigen.model.info.InfoModel
 import io.ktor.http.*

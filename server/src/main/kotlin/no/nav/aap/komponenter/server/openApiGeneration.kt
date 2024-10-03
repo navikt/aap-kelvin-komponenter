@@ -1,4 +1,4 @@
-package no.nav.aap.behandlingsflyt
+package no.nav.aap.komponenter.server
 
 import com.papsign.ktor.openapigen.OpenAPIGen
 import com.papsign.ktor.openapigen.model.Described

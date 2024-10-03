@@ -1,4 +1,4 @@
-AAP Kelvin Komponenter
+# AAP Kelvin Komponenter
 
 Felles-bibliotek for apper for AAP.
 
@@ -6,11 +6,17 @@ Felles-bibliotek for apper for AAP.
 
 For oppdatert oppskrift for å kjøre koden, se stegene i Github Actions.
 
+## Bygge dokumentasjon
+
+```
+./gradlew dokkaHtmlMultiModule
+```
+
+Åpne `index.html` i `build/dokka/htmlMultiModule`.
+
 # Henvendelser
 
-Enten:
 Spørsmål knyttet til koden eller prosjektet kan stilles som issues her på GitHub
-
 
 ## For NAV-ansatte
 

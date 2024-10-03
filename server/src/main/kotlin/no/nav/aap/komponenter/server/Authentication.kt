@@ -1,4 +1,4 @@
-package no.nav.aap.komponenter
+package no.nav.aap.komponenter.server
 
 import com.auth0.jwk.JwkProvider
 import com.auth0.jwk.JwkProviderBuilder
