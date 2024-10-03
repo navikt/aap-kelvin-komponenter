@@ -4,6 +4,7 @@ import org.jetbrains.kotlin.gradle.dsl.ExplicitApiMode
 plugins {
     kotlin("jvm") version "2.0.20"
     id("io.ktor.plugin") version "2.3.12" apply false
+    id("org.jetbrains.dokka") version "1.9.20"
     `maven-publish`
     `java-library`
 }
@@ -21,6 +22,8 @@ subprojects {
     apply(plugin = "org.jetbrains.kotlin.jvm")
     apply(plugin = "maven-publish")
     apply(plugin = "java-library")
+    apply(plugin = "org.jetbrains.dokka")
+
     kotlin {
         explicitApi = ExplicitApiMode.Warning
         compilerOptions {

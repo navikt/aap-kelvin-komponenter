@@ -26,7 +26,7 @@ jobs:
                 with:
                     distribution: 'temurin'
                     java-version: 21
-            -   name: Setup Gradle for a non-wrapper project
+            -   name: Setup Gradle for a wrapper project
                 uses: gradle/actions/setup-gradle@v4
                 with:
                     gradle-version: wrapper
@@ -63,3 +63,27 @@ jobs:
                 run: gradle -Pversion=${{ steps.tag.outputs.version }} publish
                 env:
                     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+            -   name: Genererer docs
+                run: |
+                    gradle dokkaHtmlMultiModule
+
+            -   name: upload-artifact for docs
+                uses: actions/upload-pages-artifact@v3
+                with:
+                    path: './build/dokka/htmlMultiModule'
+
+    deploy-pages:
+        runs-on: ubuntu-latest
+        needs: test
+        permissions:
+            pages: write
+            id-token: write
+        environment:
+            name: github-pages
+            url: ${{ steps.test.outputs.page_url }}
+
+        steps:
+            -   name: Deploy to GitHub Pages
+                id: deployment
+                uses: actions/deploy-pages@v4
