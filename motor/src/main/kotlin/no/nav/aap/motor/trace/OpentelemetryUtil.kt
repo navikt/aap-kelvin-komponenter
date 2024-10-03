@@ -5,7 +5,6 @@ import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.api.trace.SpanKind
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.api.trace.Tracer
-import no.nav.aap.motor.trace.OpentelemetryUtil.RunnableWithException
 import java.lang.Exception
 import java.lang.RuntimeException
 import java.util.function.UnaryOperator
@@ -32,16 +31,18 @@ internal object OpentelemetryUtil {
         }
     }
 
-    fun <E : Exception?> span(navn: String,
-                                     spanBuilderTransformer: UnaryOperator<SpanBuilder>,
-                                     runnable: RunnableWithException<E?>) {
+    fun span(
+        navn: String,
+        spanBuilderTransformer: UnaryOperator<SpanBuilder>,
+        runnable: RunnableWithException
+    ) {
         var spanBuilder: SpanBuilder = TRACER.spanBuilder(navn)
             .setSpanKind(SpanKind.INTERNAL)
         spanBuilder = spanBuilderTransformer.apply(spanBuilder)
         val span = spanBuilder.startSpan()
 
         try {
-            span.makeCurrent().use { unused ->
+            span.makeCurrent().use { _ ->
                 runnable.run()
             }
         } catch (e: Exception) {
@@ -53,7 +54,7 @@ internal object OpentelemetryUtil {
         }
     }
 
-    fun interface RunnableWithException<E : Exception?> {
+    fun interface RunnableWithException {
         fun run()
     }
 }

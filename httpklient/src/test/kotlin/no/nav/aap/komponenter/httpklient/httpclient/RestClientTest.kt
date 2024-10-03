@@ -11,6 +11,7 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.coroutines.runBlocking
 import no.nav.aap.komponenter.httpklient.httpclient.error.DefaultResponseHandler
+import no.nav.aap.komponenter.httpklient.httpclient.error.IkkeFunnetException
 import no.nav.aap.komponenter.httpklient.httpclient.request.ContentType
 import no.nav.aap.komponenter.httpklient.httpclient.request.DeleteRequest
 import no.nav.aap.komponenter.httpklient.httpclient.request.GetRequest
@@ -20,6 +21,7 @@ import no.nav.aap.komponenter.httpklient.httpclient.request.PutRequest
 import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.NoTokenTokenProvider
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import java.io.InputStream
 import java.net.URI
 import java.net.http.HttpHeaders
@@ -28,8 +30,9 @@ class RestClientTest {
 
     data class MyCustomRequest(val id: String)
 
-    val mapper = { body: InputStream, _: HttpHeaders -> body.bufferedReader(Charsets.UTF_8).use { it.readText() } }
-    val server = embeddedServer(Netty, port = 0) {
+    private val mapper =
+        { body: InputStream, _: HttpHeaders -> body.bufferedReader(Charsets.UTF_8).use { it.readText() } }
+    private val server = embeddedServer(Netty, port = 0) {
         install(ContentNegotiation) {
             jackson {
                 registerModule(JavaTimeModule())
@@ -105,6 +108,17 @@ class RestClientTest {
         val response: String? =
             client.delete(URI(url), DeleteRequest(), mapper)
         assertThat(response).isEqualTo("y u delete me?")
+    }
+
+    @Test
+    fun `404 returnerer IkkeFunnetException`() {
+        assertThrows<IkkeFunnetException> {
+            client.get(
+                URI("http://localhost:${server.port()}/dxxcc"),
+                GetRequest(),
+                mapper
+            )
+        }
     }
 
     private fun NettyApplicationEngine.port(): Int =

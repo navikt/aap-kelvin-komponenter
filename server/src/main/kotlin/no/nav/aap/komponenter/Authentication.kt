@@ -1,4 +1,4 @@
-package no.nav.aap.behandlingsflyt.server.authenticate
+package no.nav.aap.komponenter
 
 import com.auth0.jwk.JwkProvider
 import com.auth0.jwk.JwkProviderBuilder

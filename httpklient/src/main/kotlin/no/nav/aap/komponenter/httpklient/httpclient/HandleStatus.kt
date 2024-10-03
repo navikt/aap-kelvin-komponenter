@@ -1,5 +1,6 @@
 package no.nav.aap.komponenter.httpklient.httpclient
 
+import no.nav.aap.komponenter.httpklient.httpclient.error.IkkeFunnetException
 import no.nav.aap.komponenter.httpklient.httpclient.error.ManglerTilgangException
 import no.nav.aap.komponenter.httpklient.httpclient.error.UhåndtertHttpResponsException
 import java.net.HttpURLConnection
@@ -19,6 +20,10 @@ internal fun <E, R> håndterStatus(response: HttpResponse<E>, block: () -> R?): 
 
     if ((status >= HttpURLConnection.HTTP_OK && status < HttpURLConnection.HTTP_MULT_CHOICE)) {
         return block()
+    }
+
+    if (status == HttpURLConnection.HTTP_NOT_FOUND) {
+        throw IkkeFunnetException("$response :: ${response.body()}")
     }
 
     throw UhåndtertHttpResponsException("Uventet HTTP-responskode $response")

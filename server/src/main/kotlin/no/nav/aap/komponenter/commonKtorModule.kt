@@ -12,7 +12,6 @@ import io.ktor.server.request.*
 import io.micrometer.core.instrument.binder.logging.LogbackMetrics
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
 import no.nav.aap.behandlingsflyt.generateOpenAPI
-import no.nav.aap.behandlingsflyt.server.authenticate.authentication
 import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.azurecc.AzureConfig
 import no.nav.aap.komponenter.httpklient.json.DefaultJsonMapper
 import java.util.*
