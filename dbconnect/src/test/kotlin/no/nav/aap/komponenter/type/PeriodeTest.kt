@@ -82,4 +82,19 @@ class PeriodeTest {
         assertThat(periode.inntil(periode4)).isTrue()
         assertThat(periode.inntil(periode5)).isFalse()
     }
+
+    @Test
+    fun `teste antallDager skuddår`() {
+        val periode = Periode(LocalDate.of(2020, 1, 1), LocalDate.of(2021, 1, 1))
+
+        /* 2020 er et skuddår */
+        assertThat(periode.antallDager()).isEqualTo(367)
+    }
+    @Test
+    fun `teste antallDager vanlig år`() {
+        val periode = Periode(LocalDate.of(2021, 1, 1), LocalDate.of(2022, 1, 1))
+
+        /* 2020 er et skuddår */
+        assertThat(periode.antallDager()).isEqualTo(366)
+    }
 }

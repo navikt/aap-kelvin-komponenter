@@ -1,7 +1,7 @@
 package no.nav.aap.komponenter.type
 
 import java.time.LocalDate
-import java.time.Period
+import java.time.temporal.ChronoUnit
 import java.util.*
 
 public class Periode(
@@ -21,8 +21,8 @@ public class Periode(
         return dato in fom..tom
     }
 
-    public fun antallDager(): Int {
-        return Period.between(fom, tom.plusDays(1)).days
+    public fun antallDager(): Long {
+        return fom.until(tom.plusDays(1), ChronoUnit.DAYS)
     }
 
     override fun compareTo(other: Periode): Int {
