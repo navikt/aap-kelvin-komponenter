@@ -21,8 +21,8 @@ public class Periode(
         return dato in fom..tom
     }
 
-    public fun antallDager(): Long {
-        return fom.until(tom.plusDays(1), ChronoUnit.DAYS)
+    public fun antallDager(): Int {
+        return fom.until(tom.plusDays(1), ChronoUnit.DAYS).toInt()
     }
 
     override fun compareTo(other: Periode): Int {
