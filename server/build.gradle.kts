@@ -19,7 +19,7 @@ dependencies {
 
     api("io.ktor:ktor-serialization-jackson:$ktorVersion")
     api("com.fasterxml.jackson.core:jackson-databind:2.17.2")
-    api("no.nav:ktor-openapi-generator:1.0.32")
+    api("no.nav:ktor-openapi-generator:1.0.42")
 
 
     api(project(":httpklient"))
