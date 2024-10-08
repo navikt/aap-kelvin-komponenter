@@ -20,6 +20,9 @@ public class Periode(
     public fun inneholder(dato: LocalDate): Boolean {
         return dato in fom..tom
     }
+    public fun inneholder(periode: Periode): Boolean {
+        return periode.inneholder(periode.fom) && periode.inneholder(periode.tom)
+    }
 
     public fun antallDager(): Int {
         return fom.until(tom.plusDays(1), ChronoUnit.DAYS).toInt()
