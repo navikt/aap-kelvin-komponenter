@@ -9,7 +9,6 @@ include(
     "dbconnect",
     "dbtest",
     "motor",
-    "motor-test-utils",
     "motor-api",
     "httpklient",
     "server"
