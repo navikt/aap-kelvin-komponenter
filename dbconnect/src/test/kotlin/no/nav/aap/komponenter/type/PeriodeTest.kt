@@ -67,7 +67,7 @@ class PeriodeTest {
         assertThat(periode.inneholder(Periode(LocalDate.now().minusDays(4), LocalDate.now().minusDays(3)))).isTrue()
         assertThat(periode.inneholder(Periode(LocalDate.now().minusDays(4), LocalDate.now().minusDays(2)))).isTrue()
         assertThat(periode.inneholder(Periode(LocalDate.now().minusDays(3), LocalDate.now().minusDays(2)))).isTrue()
-        assertThat(periode.inneholder(Periode(LocalDate.now().minusDays(5), LocalDate.now().minusDays(1)))).isFalse()
+        assertThat(periode.inneholder(Periode(LocalDate.now().minusDays(3), LocalDate.now().minusDays(1)))).isFalse()
     }
 
     @Test

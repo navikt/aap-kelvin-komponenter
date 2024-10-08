@@ -21,7 +21,7 @@ public class Periode(
         return dato in fom..tom
     }
     public fun inneholder(periode: Periode): Boolean {
-        return this.inneholder(periode.fom) && periode.inneholder(periode.tom)
+        return this.inneholder(periode.fom) && this.inneholder(periode.tom)
     }
 
     public fun antallDager(): Int {
