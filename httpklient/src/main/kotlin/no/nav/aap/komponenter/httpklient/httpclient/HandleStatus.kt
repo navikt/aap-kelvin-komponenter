@@ -1,6 +1,8 @@
 package no.nav.aap.komponenter.httpklient.httpclient
 
+import no.nav.aap.komponenter.httpklient.httpclient.error.BadRequestHttpResponsException
 import no.nav.aap.komponenter.httpklient.httpclient.error.IkkeFunnetException
+import no.nav.aap.komponenter.httpklient.httpclient.error.InternalServerErrorHttpResponsException
 import no.nav.aap.komponenter.httpklient.httpclient.error.ManglerTilgangException
 import no.nav.aap.komponenter.httpklient.httpclient.error.UhåndtertHttpResponsException
 import java.net.HttpURLConnection
@@ -12,7 +14,10 @@ internal fun <E, R> håndterStatus(response: HttpResponse<E>, block: () -> R?): 
         return null
     }
     if (status == HttpURLConnection.HTTP_BAD_REQUEST) {
-        throw UhåndtertHttpResponsException("$response :: ${response.body()}")
+        throw BadRequestHttpResponsException("$response :: ${response.body()}")
+    }
+    if (status >= HttpURLConnection.HTTP_INTERNAL_ERROR && status < HttpURLConnection.HTTP_GATEWAY_TIMEOUT) {
+        throw InternalServerErrorHttpResponsException("$response :: ${response.body()}")
     }
     if (status == HttpURLConnection.HTTP_FORBIDDEN) {
         throw ManglerTilgangException("$response :: ${response.body()}")
