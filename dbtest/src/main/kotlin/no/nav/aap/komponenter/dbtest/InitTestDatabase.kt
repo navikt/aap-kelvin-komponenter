@@ -12,7 +12,7 @@ public object InitTestDatabase {
 
     init {
         // Postgres 15 korresponderer til versjon i nais.yaml
-        val postgres = PostgreSQLContainer<Nothing>("postgres:16")
+        val postgres = PostgreSQLContainer<_>("postgres:16")
         postgres.start()
         val jdbcUrl = postgres.jdbcUrl
         val username = postgres.username
@@ -27,6 +27,12 @@ public object InitTestDatabase {
             connectionTimeout = 10000
             maxLifetime = 900000
             connectionTestQuery = "SELECT 1"
+
+            /* Postgres i GCP kjører med UTC som timezone. Testcontainers-postgres
+            * vil bruke samme timezone som maskinen den kjører fra (Europe/Oslo). Så
+            * for å kunne teste at implisitte konverteringer mellom database og jvm blir riktig
+            * så settes postgres opp som i gcp. */
+            connectionInitSql = "SET TIMEZONE TO 'UTC'"
         })
 
         flyway = Flyway

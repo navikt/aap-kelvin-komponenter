@@ -3,6 +3,8 @@ package no.nav.aap.komponenter.dbconnect
 import no.nav.aap.komponenter.dbtest.InitTestDatabase
 import no.nav.aap.komponenter.type.Periode
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.data.TemporalUnitWithinOffset
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -10,10 +12,11 @@ import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.Month
+import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 import java.util.*
 
 internal class ParamsOgRowTest {
-
     @BeforeEach
     fun setup() {
         InitTestDatabase.dataSource.transaction { connection ->
@@ -369,6 +372,41 @@ internal class ParamsOgRowTest {
             }
             assertThat(strings).hasSize(2)
                 .containsExactly("2", "3")
+        }
+    }
+
+    @Test
+    fun `CURRENT_TIMESTAMP i postgres (UTC) matcher LocalDateTime now() i pod (Europe Oslo)`() {
+        InitTestDatabase.dataSource.transaction { connection ->
+            val currentTimestamp = connection.queryFirst("""
+                SELECT CURRENT_TIMESTAMP as LOCALDATETIME;
+            """.trimIndent()
+            ) {
+                setRowMapper { row ->
+                    row.getLocalDateTime("LOCALDATETIME")
+                }
+            }
+
+            assertThat(currentTimestamp).isCloseTo(
+                LocalDateTime.now(ZoneId.of("Europe/Oslo")),
+                TemporalUnitWithinOffset(1, ChronoUnit.MINUTES)
+            )
+        }
+    }
+
+    companion object {
+        @JvmStatic
+        @BeforeAll
+        fun beforeAll() {
+            /** [java.sql.Timestamp] bruker default timezone for å konvertere til og fra
+             * [java.time.LocalDateTime]. I pod-ene og på laptopene våre kjører vi med
+             * Europe/Oslo mens github action kjører med UTC.
+             *
+             * Er litt stygt å endre timezone mens programmet kjører. I stede for å sette
+             * timezone her, kan vi sette timezone i Github Actions, man da vil ikke unit-tester
+             * kunne kjøre på en random maskin uten at det konfigureres først.
+             */
+            TimeZone.setDefault(TimeZone.getTimeZone("Europe/Oslo"))
         }
     }
 }
