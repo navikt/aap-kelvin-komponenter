@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.math.BigDecimal
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.Month
@@ -20,7 +21,7 @@ internal class ParamsOgRowTest {
     @BeforeEach
     fun setup() {
         InitTestDatabase.dataSource.transaction { connection ->
-            connection.execute("TRUNCATE TEST_BYTES, TEST_STRING, TEST_ENUM, TEST_INT, TEST_LONG, TEST_BIG_DECIMAL, TEST_UUID, TEST_BOOLEAN, TEST_DATERANGE, TEST_LOCALDATE, TEST_LOCALDATETIME")
+            connection.execute("TRUNCATE TEST_BYTES, TEST_STRING, TEST_ENUM, TEST_INT, TEST_LONG, TEST_BIG_DECIMAL, TEST_UUID, TEST_BOOLEAN, TEST_DATERANGE, TEST_LOCALDATE, TEST_LOCALDATETIME, TEST_INSTANT")
         }
     }
 
@@ -349,6 +350,32 @@ internal class ParamsOgRowTest {
     }
 
     @Test
+    fun `Skriver og leser Instant og null-verdi riktig`() {
+        val instant = Instant.parse("2016-08-12T09:38:12Z")
+        InitTestDatabase.dataSource.transaction { connection ->
+            connection.execute(
+                """
+                    INSERT INTO TEST_INSTANT (TEST, TEST_NULL)
+                    VALUES (?, ?)
+                """.trimMargin()
+            ) {
+                setParams {
+                    setInstant(1, instant)
+                    setInstant(2, null)
+                }
+            }
+            connection.queryFirst("SELECT * FROM TEST_INSTANT") {
+                setRowMapper { row ->
+                    assertThat(row.getInstantOrNull("TEST")).isEqualTo(instant)
+                    assertThat(row.getInstant("TEST")).isEqualTo(instant)
+                    assertThat(row.getInstantOrNull("TEST_NULL")).isNull()
+                    assertThrows<IllegalArgumentException> { row.getInstant("TEST_NULL") }
+                }
+            }
+        }
+    }
+
+    @Test
     fun `Skriver og leser med listeparametre`() {
         InitTestDatabase.dataSource.transaction { connection ->
             connection.executeBatch(
@@ -389,6 +416,25 @@ internal class ParamsOgRowTest {
 
             assertThat(currentTimestamp).isCloseTo(
                 LocalDateTime.now(ZoneId.of("Europe/Oslo")),
+                TemporalUnitWithinOffset(1, ChronoUnit.MINUTES)
+            )
+        }
+    }
+
+    @Test
+    fun `CURRENT_TIMESTAMP i postgres (UTC) matcher Instant now() i pod (Europe Oslo)`() {
+        InitTestDatabase.dataSource.transaction { connection ->
+            val currentTimestamp = connection.queryFirst("""
+                SELECT CURRENT_TIMESTAMP as INSTANT;
+            """.trimIndent()
+            ) {
+                setRowMapper { row ->
+                    row.getInstant("INSTANT")
+                }
+            }
+
+            assertThat(currentTimestamp).isCloseTo(
+                Instant.now(),
                 TemporalUnitWithinOffset(1, ChronoUnit.MINUTES)
             )
         }

@@ -5,6 +5,7 @@ import java.math.BigDecimal
 import java.sql.Date
 import java.sql.ResultSet
 import java.sql.Timestamp
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.*
@@ -180,6 +181,15 @@ public class Row internal constructor(private val resultSet: ResultSet) {
     public fun getLocalDateTimeOrNull(columnLabel: String): LocalDateTime? {
         val timestamp: Timestamp? = resultSet.getTimestamp(columnLabel)
         return timestamp?.toLocalDateTime()
+    }
+
+    public fun getInstantOrNull(columnLabel: String): Instant? {
+        val date: Timestamp? = resultSet.getTimestamp(columnLabel)
+        return date?.toInstant()
+    }
+
+    public fun getInstant(columnLabel: String): Instant {
+        return requireNotNull(getInstantOrNull(columnLabel))
     }
 
     public fun getPropertiesOrNull(columnLabel: String): Properties? {

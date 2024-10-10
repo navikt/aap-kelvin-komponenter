@@ -7,6 +7,7 @@ import java.sql.Date
 import java.sql.PreparedStatement
 import java.sql.Timestamp
 import java.sql.Types
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.*
@@ -81,6 +82,10 @@ public class Params internal constructor(
 
     public fun setLocalDateTime(index: Int, localDateTime: LocalDateTime?) {
         preparedStatement.setTimestamp(index, localDateTime?.let(Timestamp::valueOf))
+    }
+
+    public fun setInstant(index: Int, instant: Instant?) {
+        preparedStatement.setTimestamp(index, instant?.let(Timestamp::from))
     }
 
     public fun setProperties(index: Int, properties: Properties?) {
