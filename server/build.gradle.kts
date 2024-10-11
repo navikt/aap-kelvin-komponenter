@@ -1,6 +1,6 @@
 import org.jetbrains.kotlin.gradle.dsl.ExplicitApiMode
 
-val ktorVersion = "2.3.12"
+val ktorVersion = "3.0.0"
 
 kotlin.explicitApi = ExplicitApiMode.Warning
 
@@ -19,7 +19,7 @@ dependencies {
 
     api("io.ktor:ktor-serialization-jackson:$ktorVersion")
     api("com.fasterxml.jackson.core:jackson-databind:2.18.0")
-    api("no.nav:ktor-openapi-generator:1.0.42")
+    api("no.nav:ktor-openapi-generator:1.0.46")
 
 
     api(project(":httpklient"))

@@ -121,9 +121,10 @@ class RestClientTest {
         }
     }
 
-    private fun NettyApplicationEngine.port(): Int =
-        runBlocking { resolvedConnectors() }
-            .first { it.type == ConnectorType.HTTP }
+    private fun EmbeddedServer<*, *>.port(): Int {
+        return runBlocking {
+            this@port.engine.resolvedConnectors()
+        }.first { it.type == ConnectorType.HTTP }
             .port
-
+    }
 }

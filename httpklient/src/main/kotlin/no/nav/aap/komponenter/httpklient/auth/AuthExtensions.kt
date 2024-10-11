@@ -23,9 +23,9 @@ public fun ApplicationCall.token(): OidcToken {
 }
 
 public fun <TResponse> OpenAPIPipelineResponseContext<TResponse>.token(): OidcToken {
-    return pipeline.context.token()
+    return pipeline.call.token()
 }
 
 public fun <TResponse> OpenAPIPipelineResponseContext<TResponse>.bruker(): Bruker {
-    return pipeline.context.bruker()
+    return pipeline.call.bruker()
 }
