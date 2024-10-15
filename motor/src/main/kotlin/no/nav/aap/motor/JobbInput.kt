@@ -110,6 +110,10 @@ public class JobbInput(internal val jobb: Jobb) {
         return properties.getProperty(key)
     }
 
+    public fun optionalParameter(key: String): String? {
+        return properties.getProperty(key)
+    }
+
     public fun harPayload(): Boolean {
         return payload != null
     }
