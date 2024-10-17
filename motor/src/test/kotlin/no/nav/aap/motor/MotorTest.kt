@@ -53,6 +53,35 @@ class MotorTest {
         motor.stop()
     }
 
+    @Test
+    fun `burde ikke feile om to jobber for samme behandling starter samtidig, men heller legge i kø`() {
+        val motor = Motor(
+            dataSource = dataSource,
+            antallKammer = 2,
+            logInfoProvider = NoExtraLogInfoProvider,
+            jobber = listOf(TullTestJobbUtfører)
+        )
+
+        motor.start()
+
+        val randomString = UUID.randomUUID().toString()
+
+        dataSource.transaction {
+            JobbRepository(it).leggTil(JobbInput(TullTestJobbUtfører).medPayload(randomString).forBehandling(0, 1))
+            JobbRepository(it).leggTil(JobbInput(TullTestJobbUtfører).medPayload(randomString).forBehandling(0, 1))
+        }
+
+        val svare = ventPåSvarITestTabell {
+            it.queryFirstOrNull("SELECT value FROM TEST_TABLE") {
+                setRowMapper { (it.getString("value")) }
+            }
+        }
+
+        assertThat(svare).isEqualTo(randomString)
+
+        motor.stop()
+    }
+
     // Har timeout her for å feile om ting begynner å ta tid
     @Timeout(value = 10, unit = java.util.concurrent.TimeUnit.SECONDS)
     @Test
