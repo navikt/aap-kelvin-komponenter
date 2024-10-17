@@ -3,6 +3,7 @@ package no.nav.aap.motor
 import no.nav.aap.komponenter.dbconnect.DBConnection
 import no.nav.aap.komponenter.dbconnect.transaction
 import no.nav.aap.komponenter.dbtest.InitTestDatabase
+import no.nav.aap.motor.help.RekkefølgeTestJobbUtfører
 import no.nav.aap.motor.help.TullTestJobbUtfører
 import no.nav.aap.motor.mdc.NoExtraLogInfoProvider
 import org.assertj.core.api.Assertions.assertThat
@@ -57,27 +58,45 @@ class MotorTest {
     fun `burde ikke feile om to jobber for samme behandling starter samtidig, men heller legge i kø`() {
         val motor = Motor(
             dataSource = dataSource,
-            antallKammer = 2,
+            antallKammer = 5,
             logInfoProvider = NoExtraLogInfoProvider,
-            jobber = listOf(TullTestJobbUtfører)
+            jobber = listOf(RekkefølgeTestJobbUtfører)
         )
 
-        motor.start()
-
-        val randomString = UUID.randomUUID().toString()
-
-        dataSource.transaction {
-            JobbRepository(it).leggTil(JobbInput(TullTestJobbUtfører).medPayload(randomString).forBehandling(0, 1))
-            JobbRepository(it).leggTil(JobbInput(TullTestJobbUtfører).medPayload(randomString).forBehandling(0, 1))
-        }
-
-        val svare = ventPåSvarITestTabell {
-            it.queryFirstOrNull("SELECT value FROM TEST_TABLE") {
-                setRowMapper { (it.getString("value")) }
+        dataSource.transaction { conn ->
+            (1..100).forEach {
+                JobbRepository(conn).leggTil(
+                    JobbInput(RekkefølgeTestJobbUtfører).medPayload(it.toString()).forBehandling(0, 1)
+                )
             }
         }
 
-        assertThat(svare).isEqualTo(randomString)
+
+        motor.start()
+
+        ventPåMotor(motor)
+
+        val svare = ventPåSvarITestTabell { conn ->
+            val x = conn.queryFirstOrNull("SELECT count(*) FROM ORDER_TABLE") {
+                setRowMapper { (it.getLong("count")) }
+            }
+            if (x == 100L) x else null
+        }
+
+        assertThat(svare).isEqualTo(100L)
+
+        val innsattData = dataSource.transaction {
+            it.queryList("SELECT value, trad_navn, opprettet_tid FROM ORDER_TABLE ORDER BY opprettet_tid") {
+                setRowMapper {
+                    Triple(it.getString("trad_navn"), it.getLocalDateTime("OPPRETTET_TID"), it.getString("value"))
+                }
+            }
+        }
+
+        // Verifiser at vi faktisk kjører på to kjerner
+        assertThat(innsattData.map { it.first }.toSet().size).isGreaterThan(1)
+        assertThat(innsattData.map { it.second }).isSorted()
+        assertThat(innsattData.map { it.third }.map { it.toInt() }).isSorted()
 
         motor.stop()
     }
@@ -132,5 +151,11 @@ class MotorTest {
         }
         logger.info("Waited $timeInMillis millis.")
         return requireNotNull(res)
+    }
+
+    private fun ventPåMotor(motor: Motor) {
+        while (!motor.kjører()) {
+            Thread.sleep(20)
+        }
     }
 }
