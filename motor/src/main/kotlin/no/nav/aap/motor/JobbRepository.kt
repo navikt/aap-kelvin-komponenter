@@ -42,15 +42,15 @@ internal class JobbRepository(private val connection: DBConnection) {
     internal fun plukkJobb(): JobbInput? {
 
         val query = """
-            with rekkefolge as ((select distinct on (sak_id, behandling_id) sak_id, behandling_id, id
+            with rekkefolge as ((select distinct on (sak_id, behandling_id) id
                                  from JOBB
-                                 where (status = '${JobbStatus.FEILET.name}' OR status = '${JobbStatus.KLAR.name}')
+                                 where status IN ('${JobbStatus.FEILET.name}', '${JobbStatus.KLAR.name}')
                                    AND sak_id is not null
                                  ORDER BY sak_id, behandling_id, neste_kjoring ASC)
                                 UNION ALL
-                                (select sak_id, behandling_id, id
+                                (select id
                                  from JOBB
-                                 where status in ('${JobbStatus.FEILET.name}', '${JobbStatus.KLAR.name}')
+                                 where status = '${JobbStatus.KLAR.name}'
                                    AND sak_id IS NULL
                                    AND BEHANDLING_id IS NULL
                                    ORDER BY neste_kjoring ASC))
