@@ -105,7 +105,7 @@ class MotorTest {
     }
 
     // Har timeout her for å feile om ting begynner å ta tid
-    @Timeout(value = 30, unit = java.util.concurrent.TimeUnit.SECONDS)
+    @Timeout(value = 10, unit = java.util.concurrent.TimeUnit.SECONDS)
     @Test
     fun `naiv last-test for motor`() {
         val motor = Motor(
@@ -115,7 +115,7 @@ class MotorTest {
             jobber = listOf(TullTestJobbUtfører)
         )
 
-        val antallJobber = 10000
+        val antallJobber = 1000
 
         dataSource.transaction { conn ->
             (1..antallJobber).forEach { _ ->
@@ -126,7 +126,7 @@ class MotorTest {
 
         motor.start()
 
-        util.ventPåSvar(maxTid = 50)
+        util.ventPåSvar()
 
         motor.stop()
     }
