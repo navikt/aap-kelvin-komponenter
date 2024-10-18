@@ -1,7 +1,6 @@
 package no.nav.aap.motor
 
 import no.nav.aap.komponenter.dbconnect.DBConnection
-import no.nav.aap.komponenter.dbconnect.Row
 import org.slf4j.LoggerFactory
 import java.time.LocalDateTime
 
@@ -40,33 +39,49 @@ internal class JobbRepository(private val connection: DBConnection) {
     }
 
     internal fun plukkJobb(): JobbInput? {
-        val plukketJobb = connection.queryFirstOrNull(
-            """
-            SELECT id, type, status, sak_id, behandling_id, neste_kjoring, parameters, payload, 
-                (SELECT count(1) FROM JOBB_HISTORIKK h WHERE h.jobb_id = o.id AND h.status = '${JobbStatus.FEILET.name}') as antall_feil
+
+        val query = """
+            with rekkefolge as ((select distinct on (sak_id, behandling_id) id
+                                 from JOBB
+                                 where status IN ('${JobbStatus.FEILET.name}', '${JobbStatus.KLAR.name}')
+                                   AND sak_id is not null
+                                 ORDER BY sak_id, behandling_id, neste_kjoring ASC)
+                                UNION ALL
+                                (select id
+                                 from JOBB
+                                 where status = '${JobbStatus.KLAR.name}'
+                                   AND sak_id IS NULL
+                                   AND BEHANDLING_id IS NULL
+                                   ORDER BY neste_kjoring ASC))
+                                   
+            SELECT o.id,
+                   o.type,
+                   o.status,
+                   o.sak_id,
+                   o.behandling_id,
+                   o.neste_kjoring,
+                   o.parameters,
+                   o.payload,
+                   (SELECT count(1)
+                    FROM JOBB_HISTORIKK h
+                    WHERE h.jobb_id = o.id
+                      AND h.status = '${JobbStatus.FEILET.name}') as antall_feil
             FROM JOBB o
-            WHERE status = '${JobbStatus.KLAR.name}'
-              AND neste_kjoring < ?
-              AND NOT EXISTS
-                (
-                SELECT 1
-                 FROM JOBB op
-                 WHERE op.status = '${JobbStatus.FEILET.name}'
-                   AND op.sak_id is not null
-                   AND o.sak_id is not null
-                   AND o.sak_id = op.sak_id
-                   AND (o.behandling_id = op.behandling_id OR op.behandling_id IS NULL OR o.behandling_id IS NULL)
-                )
-            ORDER BY neste_kjoring ASC
-            FOR UPDATE SKIP LOCKED
+                     INNER JOIN rekkefolge r ON r.id = o.id
+            WHERE o.STATUS = '${JobbStatus.KLAR.name}'
+              AND o.neste_kjoring < ?
+            ORDER BY o.neste_kjoring ASC
+                FOR UPDATE SKIP LOCKED
             LIMIT 1
-            """.trimIndent()
-        ) {
+
+        """.trimIndent()
+
+        val plukketJobb = connection.queryFirstOrNull(query) {
             setParams {
                 setLocalDateTime(1, LocalDateTime.now())
             }
             setRowMapper { row ->
-                mapJobb(row)
+                JobbInputParser.mapJobb(row)
             }
         }
 
@@ -87,19 +102,6 @@ internal class JobbRepository(private val connection: DBConnection) {
         }
 
         return plukketJobb
-    }
-
-    private fun mapJobb(row: Row): JobbInput {
-        return JobbInput(JobbType.parse(row.getString("type")))
-            .medId(row.getLong("id"))
-            .medStatus(row.getEnum("status"))
-            .forBehandling(
-                row.getLongOrNull("sak_id"),
-                row.getLongOrNull("behandling_id")
-            )
-            .medAntallFeil(row.getLong("antall_feil"))
-            .medProperties(row.getPropertiesOrNull("parameters"))
-            .medPayload(row.getStringOrNull("payload"))
     }
 
     internal fun markerKjørt(jobbInput: JobbInput) {

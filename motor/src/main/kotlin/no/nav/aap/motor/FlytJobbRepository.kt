@@ -1,19 +1,6 @@
 package no.nav.aap.motor
 
 import no.nav.aap.komponenter.dbconnect.DBConnection
-import no.nav.aap.komponenter.dbconnect.Row
-
-internal fun mapJobb(row: Row): JobbInput {
-    return JobbInput(JobbType.parse(row.getString("type")))
-        .medId(row.getLong("id"))
-        .medStatus(row.getEnum("status"))
-        .forBehandling(
-            row.getLongOrNull("sak_id"),
-            row.getLongOrNull("behandling_id")
-        )
-        .medNesteKjøring(row.getLocalDateTime("neste_kjoring"))
-        .medAntallFeil(row.getLong("antall_feil"))
-}
 
 public class FlytJobbRepository(private val connection: DBConnection) {
     private val jobbRepository = JobbRepository(connection)
@@ -35,7 +22,7 @@ public class FlytJobbRepository(private val connection: DBConnection) {
                 setLong(1, id)
             }
             setRowMapper { row ->
-                mapJobb(row)
+                JobbInputParser.mapJobb(row)
             }
         }
     }

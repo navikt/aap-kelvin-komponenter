@@ -7,16 +7,19 @@ import java.time.LocalDateTime
 import javax.sql.DataSource
 import kotlin.system.measureTimeMillis
 
-public class TestUtil(private val datasource: DataSource) {
+public class TestUtil(private val datasource: DataSource, private val cronTypes: List<String>) {
     private val log = LoggerFactory.getLogger(TestUtil::class.java)
 
     public fun ventPåSvar(sakId: Long? = null, behandlingId: Long? = null, maxTid: Long = 20) {
         val timeInMillis = measureTimeMillis {
             datasource.transaction(readOnly = true) {
                 val maxTid = LocalDateTime.now().plusSeconds(maxTid)
-                val testJobbRepository = TestJobbRepository(it)
-                while ((testJobbRepository.harOppgaver(sakId, behandlingId)) && maxTid.isAfter(LocalDateTime.now())) {
+                val testJobbRepository = TestJobbRepository(it, cronTypes)
+                while ((testJobbRepository.harJobb(sakId, behandlingId)) && maxTid.isAfter(LocalDateTime.now())) {
                     Thread.sleep(50L)
+                }
+                if (maxTid.isAfter(LocalDateTime.now())) {
+                    log.warn("Avbryter venting nå, da $maxTid sekunder har gått.")
                 }
             }
         }
