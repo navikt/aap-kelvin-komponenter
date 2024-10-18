@@ -1,7 +1,6 @@
 package no.nav.aap.motor
 
 import no.nav.aap.komponenter.dbconnect.DBConnection
-import no.nav.aap.komponenter.dbconnect.Row
 import org.slf4j.LoggerFactory
 import java.time.LocalDateTime
 
@@ -82,7 +81,7 @@ internal class JobbRepository(private val connection: DBConnection) {
                 setLocalDateTime(1, LocalDateTime.now())
             }
             setRowMapper { row ->
-                mapJobb(row)
+                JobbInputParser.mapJobb(row)
             }
         }
 
@@ -103,19 +102,6 @@ internal class JobbRepository(private val connection: DBConnection) {
         }
 
         return plukketJobb
-    }
-
-    private fun mapJobb(row: Row): JobbInput {
-        return JobbInput(JobbType.parse(row.getString("type")))
-            .medId(row.getLong("id"))
-            .medStatus(row.getEnum("status"))
-            .forBehandling(
-                row.getLongOrNull("sak_id"),
-                row.getLongOrNull("behandling_id")
-            )
-            .medAntallFeil(row.getLong("antall_feil"))
-            .medProperties(row.getPropertiesOrNull("parameters"))
-            .medPayload(row.getStringOrNull("payload"))
     }
 
     internal fun markerKjørt(jobbInput: JobbInput) {
