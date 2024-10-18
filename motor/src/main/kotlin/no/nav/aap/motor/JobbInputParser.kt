@@ -15,5 +15,6 @@ public object JobbInputParser {
             .medAntallFeil(row.getLong("antall_feil"))
             .medProperties(row.getPropertiesOrNull("parameters"))
             .medPayload(row.getStringOrNull("payload"))
+            .medNesteKjøring(row.getLocalDateTime("neste_kjoring"))
     }
 }
