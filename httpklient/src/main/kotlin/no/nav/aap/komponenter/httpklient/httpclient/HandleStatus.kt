@@ -20,7 +20,12 @@ internal fun <E, R> håndterStatus(response: HttpResponse<E>, block: () -> R?): 
         return block()
     }
 
-    val responseBody = (response.body() as InputStream).bufferedReader().use { it.readText() }
+    val body = response.body()
+    val responseBody = when (body) {
+        is InputStream -> body.bufferedReader().use { it.readText() }
+        is String -> body
+        else -> body
+    }
 
     if (status == HttpURLConnection.HTTP_BAD_REQUEST) {
         throw BadRequestHttpResponsException("$response :: $responseBody")
