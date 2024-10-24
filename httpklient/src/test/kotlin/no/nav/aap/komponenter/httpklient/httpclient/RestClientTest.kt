@@ -1,15 +1,8 @@
 package no.nav.aap.komponenter.httpklient.httpclient
 
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import io.ktor.serialization.jackson.jackson
-import io.ktor.server.application.*
-import io.ktor.server.engine.*
-import io.ktor.server.netty.*
-import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import kotlinx.coroutines.runBlocking
 import no.nav.aap.komponenter.httpklient.httpclient.error.DefaultResponseHandler
 import no.nav.aap.komponenter.httpklient.httpclient.error.IkkeFunnetException
 import no.nav.aap.komponenter.httpklient.httpclient.request.ContentType
@@ -32,12 +25,7 @@ class RestClientTest {
 
     private val mapper =
         { body: InputStream, _: HttpHeaders -> body.bufferedReader(Charsets.UTF_8).use { it.readText() } }
-    private val server = embeddedServer(Netty, port = 0) {
-        install(ContentNegotiation) {
-            jackson {
-                registerModule(JavaTimeModule())
-            }
-        }
+    private val server = createFakeServer {
         routing {
             get("/test") {
                 call.respondText("you got me")
@@ -60,7 +48,8 @@ class RestClientTest {
                 call.respondText("y u delete me?")
             }
         }
-    }.apply { start() }
+    }
+
     val client = RestClient(ClientConfig(), NoTokenTokenProvider(), DefaultResponseHandler())
     val url = "http://localhost:${server.port()}/test"
 
@@ -121,10 +110,5 @@ class RestClientTest {
         }
     }
 
-    private fun EmbeddedServer<*, *>.port(): Int {
-        return runBlocking {
-            this@port.engine.resolvedConnectors()
-        }.first { it.type == ConnectorType.HTTP }
-            .port
-    }
+
 }
