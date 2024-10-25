@@ -6,21 +6,16 @@ import org.flywaydb.core.Flyway
 import javax.sql.DataSource
 
 public object Migrering {
-    public fun migrate(dataSource: DataSource) {
+    public fun migrate(dataSource: DataSource, cleanOnValidationError: Boolean = false) {
         val flyway = Flyway
             .configure()
-            .cleanDisabled(!cleanDb())
-            .cleanOnValidationError(cleanDb())
+            .cleanDisabled(Miljø.er() == MiljøKode.PROD)
+            .cleanOnValidationError(cleanOnValidationError)
             .dataSource(dataSource)
             .locations("flyway")
             .validateMigrationNaming(true)
             .load()
 
         flyway.migrate()
-    }
-
-    //FIXME: Før prodsetting, slett migreringsscriptet V1.0__Ikke_for_prod.sql
-    private fun cleanDb(): Boolean {
-        return Miljø.er() in arrayOf(MiljøKode.LOKALT, MiljøKode.DEV)
     }
 }
