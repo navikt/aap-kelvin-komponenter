@@ -123,7 +123,7 @@ public class JobbInput(internal val jobb: Jobb) {
     }
 
     override fun toString(): String {
-        return "[${jobb.type()}] - id = $id, sakId = $sakId, behandlingId = $behandlingId"
+        return "[${jobb.type()}] - ${nesteKjøringTidspunkt()} - id = $id, sakId = $sakId, behandlingId = $behandlingId"
     }
 
     public fun medProperties(properties: Properties?): JobbInput {
