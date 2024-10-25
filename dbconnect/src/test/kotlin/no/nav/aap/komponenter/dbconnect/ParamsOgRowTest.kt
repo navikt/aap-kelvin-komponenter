@@ -440,6 +440,37 @@ internal class ParamsOgRowTest {
         }
     }
 
+    @Test
+    fun `get array of integers`() {
+        InitTestDatabase.dataSource.transaction { connection ->
+            val array = connection.queryFirst("""
+                SELECT ARRAY[1, 2, 3] AS my_array;
+            """.trimIndent()
+            ) {
+                setRowMapper { row ->
+                    row.getArray("my_array", Int::class)
+                }
+            }
+
+            assertThat(array).containsExactly(1, 2, 3)
+        }
+    }
+    @Test
+    fun `get array of strings`() {
+        InitTestDatabase.dataSource.transaction { connection ->
+            val array = connection.queryFirst("""
+                SELECT ARRAY['ff', 'hei', 'df'] AS my_array;
+            """.trimIndent()
+            ) {
+                setRowMapper { row ->
+                    row.getArray("my_array", String::class)
+                }
+            }
+
+            assertThat(array).containsExactly("ff", "hei", "df")
+        }
+    }
+
     companion object {
         @JvmStatic
         @BeforeAll

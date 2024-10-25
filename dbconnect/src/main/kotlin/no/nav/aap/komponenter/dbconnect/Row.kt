@@ -9,6 +9,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.*
+import kotlin.reflect.KClass
 
 public class Row internal constructor(private val resultSet: ResultSet) {
     public fun getBytes(columnLabel: String): ByteArray {
@@ -159,6 +160,18 @@ public class Row internal constructor(private val resultSet: ResultSet) {
             return null
         }
         return DaterangeParser.fromSQL(dateRange)
+    }
+
+    /**
+     * Example:
+     * ```kotlin
+     * row.getArray("my_array", Int::class)
+     * ```
+     * */
+    public fun <E : Any> getArray(columnLabel: String, elementType: KClass<E>): List<E> {
+        val array = resultSet.getArray(columnLabel) ?: return emptyList()
+        val sqlArray = array.array as? Array<*>
+        return sqlArray?.filterIsInstance(elementType.javaObjectType)?.toList() ?: emptyList()
     }
 
     public fun getLocalDate(columnLabel: String): LocalDate {
