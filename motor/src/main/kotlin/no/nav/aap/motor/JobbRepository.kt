@@ -44,7 +44,7 @@ internal class JobbRepository(private val connection: DBConnection) {
             with rekkefolge as ((select distinct on (sak_id, behandling_id) id
                                  from JOBB
                                  where status IN ('${JobbStatus.FEILET.name}', '${JobbStatus.KLAR.name}')
-                                   AND sak_id is not null
+                                   AND (sak_id is not null OR (sak_id is null and behandling_id is not null))
                                  ORDER BY sak_id, behandling_id, neste_kjoring ASC)
                                 UNION ALL
                                 (select id
