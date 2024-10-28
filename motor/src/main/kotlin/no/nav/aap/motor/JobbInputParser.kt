@@ -8,7 +8,7 @@ public object JobbInputParser {
         return JobbInput(JobbType.parse(row.getString("type")))
             .medId(row.getLong("id"))
             .medStatus(row.getEnum("status"))
-            .forBehandling(
+            .gruppering(
                 row.getLongOrNull("sak_id"),
                 row.getLongOrNull("behandling_id")
             )

@@ -28,13 +28,26 @@ public class JobbInput(internal val jobb: Jobb) {
         return this
     }
 
-    public fun forBehandling(sakID: Long?, behandlingId: Long?): JobbInput {
+    /**
+     * Når man trenger å gruppere jobber etter flere enn et parameter
+     */
+    public fun forBehandling(sakID: Long, behandlingId: Long): JobbInput {
         this.sakId = sakID
         this.behandlingId = behandlingId
 
         return this
     }
 
+    internal fun gruppering(sakID: Long?, behandlingId: Long?): JobbInput {
+        this.sakId = sakID
+        this.behandlingId = behandlingId
+
+        return this
+    }
+
+    /**
+     * For gruppering etter en enkelt felles nøkkel
+     */
     public fun forSak(sakId: Long): JobbInput {
         this.sakId = sakId
 
