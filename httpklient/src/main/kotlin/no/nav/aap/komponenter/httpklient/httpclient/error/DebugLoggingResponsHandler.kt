@@ -1,8 +1,8 @@
 package no.nav.aap.komponenter.httpklient.httpclient.error
 
+import no.nav.aap.komponenter.httpklient.httpclient.håndterStatus
 import no.nav.aap.komponenter.miljo.Miljø
 import no.nav.aap.komponenter.miljo.MiljøKode
-import no.nav.aap.komponenter.httpklient.httpclient.håndterStatus
 import org.slf4j.LoggerFactory
 import java.net.http.HttpHeaders
 import java.net.http.HttpRequest
@@ -18,15 +18,18 @@ public class DebugLoggingResponsHandler() : RestResponseHandler<String> {
         response: HttpResponse<String>,
         mapper: (String, HttpHeaders) -> R
     ): R? {
-        return håndterStatus(response, block = {
-            val value = response.body()
-            if (value == null || value.isEmpty()) {
-                return@håndterStatus null
-            } else {
-                loggRespons(value)
-                return@håndterStatus mapper(value, response.headers())
-            }
-        })
+        return håndterStatus(response,
+            errorBlock = {
+                response.body()
+            }, block = {
+                val value = response.body()
+                if (value == null || value.isEmpty()) {
+                    null
+                } else {
+                    loggRespons(value)
+                    mapper(value, response.headers())
+                }
+            })
     }
 
     private fun loggRespons(value: String?) {

@@ -17,12 +17,14 @@ public class DefaultResponseHandler() : RestResponseHandler<InputStream> {
         response: HttpResponse<InputStream>,
         mapper: (InputStream, HttpHeaders) -> R
     ): R? {
-        return håndterStatus(response, block = {
+        return håndterStatus(response, errorBlock = {
+            response.body().bufferedReader().use { it.readText() }
+        }, block = {
             val value = response.body()
             if (value == null) {
-                return@håndterStatus null
+                null
             } else {
-                return@håndterStatus mapper(value, response.headers())
+                mapper(value, response.headers())
             }
         })
     }

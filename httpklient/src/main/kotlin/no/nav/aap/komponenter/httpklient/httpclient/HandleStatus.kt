@@ -5,12 +5,11 @@ import no.nav.aap.komponenter.httpklient.httpclient.error.IkkeFunnetException
 import no.nav.aap.komponenter.httpklient.httpclient.error.InternalServerErrorHttpResponsException
 import no.nav.aap.komponenter.httpklient.httpclient.error.ManglerTilgangException
 import no.nav.aap.komponenter.httpklient.httpclient.error.UhåndtertHttpResponsException
-import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.http.HttpResponse
 
 
-internal fun <E, R> håndterStatus(response: HttpResponse<E>, block: () -> R?): R? {
+internal fun <E, R> håndterStatus(response: HttpResponse<E>, errorBlock: () -> String?, block: () -> R?): R? {
     val status: Int = response.statusCode()
     if (status == HttpURLConnection.HTTP_NO_CONTENT) {
         return null
@@ -20,12 +19,7 @@ internal fun <E, R> håndterStatus(response: HttpResponse<E>, block: () -> R?): 
         return block()
     }
 
-    val body = response.body()
-    val responseBody = when (body) {
-        is InputStream -> body.bufferedReader().use { it.readText() }
-        is String -> body
-        else -> body
-    }
+    val responseBody = errorBlock()
 
     if (status == HttpURLConnection.HTTP_BAD_REQUEST) {
         throw BadRequestHttpResponsException("$response :: $responseBody")
