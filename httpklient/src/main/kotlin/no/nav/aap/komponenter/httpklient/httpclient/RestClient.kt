@@ -18,23 +18,24 @@ import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpHeaders
 import java.net.http.HttpRequest
-import java.net.http.HttpRequest.BodyPublisher
 import java.util.*
 
 public class RestClient<K>(
     private val config: ClientConfig,
     private val tokenProvider: TokenProvider,
-    private val responseHandler: RestResponseHandler<K>,
-    httpClient: HttpClient? = null
+    private val responseHandler: RestResponseHandler<K>
 ) {
 
     public companion object {
-        public fun withDefaultResponseHandler(config: ClientConfig, tokenProvider: TokenProvider): RestClient<InputStream> {
+        public fun withDefaultResponseHandler(
+            config: ClientConfig,
+            tokenProvider: TokenProvider
+        ): RestClient<InputStream> {
             return RestClient(config, tokenProvider, DefaultResponseHandler())
         }
     }
 
-    private val client = httpClient ?: HttpClient.newBuilder().connectTimeout(config.connectionTimeout)
+    private val client = HttpClient.newBuilder().connectTimeout(config.connectionTimeout)
         .proxy(HttpClient.Builder.NO_PROXY).followRedirects(HttpClient.Redirect.NEVER).build()
 
     public fun <T : Any, R> post(uri: URI, request: PostRequest<T>, mapper: (K, HttpHeaders) -> R): R? {
@@ -68,9 +69,11 @@ public class RestClient<K>(
     }
 
     private fun buildRequest(uri: URI, request: Request): HttpRequest {
-        val httpRequest =
-            HttpRequest.newBuilder(uri).addHeaders(request).addHeaders(config, tokenProvider, request.currentToken())
-                .timeout(request.timeout());
+        val httpRequest = HttpRequest.newBuilder(uri)
+                .addHeaders(request)
+                .addHeaders(config, tokenProvider, request.currentToken())
+                .timeout(request.timeout())
+
         when (request) {
             is GetRequest -> httpRequest.GET()
             is DeleteRequest -> httpRequest.DELETE()
