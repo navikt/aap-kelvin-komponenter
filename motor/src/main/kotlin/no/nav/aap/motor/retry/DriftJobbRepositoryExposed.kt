@@ -24,7 +24,9 @@ public class DriftJobbRepositoryExposed(connection: DBConnection) {
     }
 
     public fun hentInfoOmGjentagendeJobber(): List<JobbInput> {
-        return JobbType.cronTypes().map { retryFeiledeOppgaverRepository.hentInfoOmSisteAvType(it) }
+        return kotlin.runCatching {
+            JobbType.cronTypes().map { retryFeiledeOppgaverRepository.hentInfoOmSisteAvType(it) }
+        }.getOrDefault(emptyList())
     }
 
     public fun hentSisteJobber(antall: Int): List<Pair<JobbInput, String?>> {

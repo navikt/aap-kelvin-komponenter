@@ -9,8 +9,8 @@ import io.ktor.server.plugins.callid.*
 import io.ktor.server.plugins.calllogging.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.request.*
+import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.binder.logging.LogbackMetrics
-import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
 import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.azurecc.AzureConfig
 import no.nav.aap.komponenter.httpklient.json.DefaultJsonMapper
 import java.util.*
@@ -24,7 +24,7 @@ import java.util.*
  *  - Genererer Swagger-dokumentasjon
  */
 public fun Application.commonKtorModule(
-    prometheus: PrometheusMeterRegistry, azureConfig: AzureConfig, infoModel: InfoModel
+    prometheus: MeterRegistry, azureConfig: AzureConfig, infoModel: InfoModel
 ) {
     install(MicrometerMetrics) {
         registry = prometheus

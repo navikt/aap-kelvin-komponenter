@@ -50,8 +50,8 @@ class RestClientTest {
         }
     }
 
-    val client = RestClient(ClientConfig(), NoTokenTokenProvider(), DefaultResponseHandler())
-    val url = "http://localhost:${server.port()}/test"
+    private val client = RestClient(ClientConfig(), NoTokenTokenProvider(), DefaultResponseHandler())
+    private val url = "http://localhost:${server.port()}/test"
 
     @Test
     fun `tester at get requester funker`() {
