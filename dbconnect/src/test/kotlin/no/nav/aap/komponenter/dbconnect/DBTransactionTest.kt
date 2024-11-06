@@ -5,6 +5,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import org.postgresql.util.PSQLException
 
 internal class DBTransactionTest {
 
@@ -48,6 +49,26 @@ internal class DBTransactionTest {
         }
 
         assertThat(result).isEmpty()
+    }
+
+    @Test
+    fun `Ber om skrivelås i en readonly transaction`() {
+        assertThrows<PSQLException> {
+            InitTestDatabase.dataSource.transaction(readOnly = true) { connection ->
+                connection.queryFirst("SELECT * FROM TEST_TRANSACTION WHERE TEST = 'd' FOR UPDATE") {
+                    setRowMapper { row -> row.getString("TEST") }
+                }
+                error("error")
+            }
+        }
+        assertThrows<PSQLException> {
+            InitTestDatabase.dataSource.transaction(readOnly = true) { connection ->
+                connection.queryFirst("SELECT * FROM TEST_TRANSACTION FOR SHARE") {
+                    setRowMapper { row -> row.getString("TEST") }
+                }
+                error("error")
+            }
+        }
     }
 
     @Test

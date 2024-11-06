@@ -7,7 +7,7 @@ public fun <T> DataSource.transaction(readOnly: Boolean = false, block: (DBConne
         if (readOnly) {
             connection.isReadOnly = true // Setter transaction i read-only
         }
-        val dbTransaction = DBTransaction(connection)
+        val dbTransaction = DBTransaction(connection, readOnly)
         dbTransaction.transaction(block)
     }
 }
