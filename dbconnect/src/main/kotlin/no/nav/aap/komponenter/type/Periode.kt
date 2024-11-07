@@ -54,6 +54,24 @@ public class Periode(
         return result
     }
 
+    public fun dager(): Iterable<LocalDate> {
+        return object : Iterable<LocalDate> {
+            override fun iterator(): Iterator<LocalDate> {
+                return object : Iterator<LocalDate> {
+                    private var current = fom
+                    override fun hasNext(): Boolean {
+                        return current <= tom
+                    }
+
+                    override fun next(): LocalDate {
+                        if (!hasNext()) throw NoSuchElementException("Slutten av periode-iterator")
+                        return current.also { current = current.plusDays(1) }
+                    }
+                }
+            }
+        }
+    }
+
     override fun toString(): String {
         return "Periode(fom=$fom, tom=$tom)"
     }

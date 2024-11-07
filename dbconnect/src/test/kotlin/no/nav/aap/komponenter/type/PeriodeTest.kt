@@ -108,4 +108,25 @@ class PeriodeTest {
         /* 2020 er et skuddår */
         assertThat(periode.antallDager()).isEqualTo(366)
     }
+
+    @Test
+    fun `iterer over periode på 1 dag`() {
+        val periode = Periode(
+            LocalDate.of(2020, 1, 1),
+            LocalDate.of(2020, 1, 1)
+        )
+
+        assertThat(periode.dager().toList()).isEqualTo(listOf(LocalDate.of(2020, 1, 1)))
+    }
+
+    @Test
+    fun `iterer over periode på flere dager`() {
+        val periode = Periode(
+            LocalDate.of(2020, 1, 1),
+            LocalDate.of(2020, 1, 3)
+        )
+
+        val forventetDager = (1..3).map { LocalDate.of(2020, 1, it) }
+        assertThat(periode.dager().toList()).isEqualTo(forventetDager)
+    }
 }
