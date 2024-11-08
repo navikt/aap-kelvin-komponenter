@@ -48,6 +48,11 @@ jobs:
                     echo $text >> $GITHUB_OUTPUT
                     echo '$randomDelimiter' >> $GITHUB_OUTPUT
 
+            -   name: Publish
+                run: gradle -Pversion=${{ steps.tag.outputs.version }} publish
+                env:
+                    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
             -   uses: actions/create-release@v1.1.4
                 id: create_release
                 env:
@@ -58,11 +63,6 @@ jobs:
                     body: |
                         Changes in this Release
                         ${{ steps.notes.outputs.CHANGELOG }}
-
-            -   name: Publish
-                run: gradle -Pversion=${{ steps.tag.outputs.version }} publish
-                env:
-                    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
             -   name: Genererer docs
                 run: |
