@@ -44,8 +44,8 @@ internal class JwtProvider : AuthProvider<JWTPrincipal> {
 
 internal fun Application.generateOpenAPI(
     infoModel: InfoModel
-) {
-    install(OpenAPIGen) {
+): OpenAPIGen {
+    return install(OpenAPIGen) {
         // this serves OpenAPI definition on /openapi.json
         serveOpenApiJson = true
         // this serves Swagger UI on /swagger-ui/index.html

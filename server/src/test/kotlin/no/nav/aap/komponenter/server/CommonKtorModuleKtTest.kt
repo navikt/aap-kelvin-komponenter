@@ -25,13 +25,17 @@ class CommonKtorModuleKtTest {
         System.setProperty("azure.openid.config.jwks.uri", "http://localhost:1234/jwks")
         System.setProperty("azure.openid.config.issuer", "behandlingsflyt")
 
+        var openApiJSON: String? = null;
+
         testApplication {
             application {
-                commonKtorModule(
+                val answ = commonKtorModule(
                     prometheus = PrometheusMeterRegistry(PrometheusConfig.DEFAULT),
                     azureConfig = AzureConfig(),
                     infoModel = InfoModel(title = "My cute title")
                 )
+
+                openApiJSON = answ.getOpenApiJSON()
             }
 
             val client = createClient {
@@ -54,6 +58,8 @@ class CommonKtorModuleKtTest {
             val openApiTitle = respJsonObj.get("info").get("title").asText()
 
             assertThat(openApiTitle).isEqualTo("My cute title")
+            assertThat(openApiJSON).isNotNull()
+            assertThat(openApiJSON?.length).isGreaterThan(10)
         }
     }
 }

@@ -25,7 +25,7 @@ import java.util.*
  */
 public fun Application.commonKtorModule(
     prometheus: MeterRegistry, azureConfig: AzureConfig, infoModel: InfoModel
-) {
+): CommonResponse {
     install(MicrometerMetrics) {
         registry = prometheus
         meterBinders += LogbackMetrics()
@@ -46,7 +46,14 @@ public fun Application.commonKtorModule(
 
     authentication(azureConfig)
 
-    generateOpenAPI(
+    val openApiGen = generateOpenAPI(
         infoModel = infoModel
     )
+
+    return CommonResponse { DefaultJsonMapper.toJson(openApiGen.api.serialize()) }
 }
+
+/**
+ * @param getOpenApiJSON Callback to get the JSON representation of the OpenAPI spec. Useful for automation tasks.
+ */
+public class CommonResponse(public val getOpenApiJSON: () -> String)
