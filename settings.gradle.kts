@@ -12,5 +12,6 @@ include(
     "motor-test-utils",
     "motor-api",
     "httpklient",
-    "server"
+    "server",
+    "verdityper"
 )
