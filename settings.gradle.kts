@@ -13,5 +13,6 @@ include(
     "motor-api",
     "httpklient",
     "server",
-    "verdityper"
+    "verdityper",
+    "tidslinje"
 )
