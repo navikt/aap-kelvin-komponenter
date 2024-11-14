@@ -21,6 +21,8 @@ private val logger = LoggerFactory.getLogger(MotorTest::class.java)
 class MotorTest {
     private val dataSource = InitTestDatabase.dataSource
 
+    private val util = TestUtil(dataSource, JobbType.cronTypes())
+
     @BeforeEach
     fun beforeEach() {
         InitTestDatabase.clean()
@@ -55,7 +57,55 @@ class MotorTest {
         motor.stop()
     }
 
-    private val util = TestUtil(dataSource, JobbType.cronTypes())
+    @Test
+    fun `prøver igjen retries ganger`() {
+        val antallRetries = 10
+        var x = 0
+        val jobbutfører = object : Jobb {
+            override fun konstruer(connection: DBConnection): JobbUtfører {
+                return object : JobbUtfører {
+                    override fun utfør(input: JobbInput) {
+                        x++
+                        throw IllegalStateException("test")
+                    }
+                }
+            }
+
+            override fun type(): String {
+                return "type"
+            }
+
+            override fun navn(): String {
+                return "navn"
+            }
+
+            override fun beskrivelse(): String {
+                return "beskrivelse"
+            }
+
+            override fun retries(): Int {
+                return antallRetries
+            }
+        }
+        val motor = Motor(
+            dataSource = dataSource,
+            antallKammer = 2,
+            logInfoProvider = NoExtraLogInfoProvider,
+            jobber = listOf(jobbutfører)
+        )
+
+        dataSource.transaction {
+            JobbRepository(it).leggTil(
+                JobbInput(jobbutfører)
+            )
+        }
+
+        motor.start()
+
+        util.ventPåSvar()
+
+        assertThat(x).isEqualTo(antallRetries)
+    }
 
     @Test
     fun `burde ikke feile om to jobber for samme behandling starter samtidig, men heller legge i kø`() {
@@ -152,9 +202,4 @@ class MotorTest {
         return requireNotNull(res)
     }
 
-    private fun ventPåMotor(motor: Motor) {
-        while (!motor.kjører()) {
-            Thread.sleep(20)
-        }
-    }
 }

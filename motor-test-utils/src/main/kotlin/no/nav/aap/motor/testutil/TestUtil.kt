@@ -13,12 +13,12 @@ public class TestUtil(private val datasource: DataSource, private val cronTypes:
     public fun ventPåSvar(sakId: Long? = null, behandlingId: Long? = null, maxTid: Long = 20) {
         val timeInMillis = measureTimeMillis {
             datasource.transaction(readOnly = true) {
-                val maxTid = LocalDateTime.now().plusSeconds(maxTid)
+                val sluttTidspunkt = LocalDateTime.now().plusSeconds(maxTid)
                 val testJobbRepository = TestJobbRepository(it, cronTypes)
-                while ((testJobbRepository.harJobb(sakId, behandlingId)) && maxTid.isAfter(LocalDateTime.now())) {
+                while ((testJobbRepository.harJobb(sakId, behandlingId)) && sluttTidspunkt.isAfter(LocalDateTime.now())) {
                     Thread.sleep(50L)
                 }
-                if (maxTid.isAfter(LocalDateTime.now())) {
+                if (LocalDateTime.now().isAfter(sluttTidspunkt)) {
                     log.warn("Avbryter venting nå, da $maxTid sekunder har gått.")
                 }
             }
