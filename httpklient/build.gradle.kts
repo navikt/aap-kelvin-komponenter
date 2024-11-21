@@ -19,6 +19,9 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
     testImplementation("org.assertj:assertj-core:3.26.3")
     testImplementation("io.ktor:ktor-server-netty:$ktorVersion")
+    constraints {
+        implementation("io.netty:netty-common:4.1.115.Final")
+    }
     testImplementation("io.ktor:ktor-serialization-jackson:$ktorVersion")
     testImplementation("com.fasterxml.jackson.core:jackson-databind:2.18.1")
     testImplementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.18.1")

@@ -7,6 +7,7 @@ import java.sql.Statement
 
 private const val QUERY_TIMEOUT_IN_SECONDS = 30
 
+@Suppress("SqlSourceToSinkFlow")
 public class DBConnection internal constructor(
     private val connection: Connection
 ) {
