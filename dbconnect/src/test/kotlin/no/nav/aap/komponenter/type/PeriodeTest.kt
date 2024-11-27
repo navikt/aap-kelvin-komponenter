@@ -2,7 +2,15 @@ package no.nav.aap.komponenter.type
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.time.DayOfWeek
+import java.time.DayOfWeek.FRIDAY
+import java.time.DayOfWeek.MONDAY
+import java.time.DayOfWeek.THURSDAY
+import java.time.DayOfWeek.TUESDAY
+import java.time.DayOfWeek.WEDNESDAY
 import java.time.LocalDate
+import java.time.Month
+import java.time.Month.NOVEMBER
 
 class PeriodeTest {
 
@@ -128,5 +136,15 @@ class PeriodeTest {
 
         val forventetDager = (1..3).map { LocalDate.of(2020, 1, it) }
         assertThat(periode.dager().toList()).isEqualTo(forventetDager)
+    }
+
+    @Test
+    fun `antall hverdager i periode`() {
+        val periode = Periode(
+            LocalDate.of(2024, NOVEMBER, 6),
+            LocalDate.of(2024, NOVEMBER, 22),
+        )
+
+        assertThat(periode.antallDager(MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY)).isEqualTo(13)
     }
 }

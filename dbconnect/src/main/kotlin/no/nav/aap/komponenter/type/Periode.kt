@@ -1,5 +1,6 @@
 package no.nav.aap.komponenter.type
 
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 import java.util.*
@@ -26,6 +27,11 @@ public class Periode(
 
     public fun antallDager(): Int {
         return fom.until(tom.plusDays(1), ChronoUnit.DAYS).toInt()
+    }
+
+    public fun antallDager(vararg dager: DayOfWeek): Int {
+        /* Naiv og åpenbart™ riktig implementasjon :) */
+        return dager().count { it.dayOfWeek in dager }
     }
 
     override fun compareTo(other: Periode): Int {
