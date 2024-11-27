@@ -102,8 +102,8 @@ public class Motor(
                             }
                         }
                     }
-                } catch (excetion: Throwable) {
-                    log.warn("Feil under plukking av jobber", excetion)
+                } catch (exception: Throwable) {
+                    log.warn("Feil under plukking av jobber", exception)
                 }
                 log.debug("Ingen flere jobber å plukke, hviler litt")
                 if (!stopped) {
