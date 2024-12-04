@@ -1,5 +1,8 @@
 package no.nav.aap.motor
 
+import io.micrometer.core.instrument.ImmutableTag
+import io.micrometer.core.instrument.MeterRegistry
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import no.nav.aap.komponenter.dbconnect.DBConnection
 import no.nav.aap.komponenter.dbconnect.transaction
 import no.nav.aap.motor.mdc.JobbLogInfoProvider
@@ -20,7 +23,8 @@ public class Motor(
     private val dataSource: DataSource,
     private val antallKammer: Int = 8,
     logInfoProvider: JobbLogInfoProvider = NoExtraLogInfoProvider,
-    jobber: List<Jobb>
+    jobber: List<Jobb>,
+    private val prometheus: MeterRegistry = SimpleMeterRegistry()
 ) {
 
     init {
@@ -141,6 +145,9 @@ public class Motor(
                     jobbInput,
                     exception
                 )
+                if (jobbInput.skalMarkeresSomFeilet()) {
+                    prometheus.counter("motor_jobb_feilet", listOf(ImmutableTag("type", jobbInput.type()))).increment()
+                }
                 JobbRepository(connection).markerFeilet(jobbInput, exception)
             } finally {
                 MDC.clear()
@@ -201,7 +208,7 @@ public class Motor(
                     }
                 }
             } catch (exception: Throwable) {
-                logger.warn("Ukjent feil under watchdog aktivtet", exception)
+                logger.warn("Ukjent feil under watchdog-aktivitet.", exception)
             }
             watchdogExecutor.schedule(Watchdog(), 1, TimeUnit.MINUTES)
         }

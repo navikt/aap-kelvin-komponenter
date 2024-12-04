@@ -163,6 +163,7 @@ public class Row internal constructor(private val resultSet: ResultSet) {
     }
 
     /**
+     * Feltet [elementType] må være av en type JDBC returnerer.
      * Example:
      * ```kotlin
      * row.getArray("my_array", Int::class)

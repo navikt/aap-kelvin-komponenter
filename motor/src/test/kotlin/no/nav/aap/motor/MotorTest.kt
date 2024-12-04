@@ -1,5 +1,6 @@
 package no.nav.aap.motor
 
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import no.nav.aap.komponenter.dbconnect.DBConnection
 import no.nav.aap.komponenter.dbconnect.transaction
 import no.nav.aap.komponenter.dbtest.InitTestDatabase
@@ -59,7 +60,7 @@ class MotorTest {
 
     @Test
     fun `prøver igjen retries ganger`() {
-        val antallRetries = 10
+        val antallRetries = 5
         var x = 0
         val jobbutfører = object : Jobb {
             override fun konstruer(connection: DBConnection): JobbUtfører {
@@ -87,11 +88,13 @@ class MotorTest {
                 return antallRetries
             }
         }
+        val prometheus = SimpleMeterRegistry()
         val motor = Motor(
             dataSource = dataSource,
             antallKammer = 2,
             logInfoProvider = NoExtraLogInfoProvider,
-            jobber = listOf(jobbutfører)
+            jobber = listOf(jobbutfører),
+            prometheus = prometheus
         )
 
         dataSource.transaction {
@@ -105,6 +108,7 @@ class MotorTest {
         util.ventPåSvar()
 
         assertThat(x).isEqualTo(antallRetries)
+        assertThat(prometheus.counter("motor_jobb_feilet", "type", "type").count()).isEqualTo(1.0)
     }
 
     @Test
