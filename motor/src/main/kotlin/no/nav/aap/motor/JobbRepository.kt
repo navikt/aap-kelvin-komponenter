@@ -139,6 +139,15 @@ internal class JobbRepository(private val connection: DBConnection) {
             }
         }
 
+        // Ikke kjør på nyttt med én gang om en jobb feilet
+        val nyNesteKjøring = jobbInput.nesteKjøringTidspunkt().plusSeconds(1)
+        connection.execute("UPDATE JOBB set neste_kjoring = ? WHERE id = ? AND status = 'KLAR'") {
+            setParams {
+                setLocalDateTime(1, nyNesteKjøring)
+                setLong(2, jobbInput.id)
+            }
+        }
+
         if (jobbInput.skalMarkeresSomFeilet()) {
             connection.execute("UPDATE JOBB SET status = ? WHERE id = ? AND status = 'KLAR'") {
                 setParams {
