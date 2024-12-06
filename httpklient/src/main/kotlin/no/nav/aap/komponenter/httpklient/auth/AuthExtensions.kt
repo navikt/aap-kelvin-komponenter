@@ -16,6 +16,15 @@ public fun ApplicationCall.bruker(): Bruker {
     return Bruker(navIdent)
 }
 
+public fun ApplicationCall.personBruker(): PersonBruker {
+    val pid = principal<JWTPrincipal>()?.getClaim("pid", String::class)
+    if (pid == null) {
+        error("pid (personidentifikator) mangler i tokenx claims")
+    }
+    return PersonBruker(pid)
+
+}
+
 public fun ApplicationCall.token(): OidcToken {
     val token: String = requireNotNull(this.request.headers[HttpHeaders.Authorization]).split(" ")[1]
 
@@ -28,4 +37,8 @@ public fun <TResponse> OpenAPIPipelineResponseContext<TResponse>.token(): OidcTo
 
 public fun <TResponse> OpenAPIPipelineResponseContext<TResponse>.bruker(): Bruker {
     return pipeline.call.bruker()
+}
+
+public fun <TResponse> OpenAPIPipelineResponseContext<TResponse>.personBruker(): PersonBruker {
+    return pipeline.call.personBruker()
 }

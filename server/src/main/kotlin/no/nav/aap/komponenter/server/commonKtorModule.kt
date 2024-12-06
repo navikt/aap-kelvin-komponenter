@@ -12,6 +12,7 @@ import io.ktor.server.request.*
 import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.binder.logging.LogbackMetrics
 import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.azurecc.AzureConfig
+import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.tokenx.TokenxConfig
 import no.nav.aap.komponenter.httpklient.json.DefaultJsonMapper
 import java.util.*
 
@@ -20,11 +21,14 @@ import java.util.*
  *  - MicrometerMetrics
  *  - ContentNegotiation
  *  - CallLogging
- *  - Sets up JWT authentication against Azure.
+ *  - Sets up JWT authentication against Azure or tokenx.
  *  - Genererer Swagger-dokumentasjon
  */
 public fun Application.commonKtorModule(
-    prometheus: MeterRegistry, azureConfig: AzureConfig, infoModel: InfoModel
+    prometheus: MeterRegistry,
+    azureConfig: AzureConfig? = null,
+    infoModel: InfoModel,
+    tokenxConfig: TokenxConfig? = null,
 ): CommonResponse {
     install(MicrometerMetrics) {
         registry = prometheus
@@ -44,7 +48,7 @@ public fun Application.commonKtorModule(
         generate { UUID.randomUUID().toString() }
     }
 
-    authentication(azureConfig)
+    authentication(azureConfig, tokenxConfig)
 
     val openApiGen = generateOpenAPI(
         infoModel = infoModel
