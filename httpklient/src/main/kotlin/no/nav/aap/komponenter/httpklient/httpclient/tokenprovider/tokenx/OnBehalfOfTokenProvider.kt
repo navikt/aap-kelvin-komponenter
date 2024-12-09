@@ -27,7 +27,7 @@ public class OnBehalfOfTokenProvider(
         val response: OidcTokenResponse = client.post(texasUri, PostRequest(body = mapOf(
             "identity_provider" to "tokenx",
             "target" to scope,
-            "user_token" to currentToken,
+            "user_token" to currentToken.token(),
         ))) ?: error("oidc-token-response forventet fra texas")
 
         return OidcToken(response.access_token)
