@@ -3,7 +3,7 @@ import org.jetbrains.kotlin.gradle.dsl.ExplicitApiMode
 
 plugins {
     kotlin("jvm") version "2.1.0"
-    id("io.ktor.plugin") version "3.0.1" apply false
+    id("io.ktor.plugin") version "3.0.2" apply false
     id("org.jetbrains.dokka") version "1.9.20"
     `maven-publish`
     `java-library`
