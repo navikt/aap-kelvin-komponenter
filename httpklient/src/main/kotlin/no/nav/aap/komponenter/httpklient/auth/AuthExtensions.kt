@@ -25,6 +25,16 @@ public fun ApplicationCall.personBruker(): PersonBruker {
 
 }
 
+/**
+ * Vil teste først. Mistenker at audience er på formen dev-gcp:team:app. Men returnerer string først.
+ */
+public fun ApplicationCall.audience(): String {
+    val aud = principal<JWTPrincipal>()?.getClaim("aud", String::class)
+        ?: error("aud mangler i tokenx claims")
+    return aud
+
+}
+
 public fun ApplicationCall.token(): OidcToken {
     val token: String = requireNotNull(this.request.headers[HttpHeaders.Authorization]).split(" ")[1]
 
