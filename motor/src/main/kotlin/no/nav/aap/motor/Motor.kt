@@ -93,8 +93,14 @@ public class Motor(
                             val repository = JobbRepository(connection)
                             val plukketJobb = repository.plukkJobb()
                             if (plukketJobb != null) {
+                                val behandlingId = plukketJobb.behandlingIdOrNull()
+                                val sakId = plukketJobb.sakIdOrNull()
                                 OpentelemetryUtil.span(
                                     "jobb + ${plukketJobb.type()}",
+                                    behandlingId,
+                                    sakId,
+                                    plukketJobb.id.toString(),
+                                    plukketJobb.status().toString(),
                                     JobbInfoSpanBuilder.jobbAttributter(plukketJobb)
                                 ) {
                                     utfør(plukketJobb, connection)
