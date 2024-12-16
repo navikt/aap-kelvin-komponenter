@@ -4,7 +4,8 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 
 /**
- * Faktor av antall G for representasjon av størrelsen på det maksimale grunnlaget
+ * Representerer et beløp som faktor av antall G for en tidsuavhengig representasjon
+ * av beløp som skal G-justeres.
  */
 public class GUnit(verdi: BigDecimal) : Comparable<GUnit> {
     private val verdi = verdi.setScale(SCALE, RoundingMode.HALF_UP)
@@ -66,6 +67,9 @@ public class GUnit(verdi: BigDecimal) : Comparable<GUnit> {
         return this.multiplisert(2).dividert(3)
     }
 
+    /**
+     * Begrenser beløpet til 6G, det samme som `min(beløp, 6G)`.
+     */
     public fun begrensTil6GUnits(): GUnit {
         val begrensetVerdi = minOf(verdi, BigDecimal(6))
         return GUnit(begrensetVerdi)

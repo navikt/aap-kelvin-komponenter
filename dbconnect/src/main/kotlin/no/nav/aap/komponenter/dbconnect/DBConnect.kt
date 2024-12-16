@@ -2,6 +2,11 @@ package no.nav.aap.komponenter.dbconnect
 
 import javax.sql.DataSource
 
+/**
+ * Start en transaksjon.
+ *
+ * @param readOnly Om transaksjonen skal være i read-only modus. Defaulter til false.
+ */
 public fun <T> DataSource.transaction(readOnly: Boolean = false, block: (DBConnection) -> T): T {
     return this.connection.use { connection ->
         if (readOnly) {

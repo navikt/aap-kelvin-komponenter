@@ -3,6 +3,13 @@ package no.nav.aap.motor.api
 import no.nav.aap.motor.JobbStatus
 import java.time.LocalDateTime
 
+/**
+ * @param type Jobbtype. Er et element fra runtime-versjonen av [no.nav.aap.motor.JobbType].
+ * @param planlagtKjøretidspunkt Når er denne jobben planlagt å kjøre neste gang.
+ * @param feilmelding Hvis jobben har feilet, den lagrede feilmeldingen.
+ * @param beskrivelse Beskrivelsen til jobben, som returnert fra [no.nav.aap.motor.Jobb.beskrivelse].
+ * @param navn Navnet til jobben, som returnert fra [no.nav.aap.motor.Jobb.navn].
+ */
 public class JobbInfoDto(
     public val id: Long,
     public val type: String,

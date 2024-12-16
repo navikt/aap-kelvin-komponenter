@@ -2,6 +2,8 @@
 
 Felles-bibliotek for apper for AAP.
 
+Dokumentasjon: https://navikt.github.io/aap-kelvin-komponenter/
+
 # Komme i gang
 
 For oppdatert oppskrift for å kjøre koden, se stegene i Github Actions.

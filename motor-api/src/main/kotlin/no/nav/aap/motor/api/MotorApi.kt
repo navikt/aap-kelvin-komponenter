@@ -81,8 +81,8 @@ public fun NormalOpenAPIRoute.motorApi(dataSource: DataSource) {
             get<Unit, List<JobbInfoDto>>(modules) { _ ->
                 val saker: List<JobbInfoDto> = dataSource.transaction(readOnly = true) { connection ->
                     DriftJobbRepositoryExposed(connection).hentSisteJobber(150)
-                        .map { (jobbInput, jobbStatus) ->
-                            jobbInfoDto(jobbInput, jobbStatus, connection)
+                        .map { (jobbInput, feilmelding) ->
+                            jobbInfoDto(jobbInput, feilmelding, connection)
                         }
 
                 }
@@ -94,7 +94,7 @@ public fun NormalOpenAPIRoute.motorApi(dataSource: DataSource) {
 
 private fun jobbInfoDto(
     jobbInput: JobbInput,
-    jobbStatus: String?,
+    feilmelding: String?,
     connection: DBConnection
 ): JobbInfoDto {
     return JobbInfoDto(
@@ -104,7 +104,7 @@ private fun jobbInfoDto(
         beskrivelse = jobbInput.beskrivelse(),
         status = jobbInput.status(),
         antallFeilendeForsøk = jobbInput.antallRetriesForsøkt(),
-        feilmelding = jobbStatus,
+        feilmelding = feilmelding,
         planlagtKjøretidspunkt = jobbInput.nesteKjøring(),
         metadata = JobbLogInfoProviderHolder.get()
             .hentInformasjon(connection, jobbInput)?.felterMedVerdi
