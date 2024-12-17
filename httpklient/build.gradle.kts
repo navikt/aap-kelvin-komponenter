@@ -1,7 +1,7 @@
 import org.jetbrains.kotlin.gradle.dsl.ExplicitApiMode
 
 val ktorVersion = "3.0.2"
-val junitVersion = "5.11.3"
+val junitVersion = "5.11.4"
 
 kotlin.explicitApi = ExplicitApiMode.Warning
 
