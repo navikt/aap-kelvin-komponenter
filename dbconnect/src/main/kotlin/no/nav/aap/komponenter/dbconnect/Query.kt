@@ -12,7 +12,7 @@ public class Query<T> internal constructor(
 
     private var paramsSet = false
     private fun assertParams() {
-        require(!paramsSet) { "Kan ikke sette paramertre flere ganger" }
+        require(!paramsSet) { "Kan ikke sette parametre flere ganger" }
         paramsSet = true
     }
 
