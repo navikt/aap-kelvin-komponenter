@@ -13,7 +13,7 @@ import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.binder.logging.LogbackMetrics
 import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.azurecc.AzureConfig
 import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.tokenx.TokenxConfig
-import no.nav.aap.komponenter.httpklient.json.DefaultJsonMapper
+import no.nav.aap.komponenter.json.DefaultJsonMapper
 import java.util.*
 
 /**

@@ -8,6 +8,7 @@ include(
     "dbmigrering",
     "dbconnect",
     "dbtest",
+    "json",
     "motor",
     "motor-test-utils",
     "motor-api",

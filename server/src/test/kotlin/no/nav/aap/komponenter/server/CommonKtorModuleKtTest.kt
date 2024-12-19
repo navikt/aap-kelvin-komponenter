@@ -11,7 +11,7 @@ import io.ktor.server.testing.*
 import io.micrometer.prometheusmetrics.PrometheusConfig
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
 import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.azurecc.AzureConfig
-import no.nav.aap.komponenter.httpklient.json.DefaultJsonMapper
+import no.nav.aap.komponenter.json.DefaultJsonMapper
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -25,7 +25,7 @@ class CommonKtorModuleKtTest {
         System.setProperty("azure.openid.config.jwks.uri", "http://localhost:1234/jwks")
         System.setProperty("azure.openid.config.issuer", "behandlingsflyt")
 
-        var openApiJSON: String? = null;
+        var openApiJSON: String? = null
 
         testApplication {
             application {

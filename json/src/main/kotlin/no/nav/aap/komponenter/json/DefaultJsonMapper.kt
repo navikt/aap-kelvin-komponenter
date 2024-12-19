@@ -1,4 +1,4 @@
-package no.nav.aap.komponenter.httpklient.json
+package no.nav.aap.komponenter.json
 
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper

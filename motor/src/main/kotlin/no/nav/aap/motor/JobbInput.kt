@@ -1,5 +1,6 @@
 package no.nav.aap.motor
 
+import no.nav.aap.komponenter.json.DefaultJsonMapper
 import no.nav.aap.motor.cron.CronExpression
 import org.slf4j.MDC
 import java.time.LocalDateTime
@@ -63,6 +64,10 @@ public class JobbInput(internal val jobb: Jobb) {
     public fun medPayload(payload: String?): JobbInput {
         this.payload = payload
         return this
+    }
+
+    public fun <T> medPayload(payload: T?) {
+        this.payload = payload?.let { value -> DefaultJsonMapper.toJson(value) }
     }
 
     public fun sakIdOrNull(): Long? {
@@ -129,6 +134,10 @@ public class JobbInput(internal val jobb: Jobb) {
 
     public fun harPayload(): Boolean {
         return payload != null
+    }
+
+    public inline fun <reified T> payload(): T {
+        return DefaultJsonMapper.fromJson(payload()) as T
     }
 
     public fun payload(): String {

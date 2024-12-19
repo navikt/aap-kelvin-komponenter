@@ -1,6 +1,6 @@
 package no.nav.aap.komponenter.httpklient.httpclient.request
 
-import no.nav.aap.komponenter.httpklient.json.DefaultJsonMapper
+import no.nav.aap.komponenter.json.DefaultJsonMapper
 
 internal object BodyConverter {
     fun convert(body: Any, contentType: ContentType): String {
