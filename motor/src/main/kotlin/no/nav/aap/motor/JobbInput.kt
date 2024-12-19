@@ -66,8 +66,9 @@ public class JobbInput(internal val jobb: Jobb) {
         return this
     }
 
-    public fun <T> medPayload(payload: T?) {
+    public fun <T> medPayload(payload: T?): JobbInput {
         this.payload = payload?.let { value -> DefaultJsonMapper.toJson(value) }
+        return this
     }
 
     public fun sakIdOrNull(): Long? {
