@@ -14,7 +14,7 @@ import kotlin.reflect.KClass
 public class Row internal constructor(private val resultSet: ResultSet) {
     public fun getBytes(columnLabel: String): ByteArray {
         val bytes: ByteArray? = getBytesOrNull(columnLabel)
-        requireNotNull(bytes)
+        requireNotNull(bytes) { "Null value when retrieving column $columnLabel." }
         return bytes
     }
 
@@ -24,7 +24,7 @@ public class Row internal constructor(private val resultSet: ResultSet) {
 
     public fun getString(columnLabel: String): String {
         val string: String? = getStringOrNull(columnLabel)
-        requireNotNull(string)
+        requireNotNull(string) { "Null value when retrieving column $columnLabel." }
         return string
     }
 
@@ -49,7 +49,7 @@ public class Row internal constructor(private val resultSet: ResultSet) {
 
     public fun getInt(columnLabel: String): Int {
         val int: Int? = getIntOrNull(columnLabel)
-        requireNotNull(int)
+        requireNotNull(int) { "Null value when retrieving column $columnLabel." }
         return int
     }
 
@@ -69,7 +69,7 @@ public class Row internal constructor(private val resultSet: ResultSet) {
 
     public fun getLong(columnLabel: String): Long {
         val long: Long? = getLongOrNull(columnLabel)
-        requireNotNull(long)
+        requireNotNull(long) { "Null-value for column label $columnLabel." }
         return long
     }
 
@@ -89,7 +89,7 @@ public class Row internal constructor(private val resultSet: ResultSet) {
 
     public fun getDouble(columnLabel: String): Double {
         val double: Double? = getDoubleOrNull(columnLabel)
-        requireNotNull(double)
+        requireNotNull(double) { "Null-value for column label $columnLabel." }
         return double
     }
 
@@ -109,7 +109,7 @@ public class Row internal constructor(private val resultSet: ResultSet) {
 
     public fun getBigDecimal(columnLabel: String): BigDecimal {
         val bigDecimal = getBigDecimalOrNull(columnLabel)
-        requireNotNull(bigDecimal)
+        requireNotNull(bigDecimal) { "Null-value for column label $columnLabel." }
         return bigDecimal
     }
 
@@ -132,7 +132,7 @@ public class Row internal constructor(private val resultSet: ResultSet) {
 
     public fun getBoolean(columnLabel: String): Boolean {
         val boolean = getBooleanOrNull(columnLabel)
-        requireNotNull(boolean)
+        requireNotNull(boolean) { "Null-value for column label $columnLabel." }
         return boolean
     }
 
@@ -177,7 +177,7 @@ public class Row internal constructor(private val resultSet: ResultSet) {
 
     public fun getLocalDate(columnLabel: String): LocalDate {
         val localDate = getLocalDateOrNull(columnLabel)
-        requireNotNull(localDate)
+        requireNotNull(localDate) { "Null-value for column label $columnLabel." }
         return localDate
     }
 
@@ -188,7 +188,7 @@ public class Row internal constructor(private val resultSet: ResultSet) {
 
     public fun getLocalDateTime(columnLabel: String): LocalDateTime {
         val localDateTime = getLocalDateTimeOrNull(columnLabel)
-        requireNotNull(localDateTime)
+        requireNotNull(localDateTime) { "Null-value for column label $columnLabel." }
         return localDateTime
     }
 
@@ -203,7 +203,7 @@ public class Row internal constructor(private val resultSet: ResultSet) {
     }
 
     public fun getInstant(columnLabel: String): Instant {
-        return requireNotNull(getInstantOrNull(columnLabel))
+        return requireNotNull(getInstantOrNull(columnLabel)) { "Null-value for column label $columnLabel." }
     }
 
     public fun getPropertiesOrNull(columnLabel: String): Properties? {
@@ -213,7 +213,7 @@ public class Row internal constructor(private val resultSet: ResultSet) {
 
     public fun getProperties(columnLabel: String): Properties {
         val propertiesOrNull = getPropertiesOrNull(columnLabel)
-        requireNotNull(propertiesOrNull)
+        requireNotNull(propertiesOrNull) { "Null-value for column label $columnLabel." }
         return propertiesOrNull
     }
 }
