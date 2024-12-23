@@ -23,7 +23,7 @@ dependencies {
             because("https://github.com/advisories/GHSA-4g9r-vxhx-9pgx")
         }
     }
-    testImplementation("ch.qos.logback:logback-classic:1.5.12")
+    testImplementation("ch.qos.logback:logback-classic:1.5.15")
     testImplementation("net.logstash.logback:logstash-logback-encoder:8.0")
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
 }
