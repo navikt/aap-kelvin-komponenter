@@ -100,4 +100,9 @@ public class Params internal constructor(
         val array = connection.createArrayOf("VARCHAR", strings.toTypedArray())
         preparedStatement.setArray(index, array)
     }
+
+    public fun setLongArray(index: Int, longs: List<Long>) {
+        val array = connection.createArrayOf("BIGINT", longs.toTypedArray())
+        preparedStatement.setArray(index, array)
+    }
 }
