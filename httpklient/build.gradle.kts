@@ -21,7 +21,7 @@ dependencies {
     testImplementation("org.assertj:assertj-core:3.27.2")
     testImplementation("io.ktor:ktor-server-netty:$ktorVersion")
     constraints {
-        implementation("io.netty:netty-common:4.1.116.Final")
+        implementation("io.netty:netty-common:4.1.117.Final")
     }
     testImplementation("io.ktor:ktor-serialization-jackson:$ktorVersion")
     testImplementation("com.fasterxml.jackson.core:jackson-databind:2.18.2")
