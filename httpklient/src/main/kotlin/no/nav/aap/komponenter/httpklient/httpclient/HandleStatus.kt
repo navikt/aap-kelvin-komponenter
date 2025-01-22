@@ -30,11 +30,11 @@ internal fun <E, R> håndterStatus(response: HttpResponse<E>, errorBlock: () -> 
     }
 
     if (status == HttpURLConnection.HTTP_FORBIDDEN) {
-        throw ManglerTilgangException("$response :: $responseBody")
+        throw ManglerTilgangException("$response :: $responseBody", responseBody)
     }
 
     if (status == HttpURLConnection.HTTP_NOT_FOUND) {
-        throw IkkeFunnetException("$response :: $responseBody")
+        throw IkkeFunnetException("$response :: $responseBody", responseBody)
     }
 
     throw UhåndtertHttpResponsException("Uventet HTTP-responskode $response")
