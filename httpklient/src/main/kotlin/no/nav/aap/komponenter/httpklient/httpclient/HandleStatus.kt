@@ -1,6 +1,7 @@
 package no.nav.aap.komponenter.httpklient.httpclient
 
 import no.nav.aap.komponenter.httpklient.httpclient.error.BadRequestHttpResponsException
+import no.nav.aap.komponenter.httpklient.httpclient.error.ConflictHttpResponseException
 import no.nav.aap.komponenter.httpklient.httpclient.error.IkkeFunnetException
 import no.nav.aap.komponenter.httpklient.httpclient.error.InternalServerErrorHttpResponsException
 import no.nav.aap.komponenter.httpklient.httpclient.error.ManglerTilgangException
@@ -35,6 +36,10 @@ internal fun <E, R> håndterStatus(response: HttpResponse<E>, errorBlock: () -> 
 
     if (status == HttpURLConnection.HTTP_NOT_FOUND) {
         throw IkkeFunnetException("$response :: $responseBody", responseBody)
+    }
+
+    if (status == HttpURLConnection.HTTP_CONFLICT) {
+        throw ConflictHttpResponseException("$response :: $responseBody", responseBody)
     }
 
     throw UhåndtertHttpResponsException("Uventet HTTP-responskode $response")
