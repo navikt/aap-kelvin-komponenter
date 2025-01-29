@@ -106,6 +106,7 @@ public object StandardSammenslåere {
     }
 
     /**
+     * ```
      *             venstre høyre  minus
      * 2020-01-01  +---+          +------------+
      *             | x |          | x          |
@@ -118,6 +119,7 @@ public object StandardSammenslåere {
      * 2020-01-05  +---+          +------------+
      *             | y |          | y          |
      * 2020-01-06  +---+          +------------+
+     * ```
      */
     public fun <T, S> minus(): JoinStyle.LEFT_JOIN<T, S, T> {
         return JoinStyle.LEFT_JOIN { p, l, r ->
