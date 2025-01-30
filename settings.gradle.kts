@@ -15,5 +15,6 @@ include(
     "httpklient",
     "server",
     "verdityper",
-    "tidslinje"
+    "tidslinje",
+    "cache"
 )
