@@ -3,6 +3,7 @@ package no.nav.aap.komponenter.cache
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
+import kotlin.concurrent.thread
 
 interface TestInterface {
     val counter: Int
@@ -10,6 +11,9 @@ interface TestInterface {
     fun cachedMethod(string: String): Int
     fun uncachedMethod(): Int
     fun cachedNullMethod()
+    fun zeroCacheSizeMethod(int: Int): Int
+    fun oneCacheSizeMethod(int: Int): Int
+    fun cachedMultiArgMethod(int1: Int, int2: Int): Int
 }
 
 class TestClass : TestInterface {
@@ -17,24 +21,26 @@ class TestClass : TestInterface {
     override var counter = 0
 
     @Cacheable
-    override fun cachedMethod(): Int {
-        return counter++
-    }
+    override fun cachedMethod() = counter++
 
     @Cacheable
-    override fun cachedMethod(string: String): Int {
-        return counter++
-    }
+    override fun cachedMethod(string: String) = counter++
 
-    override fun uncachedMethod(): Int {
-        return counter++
-    }
+    override fun uncachedMethod() = counter++
 
     @Cacheable
     override fun cachedNullMethod() {
         counter++
     }
 
+    @Cacheable(maximumSize = 0)
+    override fun zeroCacheSizeMethod(int: Int) = counter++
+
+    @Cacheable(maximumSize = 1)
+    override fun oneCacheSizeMethod(int: Int) = counter++
+
+    @Cacheable
+    override fun cachedMultiArgMethod(int1: Int, int2: Int) = counter++
 
 }
 
@@ -51,8 +57,12 @@ class CacheProxyTest {
     fun `cached method should not be incremented`() {
         val testClass = TestClass().withCache()
 
-        testClass.cachedMethod()
-        val actual = testClass.cachedMethod()
+        testClass.cachedMethod("YOLO")
+        testClass.cachedMethod("YOLO")
+        testClass.cachedMethod("YOLO")
+        testClass.cachedMethod("YOLO")
+        testClass.cachedMethod("YOLO")
+        val actual = testClass.cachedMethod("YOLO")
 
         assertThat(actual).isEqualTo(0)
     }
@@ -107,4 +117,52 @@ class CacheProxyTest {
 
         assertThat(testClass.counter).isEqualTo(1)
     }
+
+    @Test
+    fun `dersom cachesize er 0 skal det ikke være begrensninger på cachesize`() {
+        val testClass = TestClass().withCache()
+
+        testClass.zeroCacheSizeMethod(0)
+        testClass.zeroCacheSizeMethod(1)
+        val actual = testClass.zeroCacheSizeMethod(0)
+
+        assertThat(actual).isEqualTo(0)
+    }
+
+    @Test
+    fun `dersom cachesize er 1 skal cache bli resatt annenhvert kall`() {
+        val testClass = TestClass().withCache()
+        thread {
+            testClass.oneCacheSizeMethod(1)
+            testClass.oneCacheSizeMethod(2)
+            testClass.oneCacheSizeMethod(3)
+
+            Thread.sleep(100)
+
+            val notCached = testClass.oneCacheSizeMethod(1)
+
+            assertThat(notCached).isEqualTo(2)
+        }
+    }
+
+    @Test
+    fun `rekkefølge for argumenter skal påvirke caching`() {
+        val testClass = TestClass().withCache()
+        testClass.cachedMultiArgMethod(1, 2)
+        val notCached = testClass.cachedMultiArgMethod(2, 1)
+
+        assertThat(notCached).isEqualTo(1)
+    }
+
+    @Test
+    fun `metoder med flere argumenter skal caches`() {
+        val testClass = TestClass().withCache()
+
+        testClass.cachedMultiArgMethod(1, 2)
+        val cached = testClass.cachedMultiArgMethod(1, 2)
+
+        assertThat(cached).isEqualTo(0)
+    }
+
+
 }

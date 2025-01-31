@@ -4,11 +4,23 @@ import com.github.benmanes.caffeine.cache.Caffeine
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
 import java.lang.reflect.Proxy
+import java.util.*
 import java.util.concurrent.TimeUnit
+
 
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.FUNCTION)
-public annotation class Cacheable
+public annotation class Cacheable(
+    val expireAfterWrite: ExpireAfterWrite = ExpireAfterWrite(),
+    val maximumSize: Long = 0,
+)
+
+@Retention(AnnotationRetention.RUNTIME)
+@Target(AnnotationTarget.FIELD)
+public annotation class ExpireAfterWrite(
+    val duration: Long = 2,
+    val timeUnit: TimeUnit = TimeUnit.MINUTES,
+)
 
 
 private const val NO_OP = "NO_OP"
@@ -28,16 +40,16 @@ private class CacheProxy(private val subject: Any) : InvocationHandler {
             return callActual(method, args)
         }
 
-        val result = getCache(method).getIfPresent(getCacheKey(method, args))
+        val result = getCache(method).getIfPresent(getCacheKey(args))
         return if (result == null) putAndReturn(method, args)
         else result.let { if (it == NO_OP) null else it }
     }
 
-    private fun getCacheKey(method: Method, args: Array<out Any>?) = Pair(method, args)
+    private fun getCacheKey(args: Array<out Any>?) = args?.map { it.hashCode() } ?: 1
 
     private fun putAndReturn(method: Method, args: Array<out Any>?): Any {
         val result = callActual(method, args) ?: NO_OP
-        getCache(method).put(getCacheKey(method, args), result)
+        getCache(method).put(getCacheKey(args), result)
         return result
     }
 
@@ -61,7 +73,8 @@ private class CacheProxy(private val subject: Any) : InvocationHandler {
             GlobalCache.putCache(
                 key,
                 Caffeine.newBuilder()
-                    .expireAfterWrite(2, TimeUnit.MINUTES)
+                    .maximumsize(method)
+                    .expireAfterWrite(method)
                     .build()
             )
         }
