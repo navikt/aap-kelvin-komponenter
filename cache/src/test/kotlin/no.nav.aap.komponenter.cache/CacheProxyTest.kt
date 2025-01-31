@@ -42,9 +42,10 @@ class TestClass : TestInterface {
     @Cacheable
     override fun cachedMultiArgMethod(int1: Int, int2: Int) = counter++
 
+
 }
 
-fun TestClass.withCache() = withCache(this, TestInterface::class.java)
+fun TestClass.withCache() = withCache(this) as TestInterface
 
 class CacheProxyTest {
 

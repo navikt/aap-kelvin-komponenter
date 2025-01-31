@@ -4,7 +4,6 @@ import com.github.benmanes.caffeine.cache.Caffeine
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
 import java.lang.reflect.Proxy
-import java.util.*
 import java.util.concurrent.TimeUnit
 
 
@@ -83,12 +82,12 @@ private class CacheProxy(private val subject: Any) : InvocationHandler {
 }
 
 
-public fun <T> withCache(subject: T, clazz: Class<T>): T {
+public fun withCache(subject: Any): Any {
     return Proxy.newProxyInstance(
         CacheProxy::class.java.classLoader,
-        arrayOf(clazz),
-        CacheProxy(subject as Any)
-    ) as T
+        subject::class.java.interfaces,
+        CacheProxy(subject)
+    )
 }
 
 
