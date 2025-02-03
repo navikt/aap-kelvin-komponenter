@@ -16,5 +16,4 @@ include(
     "server",
     "verdityper",
     "tidslinje",
-    "cache"
 )
