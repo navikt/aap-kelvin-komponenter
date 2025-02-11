@@ -1,3 +1,8 @@
+import org.jetbrains.kotlin.gradle.dsl.ExplicitApiMode
+
+kotlin.explicitApi = ExplicitApiMode.Warning
+
+
 dependencies {
     implementation(project(":dbconnect")) // Periode
     implementation(project(":verdityper"))

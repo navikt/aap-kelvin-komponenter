@@ -8,6 +8,10 @@ import java.util.*
 
 public class Tidslinje<T>(initSegmenter: NavigableSet<Segment<T>> = TreeSet()) : Iterable<Segment<T>> {
 
+    public companion object {
+        public fun <T> empty(): Tidslinje<T> = Tidslinje<T>(TreeSet())
+    }
+
     public constructor(initSegmenter: List<Segment<T>>) : this(TreeSet(initSegmenter))
     public constructor(periode: Periode, verdi: T) : this(TreeSet(listOf(Segment(periode, verdi))))
 
