@@ -92,6 +92,9 @@ public class Tidslinje<T>(initSegmenter: NavigableSet<Segment<T>> = TreeSet()) :
         return Tidslinje(nySammensetning)
     }
 
+    /**
+     * Begrens tidslinjen til [periode].
+     */
     public fun disjoint(periode: Periode): Tidslinje<T> {
         return kombiner(
             Tidslinje(periode, null),

@@ -173,7 +173,7 @@ class TidslinjeTest {
     }
 
     @Test
-    fun `enkel test med barnetilegg`() {
+    fun `enkel test med barnetillegg`() {
         val fullPeriode = Periode(LocalDate.now().minusDays(10), LocalDate.now().plusDays(10))
 
         val delPeriode1 = Periode(LocalDate.now().minusDays(10), LocalDate.now())
@@ -202,6 +202,27 @@ class TidslinjeTest {
                 .kombiner(barneUtreningTidslinje, KombinertUtbetaling())
 
         assertThat(komplettTidslinje.segmenter()).hasSize(3)
+    }
+
+    @Test
+    fun `begrens vha disjoint`() {
+        val firstSegment = Segment(Periode(LocalDate.now(), LocalDate.now().plusDays(10)), Beløp(100))
+        val secondSegment = Segment(Periode(LocalDate.now().minusDays(10), LocalDate.now().minusDays(1)), Beløp(200))
+        val tidslinje = Tidslinje(
+            listOf(
+                firstSegment,
+                secondSegment
+            )
+        )
+
+        val res = tidslinje.disjoint(Periode(LocalDate.now().minusDays(5), LocalDate.now().plusDays(5)))
+        assertThat(res.segmenter()).containsExactly(
+            Segment(
+                Periode(LocalDate.now().minusDays(5), LocalDate.now().minusDays(1)),
+                Beløp(200)
+            ), Segment(Periode(LocalDate.now(), LocalDate.now().plusDays(5)), Beløp(100))
+
+        )
     }
 }
 
