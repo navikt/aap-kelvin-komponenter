@@ -11,10 +11,10 @@ For oppdatert oppskrift for å kjøre koden, se stegene i Github Actions.
 ## Bygge dokumentasjon
 
 ```
-./gradlew dokkaHtmlMultiModule
+./gradlew dokkaGenerate
 ```
 
-Åpne `index.html` i `build/dokka/htmlMultiModule`.
+Åpne `index.html` i `build/dokka/html`.
 
 # Henvendelser
 
