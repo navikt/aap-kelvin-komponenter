@@ -8,7 +8,7 @@ plugins {
     `java-library`
 }
 
-group = "no.nav.aap"
+group = "no.nav.aap.kelvin"
 version = project.findProperty("version")?.toString() ?: "0.0.0"
 
 repositories {
