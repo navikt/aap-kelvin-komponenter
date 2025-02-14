@@ -70,7 +70,7 @@ jobs:
             -   name: upload-artifact for docs
                 uses: actions/upload-pages-artifact@v3
                 with:
-                    path: './build/dokka/'
+                    path: './build/dokka/html'
 
     deploy-pages:
         runs-on: ubuntu-latest
