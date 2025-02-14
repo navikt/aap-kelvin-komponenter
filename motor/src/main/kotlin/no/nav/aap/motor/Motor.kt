@@ -1,6 +1,5 @@
 package no.nav.aap.motor
 
-import io.micrometer.core.instrument.ImmutableTag
 import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import no.nav.aap.komponenter.dbconnect.DBConnection
@@ -128,11 +127,16 @@ public class Motor(
                 dataSource.transaction { nyConnection ->
                     setteLogginformasjonForOppgave(connection, jobbInput)
 
+                    val startTid = System.currentTimeMillis()
                     log.info("Starter på jobb :: {}", jobbInput.toString())
 
                     jobbInput.jobb.konstruer(nyConnection).utfør(jobbInput)
 
-                    log.info("Fullført jobb :: {}", jobbInput.toString())
+                    val tid = System.currentTimeMillis() - startTid
+
+                    prometheus.timer(jobbInput).record(tid, TimeUnit.MILLISECONDS)
+
+                    log.info("Fullført jobb :: {}. Tok $tid ms.", jobbInput.toString())
                     if (jobbInput.erScheduledOppgave()) {
                         JobbRepository(nyConnection).leggTil(
                             jobbInput.medNesteKjøring(
@@ -152,7 +156,7 @@ public class Motor(
                     exception
                 )
                 if (jobbInput.skalMarkeresSomFeilet()) {
-                    prometheus.counter("motor_jobb_feilet", listOf(ImmutableTag("type", jobbInput.type()))).increment()
+                    prometheus.motorFeiletTeller(jobbInput).increment()
                 }
                 JobbRepository(connection).markerFeilet(jobbInput, exception)
             } finally {
@@ -178,7 +182,6 @@ public class Motor(
             }
         }
     }
-
     /**
      * Watchdog som sjekker om alle workers kjører
      */
