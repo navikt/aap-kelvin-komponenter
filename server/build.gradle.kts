@@ -1,5 +1,9 @@
 import org.jetbrains.kotlin.gradle.dsl.ExplicitApiMode
 
+plugins {
+    id("komponenter.conventions")
+}
+
 val ktorVersion = "3.1.0"
 
 kotlin.explicitApi = ExplicitApiMode.Warning

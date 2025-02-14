@@ -1,3 +1,7 @@
+plugins {
+    id("komponenter.conventions")
+}
+
 dependencies {
     implementation("com.zaxxer:HikariCP:6.2.1")
     implementation("org.flywaydb:flyway-database-postgresql:11.3.1")

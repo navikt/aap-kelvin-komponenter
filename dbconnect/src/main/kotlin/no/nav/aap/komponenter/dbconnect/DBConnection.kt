@@ -48,7 +48,7 @@ public class DBConnection internal constructor(
     /**
      * Executes the given SQL query and returns the generated key.
      *
-     * @sample
+     * ```kotlin
      * val key = connection.executeReturnKey(query) {
      *     setParams {
      *         setLong(1, avklaringsbehovId)
@@ -60,7 +60,7 @@ public class DBConnection internal constructor(
      *         setEnumName(7, endring.grunn)
      *     }
      * }
-     *
+     *```
      * @param query The SQL query to execute.
      * @param block Lambda function to configure the execution parameters and result validation.
      * @return The generated key as a Long.

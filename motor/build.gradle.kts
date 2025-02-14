@@ -1,3 +1,7 @@
+plugins {
+    id("komponenter.conventions")
+}
+
 dependencies {
     api(project(":dbconnect"))
     api(project(":json"))

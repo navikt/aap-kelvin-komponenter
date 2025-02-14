@@ -1,3 +1,7 @@
+plugins {
+    id("komponenter.conventions")
+}
+
 dependencies {
     implementation(project(":dbconnect"))
     implementation(project(":motor"))

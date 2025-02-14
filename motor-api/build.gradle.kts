@@ -1,3 +1,8 @@
+plugins {
+    id("komponenter.conventions")
+    id("io.ktor.plugin") version "3.1.0" apply false
+}
+
 val ktorVersion = "3.1.0"
 
 dependencies {

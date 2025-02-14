@@ -1,3 +1,7 @@
+plugins {
+    id("komponenter.conventions")
+}
+
 dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.11.4")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.11.4")

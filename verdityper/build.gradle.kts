@@ -1,4 +1,8 @@
 
+plugins {
+    id("komponenter.conventions")
+}
+
 dependencies {
     implementation(project(":dbconnect"))
     implementation("com.fasterxml.jackson.core:jackson-annotations:2.18.2")
