@@ -4,13 +4,11 @@ updates:
     # Gradle updates
     - package-ecosystem: "gradle"
       directory: "/"
-      open-pull-requests-limit: 1
       schedule:
           interval: "daily"
 
     # Maintain dependencies for GitHub Actions
     - package-ecosystem: "github-actions"
       directory: "/"
-      open-pull-requests-limit: 1
       schedule:
           interval: "daily"
