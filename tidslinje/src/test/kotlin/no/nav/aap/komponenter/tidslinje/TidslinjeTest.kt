@@ -224,6 +224,33 @@ class TidslinjeTest {
 
         )
     }
+
+
+    @Test
+    fun `kun høyre`() {
+        val firstSegment = Segment(Periode(LocalDate.of(2020, 1, 1), LocalDate.of(2020, 1, 3)), 1)
+        val secondSegment = Segment(Periode(LocalDate.of(2020, 1, 5), LocalDate.of(2020, 1, 6)), 2)
+
+        val venstre = Tidslinje(
+            listOf(
+                firstSegment,
+                secondSegment
+            )
+        )
+
+        val høyreSegment = Segment(Periode(LocalDate.of(2020, 1, 2), LocalDate.of(2020, 1, 4)), 3)
+        val høyre = Tidslinje(listOf(høyreSegment))
+
+        val res = venstre.kombiner(høyre, StandardSammenslåere.kunHøyre())
+
+        assertThat(res.segmenter()).containsExactly(
+            Segment(
+                Periode(LocalDate.of(2020, 1, 2), LocalDate.of(2020, 1, 3)), 3
+            )
+
+        )
+
+    }
 }
 
 data class Utbetaling(val beløp: Beløp, val prosent: Prosent) {

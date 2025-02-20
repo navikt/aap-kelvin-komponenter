@@ -11,7 +11,7 @@ public object InitTestDatabase {
     private var flyway: Flyway
 
     init {
-        // Postgres 15 korresponderer til versjon i nais.yaml
+        // Postgres 16 korresponderer til versjon i nais.yaml
         val postgres = PostgreSQLContainer<_>("postgres:16")
         postgres.start()
         val jdbcUrl = postgres.jdbcUrl

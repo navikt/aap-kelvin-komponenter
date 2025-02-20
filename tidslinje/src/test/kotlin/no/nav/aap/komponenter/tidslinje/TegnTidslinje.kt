@@ -32,7 +32,7 @@ class TegnTidslinje {
             printBinaryFunction(venstre, høyre, "priorterHøyreSideCrossJoin", StandardSammenslåere.prioriterHøyreSideCrossJoin())
             printBinaryFunction(venstre, høyre, "priorterVenstreSideCrossJoin", StandardSammenslåere.prioriterVenstreSideCrossJoin())
             printBinaryFunction(venstre, høyre, "kunVenstre", StandardSammenslåere.kunVenstre())
-            printBinaryFunction(venstre, høyre, "kunHøyreLeftJoin", StandardSammenslåere.kunHøyreLeftJoin())
+            printBinaryFunction(venstre, høyre, "kunHøyre", StandardSammenslåere.kunHøyre())
             printBinaryFunction(venstre, høyre, "kunHøyreRightJoin", StandardSammenslåere.kunHøyreRightJoin())
             printBinaryFunction(venstre, høyre, "minus", StandardSammenslåere.minus())
         }

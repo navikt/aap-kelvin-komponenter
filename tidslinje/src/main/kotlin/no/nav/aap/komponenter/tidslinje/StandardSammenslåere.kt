@@ -143,9 +143,32 @@ public object StandardSammenslåere {
      * 2020-01-06  +---+
      * ```
      */
+    @Deprecated("Bruk [kunHøyre]", ReplaceWith("StandardSammenslåere.kunHøyre()"))
     public fun <T, S> kunHøyreLeftJoin(): JoinStyle.LEFT_JOIN<S, T, T> {
         return JoinStyle.LEFT_JOIN { periode, _, høyreSegment ->
             if (høyreSegment == null) return@LEFT_JOIN null
+            Segment(periode, høyreSegment.verdi)
+        }
+    }
+
+    /**
+     * ```
+     *             venstre høyre  kunHøyre
+     * 2020-01-01  +---+
+     *             | x |
+     * 2020-01-02  |   |   +---+  +------------+
+     *             |   |   | 1 |  | 1          |
+     * 2020-01-03  +---+   |   |  +------------+
+     *                     |   |
+     * 2020-01-04          +---+
+     *
+     * 2020-01-05  +---+
+     *             | y |
+     * 2020-01-06  +---+
+     * ```
+     */
+    public fun <T, S> kunHøyre(): JoinStyle.INNER_JOIN<S, T, T> {
+        return JoinStyle.INNER_JOIN { periode, _, høyreSegment ->
             Segment(periode, høyreSegment.verdi)
         }
     }
