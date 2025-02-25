@@ -30,7 +30,7 @@ internal fun <E, R> håndterStatus(response: HttpResponse<E>, errorBlock: () -> 
         throw InternalServerErrorHttpResponsException("$response :: $responseBody")
     }
 
-    if (status == HttpURLConnection.HTTP_FORBIDDEN) {
+    if (status == HttpURLConnection.HTTP_FORBIDDEN || status == HttpURLConnection.HTTP_UNAUTHORIZED) {
         throw ManglerTilgangException("$response :: $responseBody", responseBody)
     }
 
