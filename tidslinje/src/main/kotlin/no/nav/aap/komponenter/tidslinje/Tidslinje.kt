@@ -10,6 +10,23 @@ public class Tidslinje<T>(initSegmenter: NavigableSet<Segment<T>> = TreeSet()) :
 
     public companion object {
         public fun <T> empty(): Tidslinje<T> = Tidslinje<T>(TreeSet())
+
+        public fun <A, B, C> zip3(
+            aTidslinje: Tidslinje<A>,
+            bTidslinje: Tidslinje<B>,
+            cTidslinje: Tidslinje<C>
+        ): Tidslinje<Triple<A?, B?, C?>> {
+            return aTidslinje
+                .kombiner(bTidslinje, JoinStyle.OUTER_JOIN { periode, aSegment, bSegment ->
+                    Segment(periode, Pair(aSegment?.verdi, bSegment?.verdi))
+                })
+                .kombiner(cTidslinje, JoinStyle.OUTER_JOIN { periode, abSegment, cSegment ->
+                    Segment(
+                        periode,
+                        Triple(abSegment?.verdi?.first, abSegment?.verdi?.second, cSegment?.verdi)
+                    )
+                })
+        }
     }
 
     public constructor(initSegmenter: List<Segment<T>>) : this(TreeSet(initSegmenter))
