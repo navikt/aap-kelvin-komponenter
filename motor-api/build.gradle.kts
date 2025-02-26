@@ -8,7 +8,7 @@ val ktorVersion = "3.1.0"
 dependencies {
     implementation(project(":dbconnect"))
     implementation(project(":motor"))
-    implementation("org.slf4j:slf4j-api:2.0.16")
+    implementation("org.slf4j:slf4j-api:2.0.17")
     // Skille ut disse til egen modul for motor-api
     implementation("no.nav:ktor-openapi-generator:1.0.81")
     implementation("io.ktor:ktor-http-jvm:$ktorVersion")
