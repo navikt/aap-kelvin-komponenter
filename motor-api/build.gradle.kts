@@ -3,7 +3,7 @@ plugins {
     id("io.ktor.plugin") version "3.1.1" apply false
 }
 
-val ktorVersion = "3.1.0"
+val ktorVersion = "3.1.1"
 
 dependencies {
     implementation(project(":dbconnect"))
