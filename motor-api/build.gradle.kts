@@ -16,8 +16,8 @@ dependencies {
     testImplementation(project(":dbtest"))
     testImplementation(project(":server"))
 
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.11.4")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.11.4")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.12.0")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.12.0")
     testImplementation("org.assertj:assertj-core:3.27.3")
 
     testImplementation(project(":motor-test-utils"))
@@ -30,7 +30,6 @@ dependencies {
     testImplementation("ch.qos.logback:logback-classic:1.5.17")
     testImplementation("net.logstash.logback:logstash-logback-encoder:8.0")
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 sourceSets {

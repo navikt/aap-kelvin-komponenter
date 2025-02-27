@@ -16,6 +16,15 @@ repositories {
     maven("https://github-package-registry-mirror.gc.nav.no/cached/maven-release")
 }
 
+// https://docs.gradle.org/8.12.1/userguide/jvm_test_suite_plugin.html
+testing {
+    suites {
+        @Suppress("UnstableApiUsage") val test by getting(JvmTestSuite::class) {
+            useJUnitJupiter()
+        }
+    }
+}
+
 dokka {
     dokkaSourceSets.configureEach {
         sourceLink {
