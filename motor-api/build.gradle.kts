@@ -30,7 +30,6 @@ dependencies {
     testImplementation("ch.qos.logback:logback-classic:1.5.17")
     testImplementation("net.logstash.logback:logstash-logback-encoder:8.0")
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 sourceSets {
