@@ -5,7 +5,7 @@ plugins {
 dependencies {
     api(project(":dbconnect"))
     api(project(":json"))
-    api("io.opentelemetry.instrumentation:opentelemetry-instrumentation-api:2.13.1")
+    api("io.opentelemetry.instrumentation:opentelemetry-instrumentation-api:2.13.2")
     implementation("org.slf4j:slf4j-api:2.0.17")
     api("io.micrometer:micrometer-registry-prometheus:1.14.4")
 
