@@ -28,7 +28,7 @@ dependencies {
         implementation("io.netty:netty-common:4.1.119.Final")
     }
     testImplementation("io.ktor:ktor-serialization-jackson:$ktorVersion")
-    testImplementation("com.fasterxml.jackson.core:jackson-databind:2.18.2")
+    testImplementation("com.fasterxml.jackson.core:jackson-databind:2.18.3")
     testImplementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.18.3")
     testImplementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
 
