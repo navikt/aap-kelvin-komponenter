@@ -1,5 +1,8 @@
 package no.nav.aap.komponenter.httpklient.httpclient
 
+import io.micrometer.core.instrument.MeterRegistry
+import io.micrometer.core.instrument.Timer
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import no.nav.aap.komponenter.httpklient.httpclient.error.DefaultResponseHandler
 import no.nav.aap.komponenter.httpklient.httpclient.error.RestResponseHandler
 import no.nav.aap.komponenter.httpklient.httpclient.request.BodyConverter
@@ -20,10 +23,15 @@ import java.net.http.HttpHeaders
 import java.net.http.HttpRequest
 import java.util.*
 
+/**
+ * @param prometheus Send inn en Prometheus-instans for å få RestClient-klassen til å generere histogrammer over
+ * request-tid.
+ */
 public class RestClient<K>(
     private val config: ClientConfig,
     private val tokenProvider: TokenProvider,
-    private val responseHandler: RestResponseHandler<K>
+    private val responseHandler: RestResponseHandler<K>,
+    private val prometheus: MeterRegistry = SimpleMeterRegistry(),
 ) {
 
     public companion object {
@@ -70,9 +78,9 @@ public class RestClient<K>(
 
     private fun buildRequest(uri: URI, request: Request): HttpRequest {
         val httpRequest = HttpRequest.newBuilder(uri)
-                .addHeaders(request)
-                .addHeaders(config, tokenProvider, request.currentToken())
-                .timeout(request.timeout())
+            .addHeaders(request)
+            .addHeaders(config, tokenProvider, request.currentToken())
+            .timeout(request.timeout())
 
         when (request) {
             is GetRequest -> httpRequest.GET()
@@ -103,8 +111,13 @@ public class RestClient<K>(
     }
 
     private fun <R> executeRequestAndHandleResponse(request: HttpRequest, mapper: (K, HttpHeaders) -> R): R? {
-        val response = client.send(request, responseHandler.bodyHandler())
-        return responseHandler.håndter(request, response, mapper)
+        val response = client.send(request, responseHandler.bodyHandler());
+
+        return Timer.builder("kelvin_restclient_timer")
+            .tags("uri", request.uri().host, "method", request.method())
+            .publishPercentileHistogram()
+            .register(prometheus)
+            .recordCallable { responseHandler.håndter(request, response, mapper) }
     }
 }
 
