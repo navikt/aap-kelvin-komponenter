@@ -37,9 +37,10 @@ public class RestClient<K>(
     public companion object {
         public fun withDefaultResponseHandler(
             config: ClientConfig,
-            tokenProvider: TokenProvider
+            tokenProvider: TokenProvider,
+            prometheus: MeterRegistry = SimpleMeterRegistry(),
         ): RestClient<InputStream> {
-            return RestClient(config, tokenProvider, DefaultResponseHandler())
+            return RestClient(config, tokenProvider, DefaultResponseHandler(), prometheus)
         }
     }
 
