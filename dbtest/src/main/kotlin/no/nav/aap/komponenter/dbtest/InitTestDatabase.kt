@@ -22,10 +22,10 @@ public object InitTestDatabase {
             this.username = username
             this.password = password
             minimumIdle = 1
-            initializationFailTimeout = 30000
+            initializationFailTimeout = 5000
             idleTimeout = 10000
             connectionTimeout = 10000
-            maxLifetime = 900000
+            maxLifetime = 1800000
             connectionTestQuery = "SELECT 1"
 
             /* Postgres i GCP kjører med UTC som timezone. Testcontainers-postgres
