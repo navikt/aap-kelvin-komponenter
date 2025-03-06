@@ -23,8 +23,8 @@ public object InitTestDatabase {
             this.password = password
             minimumIdle = 1
             initializationFailTimeout = 5000
-            idleTimeout = 10000
-            connectionTimeout = 10000
+            idleTimeout = 600000
+            connectionTimeout = 30000
             maxLifetime = 1800000
             connectionTestQuery = "SELECT 1"
 
