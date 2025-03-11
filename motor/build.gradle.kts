@@ -7,12 +7,12 @@ dependencies {
     api(project(":json"))
     api("io.opentelemetry.instrumentation:opentelemetry-instrumentation-api:2.13.3")
     implementation("org.slf4j:slf4j-api:2.0.17")
-    api("io.micrometer:micrometer-registry-prometheus:1.14.4")
+    api("io.micrometer:micrometer-registry-prometheus:1.14.5")
 
 
     testImplementation(project(":dbtest"))
 
-    testImplementation("io.micrometer:micrometer-registry-prometheus:1.14.4")
+    testImplementation("io.micrometer:micrometer-registry-prometheus:1.14.5")
     testImplementation("ch.qos.logback:logback-classic:1.5.17")
     testImplementation("net.logstash.logback:logstash-logback-encoder:8.0")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.12.0")
