@@ -117,4 +117,12 @@ public class Periode(
     public fun inntil(other: Periode): Boolean {
         return this.tom == other.fom.minusDays(1) || other.tom == this.fom.minusDays(1)
     }
+
+    /**
+     * Lag en ny periode som er flyttet [antallDager] dager framover/bakover i tid.
+     * 
+     */
+    public fun flytt(antallDager: Long): Periode {
+        return Periode(fom.plusDays(antallDager), tom.plusDays(antallDager))
+    }
 }

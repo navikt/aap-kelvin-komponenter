@@ -147,4 +147,21 @@ class PeriodeTest {
 
         assertThat(periode.antallDager(MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY)).isEqualTo(13)
     }
+
+    @Test
+    fun `flytte periode`() {
+        val periode = Periode(
+            LocalDate.of(2024, NOVEMBER, 6),
+            LocalDate.of(2024, NOVEMBER, 22),
+        )
+
+        val res = periode.flytt(1)
+
+        assertThat(res).isEqualTo(
+            Periode(
+                LocalDate.of(2024, NOVEMBER, 7),
+                LocalDate.of(2024, NOVEMBER, 23),
+            )
+        )
+    }
 }

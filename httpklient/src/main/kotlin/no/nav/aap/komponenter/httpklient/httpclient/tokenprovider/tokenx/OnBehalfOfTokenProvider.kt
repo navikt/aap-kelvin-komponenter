@@ -20,7 +20,7 @@ public class OnBehalfOfTokenProvider(
         tokenProvider = NoTokenTokenProvider(),
     )
 
-    override fun getToken(scope: String?, currentToken: OidcToken?): OidcToken? {
+    override fun getToken(scope: String?, currentToken: OidcToken?): OidcToken {
         if (scope == null) throw IllegalArgumentException("scope må være definert for tokenx")
         if (currentToken == null) throw IllegalArgumentException("token må være tilstede for tokenx")
 
