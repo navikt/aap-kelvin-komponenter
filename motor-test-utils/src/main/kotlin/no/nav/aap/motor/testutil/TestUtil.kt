@@ -10,6 +10,9 @@ import kotlin.system.measureTimeMillis
 public class TestUtil(private val datasource: DataSource, private val cronTypes: List<String>) {
     private val log = LoggerFactory.getLogger(TestUtil::class.java)
 
+    /**
+     * @param maxTid Maks ventetid, i sekunder.
+     */
     public fun ventPåSvar(sakId: Long? = null, behandlingId: Long? = null, maxTid: Long = 20) {
         val timeInMillis = measureTimeMillis {
             datasource.transaction(readOnly = true) {

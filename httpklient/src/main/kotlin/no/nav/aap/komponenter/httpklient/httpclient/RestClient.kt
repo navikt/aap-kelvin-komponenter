@@ -33,6 +33,12 @@ public class RestClient<K>(
     private val responseHandler: RestResponseHandler<K>,
     private val prometheus: MeterRegistry = SimpleMeterRegistry(),
 ) {
+    private val log = org.slf4j.LoggerFactory.getLogger(javaClass)
+    init {
+        if (prometheus is SimpleMeterRegistry) {
+            log.warn("Send gjerne inn en ekte Prometheus-instans for å få bedre metrikker.")
+        }
+    }
 
     public companion object {
         public fun withDefaultResponseHandler(
