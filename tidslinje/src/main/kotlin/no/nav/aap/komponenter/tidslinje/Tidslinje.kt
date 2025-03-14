@@ -377,4 +377,17 @@ public class Tidslinje<T>(initSegmenter: NavigableSet<Segment<T>> = TreeSet()) :
             it[0].tom().plusDays(1) == it[1].fom()
         }
     }
+
+    public fun <U, R> outerJoin(other: Tidslinje<U>, body: (T?, U?) -> R): Tidslinje<R> {
+        return kombiner(other, JoinStyle.OUTER_JOIN { periode, thisSegment, otherSegment ->
+            Segment(periode, body(thisSegment?.verdi, otherSegment?.verdi))
+        })
+    }
+
+    public fun <U, R> outerJoinNotNull(other: Tidslinje<U>, body: (T?, U?) -> R?): Tidslinje<R> {
+        return kombiner(other, JoinStyle.OUTER_JOIN { periode, thisSegment, otherSegment ->
+            val verdi = body(thisSegment?.verdi, otherSegment?.verdi)
+            if (verdi == null) null else Segment(periode, verdi)
+        })
+    }
 }
