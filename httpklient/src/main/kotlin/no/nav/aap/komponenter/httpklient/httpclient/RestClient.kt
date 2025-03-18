@@ -6,6 +6,7 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import no.nav.aap.komponenter.httpklient.httpclient.error.DefaultResponseHandler
 import no.nav.aap.komponenter.httpklient.httpclient.error.RestResponseHandler
 import no.nav.aap.komponenter.httpklient.httpclient.request.BodyConverter
+import no.nav.aap.komponenter.httpklient.httpclient.request.DeleteMedBodyRequest
 import no.nav.aap.komponenter.httpklient.httpclient.request.DeleteRequest
 import no.nav.aap.komponenter.httpklient.httpclient.request.GetRequest
 import no.nav.aap.komponenter.httpklient.httpclient.request.PatchRequest
@@ -34,6 +35,7 @@ public class RestClient<K>(
     private val prometheus: MeterRegistry = SimpleMeterRegistry(),
 ) {
     private val log = org.slf4j.LoggerFactory.getLogger(javaClass)
+
     init {
         if (prometheus is SimpleMeterRegistry) {
             log.info("Send gjerne inn en ekte Prometheus-instans for å få bedre metrikker.")
@@ -83,6 +85,16 @@ public class RestClient<K>(
         return executeRequestAndHandleResponse(httpRequest, mapper)
     }
 
+    public fun <T : Any, R> deleteMedBody(
+        uri: URI,
+        request: DeleteMedBodyRequest<T>,
+        mapper: (K, HttpHeaders) -> R
+    ): R? {
+        val httpRequest = buildRequest(uri, request)
+
+        return executeRequestAndHandleResponse(httpRequest, mapper)
+    }
+
     private fun buildRequest(uri: URI, request: Request): HttpRequest {
         val httpRequest = HttpRequest.newBuilder(uri)
             .addHeaders(request)
@@ -105,6 +117,17 @@ public class RestClient<K>(
                 )
             ).header("Content-Type", request.contentType().toString())
 
+            is DeleteMedBodyRequest<*> ->
+                httpRequest.method(
+                    "DELETE", HttpRequest.BodyPublishers.ofString(
+                        BodyConverter.convert(
+                            request.body(), request.contentType()
+                        )
+                    )
+                )
+                    .header("Content-Type", request.contentType().toString())
+
+
             is PutRequest<*> -> httpRequest.PUT(
                 HttpRequest.BodyPublishers.ofString(
                     BodyConverter.convert(
@@ -118,7 +141,7 @@ public class RestClient<K>(
     }
 
     private fun <R> executeRequestAndHandleResponse(request: HttpRequest, mapper: (K, HttpHeaders) -> R): R? {
-        val response = client.send(request, responseHandler.bodyHandler());
+        val response = client.send(request, responseHandler.bodyHandler())
 
         return Timer.builder("kelvin_restclient_timer")
             .tags("uri", request.uri().host, "method", request.method())
