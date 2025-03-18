@@ -36,7 +36,7 @@ public class RestClient<K>(
     private val log = org.slf4j.LoggerFactory.getLogger(javaClass)
     init {
         if (prometheus is SimpleMeterRegistry) {
-            log.warn("Send gjerne inn en ekte Prometheus-instans for å få bedre metrikker.")
+            log.info("Send gjerne inn en ekte Prometheus-instans for å få bedre metrikker.")
         }
     }
 
