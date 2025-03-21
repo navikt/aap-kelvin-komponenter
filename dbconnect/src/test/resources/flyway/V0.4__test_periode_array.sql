@@ -1,0 +1,5 @@
+CREATE TABLE TEST_PERIODE_ARRAY
+(
+    TEST daterange[] NOT NULL
+);
+

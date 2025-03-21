@@ -162,6 +162,11 @@ public class Row internal constructor(private val resultSet: ResultSet) {
         return DaterangeParser.fromSQL(dateRange)
     }
 
+    public fun getPeriodeArray(columnLabel: String): List<Periode> {
+        return (resultSet.getArray(columnLabel).array as Array<*>)
+            .map { DaterangeParser.fromSQL(it.toString()) }
+    }
+
     /**
      * Feltet [elementType] må være av en type JDBC returnerer.
      * Example:

@@ -403,6 +403,35 @@ internal class ParamsOgRowTest {
     }
 
     @Test
+    fun `Skriver og leser med periode-array`() {
+        InitTestDatabase.dataSource.transaction { connection ->
+            val perioderInn = listOf(
+                Periode(LocalDate.of(1990, 6, 1), LocalDate.of(2200, 1, 1)),
+                Periode(LocalDate.of(2020, 1, 5), LocalDate.of(2020, 5, 3)),
+            )
+            connection.execute(
+                """
+                    INSERT INTO TEST_PERIODE_ARRAY(TEST)
+                    VALUES (?::daterange[])
+                """,
+            ) {
+                setParams {
+                    setPeriodeArray(1, perioderInn)
+                }
+            }
+
+
+            val perioderUt = connection.queryFirst("SELECT TEST FROM TEST_PERIODE_ARRAY") {
+                setRowMapper { row ->
+                    row.getPeriodeArray("TEST")
+                }
+            }
+            assertThat(perioderUt)
+                .isEqualTo(perioderInn)
+        }
+    }
+
+    @Test
     fun `CURRENT_TIMESTAMP i postgres (UTC) matcher LocalDateTime now() i pod (Europe Oslo)`() {
         InitTestDatabase.dataSource.transaction { connection ->
             val currentTimestamp = connection.queryFirst("""

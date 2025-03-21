@@ -105,4 +105,9 @@ public class Params internal constructor(
         val array = connection.createArrayOf("BIGINT", longs.toTypedArray())
         preparedStatement.setArray(index, array)
     }
+
+    public fun setPeriodeArray(index: Int, perioder: List<Periode>) {
+        val array = connection.createArrayOf("daterange", perioder.map(DaterangeParser::toSQL).toTypedArray())
+        preparedStatement.setArray(index, array)
+    }
 }
