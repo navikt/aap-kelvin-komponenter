@@ -90,6 +90,19 @@ public class DBConnection internal constructor(
             return@use executeStatement.executeReturnKeys()
         }
     }
+    
+    public fun executeReturnUpdated(
+        @Language("PostgreSQL")
+        query: String,
+        block: Execute.() -> Unit = {}
+    ): Int {
+        return this.connection.prepareStatement(query).use { preparedStatement ->
+            preparedStatement.queryTimeout = QUERY_TIMEOUT_IN_SECONDS
+            val executeStatement = Execute(preparedStatement, this.connection)
+            executeStatement.block()
+            return@use executeStatement.executeReturnUpdated()
+        }
+    }
 
     public fun <T> queryFirstOrNull(
         @Language("PostgreSQL")

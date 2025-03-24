@@ -41,6 +41,18 @@ internal class DBConnectionTest {
     }
 
     @Test
+    fun `Kan returnere antall rader oppdatert`() {
+        val insert = InitTestDatabase.dataSource.transaction { connection ->
+            connection.executeReturnUpdated("INSERT INTO test (test) VALUES ('a'), ('b')")
+        }
+        val update = InitTestDatabase.dataSource.transaction { connection ->
+            connection.executeReturnUpdated("UPDATE test set test = 'c' where test = 'a'")
+        }
+        assertThat(insert).isEqualTo(2)
+        assertThat(update).isEqualTo(1)
+    }
+
+    @Test
     fun `Henter ingen rader fra DB`() {
         val result = InitTestDatabase.dataSource.transaction { connection ->
             connection.queryFirstOrNull("SELECT test FROM test") {

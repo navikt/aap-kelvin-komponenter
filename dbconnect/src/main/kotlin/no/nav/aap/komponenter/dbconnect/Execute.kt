@@ -22,6 +22,12 @@ public class Execute internal constructor(
         resultValidator(rowsUpdated)
     }
 
+    internal fun executeReturnUpdated(): Int {
+        val rowsUpdated = preparedStatement.executeUpdate()
+        resultValidator(rowsUpdated)
+        return rowsUpdated
+    }
+
     internal fun executeReturnKey(): Long {
         return executeReturnKeysPrivate().single()
     }
