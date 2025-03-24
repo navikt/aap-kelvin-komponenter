@@ -56,8 +56,8 @@ public fun NormalOpenAPIRoute.motorApi(dataSource: DataSource) {
             }
         }
         route("/{jobbId}/kjor") {
-            val nå = LocalDateTime.now()
             post<JobbIdDTO, String, Unit>(modules) { jobbId, _ ->
+                val nå = LocalDateTime.now()
                 val oppdatert = dataSource.transaction { connection ->
                     DriftJobbRepositoryExposed(connection).settNesteKjøring(jobbId.jobbId, nå)
                 }
