@@ -194,7 +194,7 @@ internal class RetryFeiledeJobberRepository(private val connection: DBConnection
             }
         }
     }
-
+    
     internal fun mapJobbInklusivFeilmelding(row: Row): Pair<JobbInput, String?> {
         return JobbInputParser.mapJobb(row) to row.getStringOrNull("feilmelding")
     }

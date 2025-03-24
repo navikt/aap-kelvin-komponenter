@@ -2,11 +2,18 @@ package no.nav.aap.motor.retry
 
 import no.nav.aap.komponenter.dbconnect.DBConnection
 import no.nav.aap.motor.JobbInput
+import no.nav.aap.motor.JobbRepository
 import no.nav.aap.motor.JobbType
+import java.time.LocalDateTime
 
 public class DriftJobbRepositoryExposed(connection: DBConnection) {
     private val retryFeiledeOppgaverRepository = RetryFeiledeJobberRepository(connection)
+    private val jobbRepository = JobbRepository(connection)
 
+    public fun settNesteKjøring(jobbId: Long, nesteKjøring: LocalDateTime): Int {
+        return jobbRepository.settNesteKjøring(jobbId, nesteKjøring)
+    }
+    
     public fun markerAlleFeiledeForKlare(): Int {
         return retryFeiledeOppgaverRepository.markerAlleFeiledeForKlare()
     }

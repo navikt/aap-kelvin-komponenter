@@ -4,6 +4,7 @@ import com.papsign.ktor.openapigen.APITag
 import com.papsign.ktor.openapigen.route.TagModule
 import com.papsign.ktor.openapigen.route.path.normal.NormalOpenAPIRoute
 import com.papsign.ktor.openapigen.route.path.normal.get
+import com.papsign.ktor.openapigen.route.path.normal.post
 import com.papsign.ktor.openapigen.route.response.respond
 import com.papsign.ktor.openapigen.route.route
 import no.nav.aap.komponenter.dbconnect.DBConnection
@@ -11,6 +12,7 @@ import no.nav.aap.komponenter.dbconnect.transaction
 import no.nav.aap.motor.JobbInput
 import no.nav.aap.motor.mdc.JobbLogInfoProviderHolder
 import no.nav.aap.motor.retry.DriftJobbRepositoryExposed
+import java.time.LocalDateTime
 import javax.sql.DataSource
 
 private enum class Tags(override val description: String) : APITag {
@@ -51,6 +53,18 @@ public fun NormalOpenAPIRoute.motorApi(dataSource: DataSource) {
                     }
                 }
                 respond(saker)
+            }
+        }
+        route("/{jobbId}/kjor") {
+            val nå = LocalDateTime.now()
+            post<JobbIdDTO, String, Unit>(modules) { jobbId, _ ->
+                val oppdatert = dataSource.transaction { connection ->
+                    DriftJobbRepositoryExposed(connection).settNesteKjøring(jobbId.jobbId, nå)
+                }
+                if (oppdatert == 0) {
+                    respond("Kunne ikke oppdatere tidspunkt for neste kjøring for jobb med ID $jobbId")
+                } 
+                respond("Setter neste kjøring for jobb med ID $jobbId til $nå.")
             }
         }
         route("/rekjor/{jobbId}") {
