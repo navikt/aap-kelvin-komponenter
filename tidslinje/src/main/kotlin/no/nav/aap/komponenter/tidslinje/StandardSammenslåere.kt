@@ -195,7 +195,49 @@ public object StandardSammenslåere {
         }
     }
 
-    public fun <T> xor(): JoinStyle<T ,T , T> {
+    /**
+     * For to tidslinjer av samme type, kombiner til en tidslinje med liste av verdier:
+     *
+     * ```
+     *             venstre     høyre    OUTER_JOIN
+     * 2020-01-01  +------+             +------------+
+     *             | [1]  |             | [1]        |
+     * 2020-01-02  |      |   +------+  +------------+
+     *             |      |   | 3    |  | [1, 3]     |
+     * 2020-01-03  |      |   +------+  +------------+
+     *             |      |   | 4    |  | [1, 4]     |
+     * 2020-01-04  +------+   |      |  +------------+
+     *             | [2]  |   |      |  | [2, 4]     |
+     * 2020-01-05  |      |   |      |  |            |
+     *             |      |   |      |  |            |
+     * 2020-01-06  |      |   |      |  |            |
+     *             |      |   |      |  |            |
+     * 2020-01-07  |      |   |      |  |            |
+     *             |      |   |      |  |            |
+     * 2020-01-08  |      |   +------+  +------------+
+     *             |      |             | [2]        |
+     * 2020-01-09  |      |             |            |
+     *             |      |             |            |
+     * 2020-01-10  |      |             |            |
+     *             |      |             |            |
+     * 2020-01-11  +------+             +------------+
+     *```
+     */
+    public fun <E> slåSammenTilListe(): JoinStyle.OUTER_JOIN<List<E>, E, List<E>> {
+        return JoinStyle.OUTER_JOIN { periode, venstre, høyre ->
+            if (venstre == null && høyre == null) {
+                null
+            } else if (venstre != null && høyre == null) {
+                Segment(periode, venstre.verdi)
+            } else if (høyre != null && venstre == null) {
+                Segment(periode, listOf(høyre.verdi))
+            } else {
+                Segment(periode, venstre?.verdi.orEmpty() + listOfNotNull(høyre?.verdi))
+            }
+        }
+    }
+
+    public fun <T> xor(): JoinStyle<T, T, T> {
         return JoinStyle.OUTER_JOIN { p, venstreSegment, høyreSegment ->
             when {
                 venstreSegment == null && høyreSegment != null -> høyreSegment

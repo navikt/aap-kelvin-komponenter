@@ -1,5 +1,6 @@
 package no.nav.aap.komponenter.tidslinje
 
+import no.nav.aap.komponenter.tidslinje.StandardSammenslåere.slåSammenTilListe
 import no.nav.aap.komponenter.type.Periode
 import no.nav.aap.komponenter.verdityper.Beløp
 import no.nav.aap.komponenter.verdityper.Prosent
@@ -249,7 +250,30 @@ class TidslinjeTest {
             )
 
         )
+    }
 
+    @Test
+    fun `slå sammen til liste`() {
+        val firstSegmentA = Segment(Periode(LocalDate.of(2020, 1, 1), LocalDate.of(2020, 1, 3)), listOf(1))
+        val andreSegmentA = Segment(Periode(LocalDate.of(2020, 1, 4), LocalDate.of(2020, 1, 10)), listOf(2))
+
+        val firstSegmentB = Segment(Periode(LocalDate.of(2020, 1, 2), LocalDate.of(2020, 1, 2)), 3)
+        val andreSegmentB = Segment(Periode(LocalDate.of(2020, 1, 3), LocalDate.of(2020, 1, 7)), 4)
+
+        val tidslinje1 = Tidslinje(listOf(firstSegmentA, andreSegmentA))
+        val tidslinje2 = Tidslinje(listOf(firstSegmentB, andreSegmentB))
+
+        val res = tidslinje1.kombiner(tidslinje2, StandardSammenslåere.slåSammenTilListe())
+
+        printBinaryFunction(tidslinje1, tidslinje2, slåSammenTilListe())
+
+        assertThat(res.segmenter()).containsExactly(
+            Segment(Periode(LocalDate.of(2020, 1, 1), LocalDate.of(2020, 1, 1)), listOf(1)),
+            Segment(Periode(LocalDate.of(2020, 1, 2), LocalDate.of(2020, 1, 2)), listOf(1, 3)),
+            Segment(Periode(LocalDate.of(2020, 1, 3), LocalDate.of(2020, 1, 3)), listOf(1, 4)),
+            Segment(Periode(LocalDate.of(2020, 1, 4), LocalDate.of(2020, 1, 7)), listOf(2, 4)),
+            Segment(Periode(LocalDate.of(2020, 1, 8), LocalDate.of(2020, 1, 10)), listOf(2))
+        )
     }
 }
 
