@@ -3,7 +3,7 @@ plugins {
 }
 
 dependencies {
-    implementation("com.zaxxer:HikariCP:6.2.1")
+    implementation("com.zaxxer:HikariCP:6.3.0")
     implementation("org.flywaydb:flyway-database-postgresql:11.4.1")
     runtimeOnly("org.postgresql:postgresql:42.7.5")
 
