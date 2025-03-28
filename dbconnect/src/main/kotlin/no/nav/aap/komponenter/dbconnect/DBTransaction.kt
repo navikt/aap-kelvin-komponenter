@@ -19,7 +19,7 @@ internal class DBTransaction(connection: Connection, private val readOnly: Boole
             return result
         } catch (e: Throwable) {
             if (!readOnly) {
-                log.warn("Kjører rollback etter feil. '{}'", e.message, e)
+                log.info("Kjører rollback etter feil. Feil-type: ${e.javaClass.name}")
             }
             // Kaller fortsatt på rollback for en readOnly transaction, må frigjøre eventuelle databaselåser
             dbConnection.rollback()
