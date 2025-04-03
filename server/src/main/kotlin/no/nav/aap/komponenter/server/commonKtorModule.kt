@@ -11,9 +11,11 @@ import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.request.*
 import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.binder.logging.LogbackMetrics
+import no.nav.aap.komponenter.httpklient.auth.bruker
 import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.azurecc.AzureConfig
 import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.tokenx.TokenxConfig
 import no.nav.aap.komponenter.json.DefaultJsonMapper
+import no.nav.aap.komponenter.server.common.MdcKeys
 import java.util.*
 
 /**
@@ -38,10 +40,11 @@ public fun Application.commonKtorModule(
         register(ContentType.Application.Json, JacksonConverter(objectMapper = DefaultJsonMapper.objectMapper(), true))
     }
     install(CallLogging) {
-        callIdMdc("callId")
+        callIdMdc(MdcKeys.CallId)
         // For å unngå rare tegn i loggene
         disableDefaultColors()
         filter { call -> call.request.path().startsWith("/actuator").not() }
+        mdc(MdcKeys.User) { call -> runCatching { call.bruker().ident }.getOrNull() }
     }
     install(CallId) {
         retrieveFromHeader(HttpHeaders.XCorrelationId)
