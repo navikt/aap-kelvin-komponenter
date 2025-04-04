@@ -5,7 +5,6 @@ import org.slf4j.LoggerFactory
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
 import kotlin.reflect.full.companionObject
-import kotlin.reflect.full.companionObjectInstance
 import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.full.isSubtypeOf
 import kotlin.reflect.full.starProjectedType
@@ -77,40 +76,6 @@ public class RepositoryRegistry {
     }
 
     public fun provider(connection: DBConnection): RepositoryProvider {
-        return RepositoryProvider(connection)
-    }
-
-    public inner class RepositoryProvider internal constructor (private val connection: DBConnection) {
-
-        public inline fun <reified T : Repository> provide(): T {
-            return provide(T::class)
-        }
-
-        public fun <T : Repository> provide(klass: KClass<T>): T {
-            val repositoryKlass = this@RepositoryRegistry.fetch(klass.starProjectedType)
-            return internalCreate(repositoryKlass)
-        }
-
-        public fun provideAlle(): List<Repository> {
-            return this@RepositoryRegistry.alle().map { klass -> internalCreate(klass) }
-        }
-
-        private fun<T: Repository> internalCreate(repositoryKlass: KClass<Repository>): T {
-            val companionObjectType = repositoryKlass.companionObject
-            if (companionObjectType == null && repositoryKlass.objectInstance != null
-                && repositoryKlass.isSubclassOf(Repository::class)
-            ) {
-                return repositoryKlass.objectInstance as T
-            }
-
-            val companionObject = repositoryKlass.companionObjectInstance
-            requireNotNull(companionObject) {
-                "Repository må ha companion object"
-            }
-            if (companionObject is RepositoryFactory<*>) {
-                return companionObject.konstruer(connection) as T
-            }
-            throw IllegalStateException("Repository må ha et companion object som implementerer Factory<T> interfacet.")
-        }
+        return RepositoryProvider(connection, this)
     }
 }
