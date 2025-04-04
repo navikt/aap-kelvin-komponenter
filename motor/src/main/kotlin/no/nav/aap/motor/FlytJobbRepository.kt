@@ -9,8 +9,10 @@ public interface FlytJobbRepository: Repository {
     public fun hentJobberForBehandling(id: Long): List<JobbInput>
     public fun hentFeilmeldingForOppgave(id: Long): String
 
-    public operator fun invoke(connection: DBConnection): FlytJobbRepository {
-        return FlytJobbRepositoryImpl(connection)
+    public companion object {
+        public operator fun invoke(connection: DBConnection): FlytJobbRepository {
+            return FlytJobbRepositoryImpl(connection)
+        }
     }
 }
 
