@@ -1,15 +1,27 @@
 package no.nav.aap.motor
 
 import no.nav.aap.komponenter.dbconnect.DBConnection
+import no.nav.aap.komponenter.repository.RepositoryFactory
+import no.nav.aap.komponenter.repository.Repository
 
-public class FlytJobbRepository(private val connection: DBConnection) {
+public interface FlytJobbRepository: Repository {
+    public fun leggTil(jobbInput: JobbInput)
+    public fun hentJobberForBehandling(id: Long): List<JobbInput>
+    public fun hentFeilmeldingForOppgave(id: Long): String
+
+    public operator fun invoke(connection: DBConnection): FlytJobbRepository {
+        return FlytJobbRepositoryImpl(connection)
+    }
+}
+
+public class FlytJobbRepositoryImpl(private val connection: DBConnection) : FlytJobbRepository {
     private val jobbRepository = JobbRepository(connection)
 
-    public fun leggTil(jobbInput: JobbInput) {
+    override fun leggTil(jobbInput: JobbInput) {
         jobbRepository.leggTil(jobbInput)
     }
 
-    public fun hentJobberForBehandling(id: Long): List<JobbInput> {
+    override fun hentJobberForBehandling(id: Long): List<JobbInput> {
         val query = """
             SELECT *, (SELECT count(1) FROM JOBB_HISTORIKK h WHERE h.jobb_id = op.id AND h.status = '${JobbStatus.FEILET.name}') as antall_feil
                  FROM JOBB op
@@ -27,7 +39,7 @@ public class FlytJobbRepository(private val connection: DBConnection) {
         }
     }
 
-    public fun hentFeilmeldingForOppgave(id: Long): String {
+    override fun hentFeilmeldingForOppgave(id: Long): String {
         val query = """
             SELECT * 
             FROM JOBB_HISTORIKK 
@@ -43,6 +55,12 @@ public class FlytJobbRepository(private val connection: DBConnection) {
             setRowMapper { row ->
                 row.getString("feilmelding")
             }
+        }
+    }
+
+    public companion object: RepositoryFactory<FlytJobbRepository> {
+        override fun konstruer(connection: DBConnection): FlytJobbRepository {
+            return FlytJobbRepositoryImpl(connection)
         }
     }
 }
