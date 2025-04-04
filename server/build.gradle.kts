@@ -17,7 +17,7 @@ dependencies {
     api("io.ktor:ktor-server-metrics-micrometer:$ktorVersion")
     api("io.ktor:ktor-server-netty:$ktorVersion")
     constraints {
-        implementation("io.netty:netty-common:4.1.119.Final")
+        implementation("io.netty:netty-common:4.2.0.Final")
     }
     api("io.ktor:ktor-server-cors:$ktorVersion")
     api("io.ktor:ktor-server-status-pages:$ktorVersion")
