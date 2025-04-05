@@ -41,44 +41,56 @@ internal class JobbRepository(private val connection: DBConnection) {
     internal fun plukkJobb(): JobbInput? {
 
         val query = """
-            with rekkefolge as ((select distinct on (sak_id, behandling_id) id
-                                 from JOBB
-                                 where status IN ('${JobbStatus.FEILET.name}', '${JobbStatus.KLAR.name}')
-                                   AND (sak_id is not null OR (sak_id is null and behandling_id is not null))
-                                 ORDER BY sak_id, behandling_id, neste_kjoring ASC)
-                                UNION ALL
-                                (select id
-                                 from JOBB
-                                 where status = '${JobbStatus.KLAR.name}'
-                                   AND sak_id IS NULL
-                                   AND BEHANDLING_id IS NULL
-                                   ORDER BY neste_kjoring ASC))
-                                   
-            SELECT o.id,
-                   o.type,
-                   o.status,
-                   o.sak_id,
-                   o.behandling_id,
-                   o.neste_kjoring,
-                   o.parameters,
-                   o.payload,
-                   (SELECT count(1)
-                    FROM JOBB_HISTORIKK h
-                    WHERE h.jobb_id = o.id
-                      AND h.status = '${JobbStatus.FEILET.name}') as antall_feil
-            FROM JOBB o
-                     INNER JOIN rekkefolge r ON r.id = o.id
-            WHERE o.STATUS = '${JobbStatus.KLAR.name}'
-              AND o.neste_kjoring < ?
-            ORDER BY o.neste_kjoring ASC
-                FOR UPDATE SKIP LOCKED
-            LIMIT 1
+            with ekskluderende_jobb as (
+                select distinct on (sak_id, behandling_id) id, status, neste_kjoring
+                from jobb
+                where status IN ('${JobbStatus.FEILET.name}', '${JobbStatus.KLAR.name}')
+                  and (sak_id is not null or (sak_id is null and behandling_id is not null))
+                  and neste_kjoring < ?
+                order by sak_id, behandling_id, neste_kjoring asc
+            ),
+            klar_ekskluderende_jobb as (
+                select id, neste_kjoring
+                from ekskluderende_jobb
+                where status = '${JobbStatus.KLAR.name}'
+            ),
+            klar_selvstendig_jobb as (
+                select id, neste_kjoring
+                from jobb
+                where status = '${JobbStatus.KLAR.name}'
+                  and sak_id is null
+                  and behandling_id is null
+                  and neste_kjoring < ?
+            ),
+            jobb_kandidat as (
+                (select * from klar_ekskluderende_jobb)
+                union
+                (select * from klar_selvstendig_jobb)
+            )
 
+            select jobb.id,
+                   jobb.type,
+                   jobb.status,
+                   jobb.sak_id,
+                   jobb.behandling_id,
+                   jobb.neste_kjoring,
+                   jobb.parameters,
+                   jobb.payload,
+                   (select count(1)
+                    from jobb_historikk
+                    where jobb_historikk.jobb_id = jobb.id
+                      and jobb_historikk.status = '${JobbStatus.FEILET.name}') as antall_feil
+            from jobb
+            inner join jobb_kandidat on jobb_kandidat.id = jobb.id
+            order by jobb_kandidat.neste_kjoring asc
+            for update skip locked
+            limit 1
         """.trimIndent()
 
         val plukketJobb = connection.queryFirstOrNull(query) {
             setParams {
                 setLocalDateTime(1, LocalDateTime.now())
+                setLocalDateTime(2, LocalDateTime.now())
             }
             setRowMapper { row ->
                 JobbInputParser.mapJobb(row)
