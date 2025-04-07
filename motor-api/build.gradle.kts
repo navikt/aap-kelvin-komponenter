@@ -28,7 +28,7 @@ dependencies {
         }
     }
     testImplementation("ch.qos.logback:logback-classic:1.5.18")
-    testImplementation("net.logstash.logback:logstash-logback-encoder:8.0")
+    testImplementation("net.logstash.logback:logstash-logback-encoder:8.1")
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
 }
 
