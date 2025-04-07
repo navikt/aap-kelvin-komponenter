@@ -9,7 +9,6 @@ import no.nav.aap.motor.help.TullTestJobbUtfører
 import no.nav.aap.motor.mdc.NoExtraLogInfoProvider
 import no.nav.aap.motor.testutil.TestUtil
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.slf4j.LoggerFactory
@@ -23,12 +22,6 @@ class MotorTest {
     private val dataSource = InitTestDatabase.dataSource
 
     private val util = TestUtil(dataSource, JobbType.cronTypes())
-
-    @BeforeEach
-    fun beforeEach() {
-        InitTestDatabase.clean()
-        InitTestDatabase.migrate()
-    }
 
     @Test
     fun `test å kjøre en enkel jobb`() {
