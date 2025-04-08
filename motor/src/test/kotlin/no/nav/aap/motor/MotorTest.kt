@@ -9,6 +9,7 @@ import no.nav.aap.motor.help.TullTestJobbUtfører
 import no.nav.aap.motor.mdc.NoExtraLogInfoProvider
 import no.nav.aap.motor.testutil.TestUtil
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.slf4j.LoggerFactory
@@ -20,6 +21,13 @@ private val logger = LoggerFactory.getLogger(MotorTest::class.java)
 
 class MotorTest {
     private val dataSource = InitTestDatabase.freshDatabase()
+
+    @BeforeEach
+    fun beforeEach() {
+        val flyway = InitTestDatabase.flywayFor(dataSource)
+        flyway.clean()
+        flyway.migrate()
+    }
 
     private val util = TestUtil(dataSource, JobbType.cronTypes())
 

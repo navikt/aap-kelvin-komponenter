@@ -17,7 +17,7 @@ public object InitTestDatabase {
         .withDatabaseName(clerkDatabase)
 
     private val clerkDataSource: DataSource
-    private var flyway: Flyway
+    private var flyway: FlywayOps
 
     @Deprecated("skaff deg din egen private og tomme database ved å kalle `InitTestDatabase.freshDatabase()`")
     public val dataSource: DataSource
@@ -26,25 +26,11 @@ public object InitTestDatabase {
         postgres.start()
         clerkDataSource = newDataSource("clerk")
 
-        Flyway
-            .configure()
-            .cleanDisabled(false)
-            .dataSource(newDataSource("template1"))
-            .locations("flyway")
-            .validateMigrationNaming(true)
-            .load()
+        flywayFor(newDataSource("template1"))
             .migrate()
 
-
         dataSource = freshDatabase()
-        flyway = Flyway
-            .configure()
-            .cleanDisabled(false)
-            .dataSource(dataSource)
-            .locations("flyway")
-            .validateMigrationNaming(true)
-            .load()
-
+        flyway = flywayFor(dataSource)
     }
 
     public fun freshDatabase(): DataSource {
@@ -55,6 +41,31 @@ public object InitTestDatabase {
             }
         }
         return newDataSource(databaseName)
+    }
+
+    public interface FlywayOps {
+        public fun migrate()
+        public fun clean()
+    }
+
+    public fun flywayFor(dataSource: DataSource): FlywayOps {
+        return object : FlywayOps {
+            private val flyway = Flyway
+                .configure()
+                .cleanDisabled(false)
+                .dataSource(dataSource)
+                .locations("flyway")
+                .validateMigrationNaming(true)
+                .load()
+
+            override fun migrate() {
+                flyway.migrate()
+            }
+
+            override fun clean() {
+                flyway.clean()
+            }
+        }
     }
 
     private fun newDataSource(dbname: String): DataSource {
