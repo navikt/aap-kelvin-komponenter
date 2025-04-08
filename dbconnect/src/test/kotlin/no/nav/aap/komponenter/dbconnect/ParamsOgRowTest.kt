@@ -18,16 +18,18 @@ import java.time.temporal.ChronoUnit
 import java.util.*
 
 internal class ParamsOgRowTest {
+    private val dataSource = InitTestDatabase.freshDatabase()
+
     @BeforeEach
     fun setup() {
-        InitTestDatabase.dataSource.transaction { connection ->
+        dataSource.transaction { connection ->
             connection.execute("TRUNCATE TEST_BYTES, TEST_STRING, TEST_ENUM, TEST_INT, TEST_LONG, TEST_BIG_DECIMAL, TEST_UUID, TEST_BOOLEAN, TEST_DATERANGE, TEST_LOCALDATE, TEST_LOCALDATETIME, TEST_INSTANT")
         }
     }
 
     @Test
     fun `Skriver og leser ByteArray og null-verdi riktig`() {
-        InitTestDatabase.dataSource.transaction { connection ->
+        dataSource.transaction { connection ->
             connection.execute(
                 """
                     INSERT INTO TEST_BYTES (TEST, TEST_NULL)
@@ -52,7 +54,7 @@ internal class ParamsOgRowTest {
 
     @Test
     fun `Skriver og leser String og null-verdi riktig`() {
-        InitTestDatabase.dataSource.transaction { connection ->
+        dataSource.transaction { connection ->
             connection.execute(
                 """
                     INSERT INTO TEST_STRING (TEST, TEST_NULL)
@@ -81,7 +83,7 @@ internal class ParamsOgRowTest {
 
     @Test
     fun `Skriver og leser Enum og null-verdi riktig`() {
-        InitTestDatabase.dataSource.transaction { connection ->
+        dataSource.transaction { connection ->
             connection.execute(
                 """
                     INSERT INTO TEST_ENUM (TEST, TEST_NULL)
@@ -106,7 +108,7 @@ internal class ParamsOgRowTest {
 
     @Test
     fun `Skriver og leser Int og null-verdi riktig`() {
-        InitTestDatabase.dataSource.transaction { connection ->
+        dataSource.transaction { connection ->
             connection.execute(
                 """
                     INSERT INTO TEST_INT (TEST_0, TEST_1, TEST_NULL)
@@ -134,7 +136,7 @@ internal class ParamsOgRowTest {
 
     @Test
     fun `Skriver og leser Long og null-verdi riktig`() {
-        InitTestDatabase.dataSource.transaction { connection ->
+        dataSource.transaction { connection ->
             connection.execute(
                 """
                     INSERT INTO TEST_LONG (TEST_0, TEST_1, TEST_NULL)
@@ -162,7 +164,7 @@ internal class ParamsOgRowTest {
 
     @Test
     fun `Skriver og leser Double og null-verdi riktig`() {
-        InitTestDatabase.dataSource.transaction { connection ->
+        dataSource.transaction { connection ->
             connection.execute(
                 """
                     INSERT INTO TEST_DOUBLE (TEST_0, TEST_1, TEST_NULL)
@@ -190,7 +192,7 @@ internal class ParamsOgRowTest {
 
     @Test
     fun `Skriver og leser BigDecimal og null-verdi riktig`() {
-        InitTestDatabase.dataSource.transaction { connection ->
+        dataSource.transaction { connection ->
             connection.execute(
                 """
                     INSERT INTO TEST_BIG_DECIMAL (TEST_0, TEST_1, TEST_NULL)
@@ -220,7 +222,7 @@ internal class ParamsOgRowTest {
     @Test
     fun `Skriver og leser UUID og null-verdi riktig`() {
         val randomUUID = UUID.randomUUID()
-        InitTestDatabase.dataSource.transaction { connection ->
+        dataSource.transaction { connection ->
             connection.execute(
                 """
                     INSERT INTO TEST_UUID (TEST, TEST_NULL)
@@ -245,7 +247,7 @@ internal class ParamsOgRowTest {
 
     @Test
     fun `Skriver og leser Boolean og null-verdi riktig`() {
-        InitTestDatabase.dataSource.transaction { connection ->
+        dataSource.transaction { connection ->
             connection.execute(
                 """
                     INSERT INTO TEST_BOOLEAN (TEST_FALSE, TEST_TRUE, TEST_NULL)
@@ -273,7 +275,7 @@ internal class ParamsOgRowTest {
 
     @Test
     fun `Skriver og leser Periode og null-verdi riktig`() {
-        InitTestDatabase.dataSource.transaction { connection ->
+        dataSource.transaction { connection ->
             connection.execute(
                 """
                     INSERT INTO TEST_DATERANGE (TEST, TEST_NULL)
@@ -300,7 +302,7 @@ internal class ParamsOgRowTest {
     @Test
     fun `Skriver og leser LocalDate og null-verdi riktig`() {
         val localDate = LocalDate.of(2016, Month.AUGUST, 12)
-        InitTestDatabase.dataSource.transaction { connection ->
+        dataSource.transaction { connection ->
             connection.execute(
                 """
                     INSERT INTO TEST_LOCALDATE (TEST, TEST_NULL)
@@ -326,7 +328,7 @@ internal class ParamsOgRowTest {
     @Test
     fun `Skriver og leser LocalDateTime og null-verdi riktig`() {
         val localDateTime = LocalDateTime.of(2016, Month.AUGUST, 12, 9, 38, 12, 123456000)
-        InitTestDatabase.dataSource.transaction { connection ->
+        dataSource.transaction { connection ->
             connection.execute(
                 """
                     INSERT INTO TEST_LOCALDATETIME (TEST, TEST_NULL)
@@ -352,7 +354,7 @@ internal class ParamsOgRowTest {
     @Test
     fun `Skriver og leser Instant og null-verdi riktig`() {
         val instant = Instant.parse("2016-08-12T09:38:12Z")
-        InitTestDatabase.dataSource.transaction { connection ->
+        dataSource.transaction { connection ->
             connection.execute(
                 """
                     INSERT INTO TEST_INSTANT (TEST, TEST_NULL)
@@ -377,7 +379,7 @@ internal class ParamsOgRowTest {
 
     @Test
     fun `Skriver og leser med listeparametre`() {
-        InitTestDatabase.dataSource.transaction { connection ->
+        dataSource.transaction { connection ->
             connection.executeBatch(
                 """
                     INSERT INTO TEST_ARRAY_QUERY (TEST)
@@ -404,7 +406,7 @@ internal class ParamsOgRowTest {
 
     @Test
     fun `Skriver og leser med periode-array`() {
-        InitTestDatabase.dataSource.transaction { connection ->
+        dataSource.transaction { connection ->
             val perioderInn = listOf(
                 Periode(LocalDate.of(1990, 6, 1), LocalDate.of(2200, 1, 1)),
                 Periode(LocalDate.of(2020, 1, 5), LocalDate.of(2020, 5, 3)),
@@ -433,7 +435,7 @@ internal class ParamsOgRowTest {
 
     @Test
     fun `CURRENT_TIMESTAMP i postgres (UTC) matcher LocalDateTime now() i pod (Europe Oslo)`() {
-        InitTestDatabase.dataSource.transaction { connection ->
+        dataSource.transaction { connection ->
             val currentTimestamp = connection.queryFirst("""
                 SELECT CURRENT_TIMESTAMP as LOCALDATETIME;
             """.trimIndent()
@@ -452,7 +454,7 @@ internal class ParamsOgRowTest {
 
     @Test
     fun `CURRENT_TIMESTAMP i postgres (UTC) matcher Instant now() i pod (Europe Oslo)`() {
-        InitTestDatabase.dataSource.transaction { connection ->
+        dataSource.transaction { connection ->
             val currentTimestamp = connection.queryFirst("""
                 SELECT CURRENT_TIMESTAMP as INSTANT;
             """.trimIndent()
@@ -471,7 +473,7 @@ internal class ParamsOgRowTest {
 
     @Test
     fun `get array of integers`() {
-        InitTestDatabase.dataSource.transaction { connection ->
+        dataSource.transaction { connection ->
             val array = connection.queryFirst("""
                 SELECT ARRAY[1, 2, 3] AS my_array;
             """.trimIndent()
@@ -486,7 +488,7 @@ internal class ParamsOgRowTest {
     }
     @Test
     fun `get array of strings`() {
-        InitTestDatabase.dataSource.transaction { connection ->
+        dataSource.transaction { connection ->
             val array = connection.queryFirst("""
                 SELECT ARRAY['ff', 'hei', 'df'] AS my_array;
             """.trimIndent()

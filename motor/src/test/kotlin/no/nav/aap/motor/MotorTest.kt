@@ -19,7 +19,7 @@ import kotlin.system.measureTimeMillis
 private val logger = LoggerFactory.getLogger(MotorTest::class.java)
 
 class MotorTest {
-    private val dataSource = InitTestDatabase.dataSource
+    private val dataSource = InitTestDatabase.freshDatabase()
 
     private val util = TestUtil(dataSource, JobbType.cronTypes())
 

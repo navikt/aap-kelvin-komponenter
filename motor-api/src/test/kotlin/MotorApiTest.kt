@@ -21,7 +21,7 @@ import javax.sql.DataSource
 class MotorApiTest {
     @Test
     fun `skal ikke krasje på ingen planlagte jobber`() {
-        val ds = InitTestDatabase.dataSource
+        val ds = InitTestDatabase.freshDatabase()
         val motor = Motor(ds, jobber = listOf(TøysTestJobbUtfører))
 
         motor.start()

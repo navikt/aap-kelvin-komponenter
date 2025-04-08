@@ -4,23 +4,64 @@ import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import org.flywaydb.core.Flyway
 import org.testcontainers.containers.PostgreSQLContainer
+import java.util.concurrent.atomic.AtomicInteger
 import javax.sql.DataSource
 
+@Suppress("DEPRECATION")
 public object InitTestDatabase {
-    public val dataSource: DataSource
+    private const val clerkDatabase = "clerk"
+    private val databaseNumber = AtomicInteger()
+
+    // Postgres 16 korresponderer til versjon i nais.yaml
+    private val postgres: PostgreSQLContainer<*> = PostgreSQLContainer<_>("postgres:16")
+        .withDatabaseName(clerkDatabase)
+
+    private val clerkDataSource: DataSource
     private var flyway: Flyway
 
+    @Deprecated("skaff deg din egen private og tomme database ved å kalle `InitTestDatabase.freshDatabase()`")
+    public val dataSource: DataSource
+
     init {
-        // Postgres 16 korresponderer til versjon i nais.yaml
-        val postgres = PostgreSQLContainer<_>("postgres:16")
         postgres.start()
-        val jdbcUrl = postgres.jdbcUrl
-        val username = postgres.username
-        val password = postgres.password
-        dataSource = HikariDataSource(HikariConfig().apply {
-            this.jdbcUrl = jdbcUrl
-            this.username = username
-            this.password = password
+        clerkDataSource = newDataSource("clerk")
+
+        Flyway
+            .configure()
+            .cleanDisabled(false)
+            .dataSource(newDataSource("template1"))
+            .locations("flyway")
+            .validateMigrationNaming(true)
+            .load()
+            .migrate()
+
+
+        dataSource = freshDatabase()
+        flyway = Flyway
+            .configure()
+            .cleanDisabled(false)
+            .dataSource(dataSource)
+            .locations("flyway")
+            .validateMigrationNaming(true)
+            .load()
+
+    }
+
+    public fun freshDatabase(): DataSource {
+        val databaseName = "test${databaseNumber.getAndIncrement()}"
+        clerkDataSource.connection.use { connection ->
+            connection.createStatement().use { stmt ->
+                stmt.executeUpdate("create database $databaseName template template1")
+            }
+        }
+        return newDataSource(databaseName)
+    }
+
+    private fun newDataSource(dbname: String): DataSource {
+        return HikariDataSource(HikariConfig().apply {
+            this.jdbcUrl = postgres.jdbcUrl.replace("template1", dbname)
+            this.username = postgres.username
+            this.password = postgres.password
             minimumIdle = 1
             initializationFailTimeout = 5000
             idleTimeout = 600000
@@ -34,15 +75,6 @@ public object InitTestDatabase {
             * så settes postgres opp som i gcp. */
             connectionInitSql = "SET TIMEZONE TO 'UTC'"
         })
-
-        flyway = Flyway
-            .configure()
-            .cleanDisabled(false)
-            .dataSource(dataSource)
-            .locations("flyway")
-            .validateMigrationNaming(true)
-            .load()
-        migrate()
     }
 
     public fun migrate() {

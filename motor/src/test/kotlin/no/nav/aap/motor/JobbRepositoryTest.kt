@@ -12,7 +12,7 @@ import java.util.*
 
 class JobbRepositoryTest {
 
-    private val dataSource = InitTestDatabase.dataSource
+    private val dataSource = InitTestDatabase.freshDatabase()
 
     init {
         JobbType.leggTil(TøysOgTullTestJobbUtfører)

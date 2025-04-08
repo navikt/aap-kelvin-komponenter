@@ -6,17 +6,18 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 internal class DBConnectionTest {
+    private val dataSource = InitTestDatabase.freshDatabase()
 
     @BeforeEach
     fun setup() {
-        InitTestDatabase.dataSource.transaction { connection ->
+        dataSource.transaction { connection ->
             connection.execute("TRUNCATE TEST; ALTER SEQUENCE test_id_seq RESTART WITH 1")
         }
     }
 
     @Test
     fun `Skriver og henter en rad mot DB`() {
-        val result = InitTestDatabase.dataSource.transaction { connection ->
+        val result = dataSource.transaction { connection ->
             connection.execute("INSERT INTO test (test) VALUES ('a')")
             connection.queryFirst("SELECT test FROM test") {
                 setRowMapper { row -> row.getString("test") }
@@ -26,9 +27,10 @@ internal class DBConnectionTest {
         assertThat(result).isEqualTo("a")
     }
 
+
     @Test
     fun `Skriver og henter to rader mot DB`() {
-        val result = InitTestDatabase.dataSource.transaction { connection ->
+        val result = dataSource.transaction { connection ->
             connection.execute("INSERT INTO test (test) VALUES ('a'), ('b')")
             connection.queryList("SELECT test FROM test") {
                 setRowMapper { row -> row.getString("test") }
@@ -42,10 +44,10 @@ internal class DBConnectionTest {
 
     @Test
     fun `Kan returnere antall rader oppdatert`() {
-        val insert = InitTestDatabase.dataSource.transaction { connection ->
+        val insert = dataSource.transaction { connection ->
             connection.executeReturnUpdated("INSERT INTO test (test) VALUES ('a'), ('b')")
         }
-        val update = InitTestDatabase.dataSource.transaction { connection ->
+        val update = dataSource.transaction { connection ->
             connection.executeReturnUpdated("UPDATE test set test = 'c' where test = 'a'")
         }
         assertThat(insert).isEqualTo(2)
@@ -54,7 +56,7 @@ internal class DBConnectionTest {
 
     @Test
     fun `Henter ingen rader fra DB`() {
-        val result = InitTestDatabase.dataSource.transaction { connection ->
+        val result = dataSource.transaction { connection ->
             connection.queryFirstOrNull("SELECT test FROM test") {
                 setRowMapper { row -> row.getString("test") }
             }
@@ -65,7 +67,7 @@ internal class DBConnectionTest {
 
     @Test
     fun `Henter null-verdi fra DB`() {
-        val result = InitTestDatabase.dataSource.transaction { connection ->
+        val result = dataSource.transaction { connection ->
             connection.execute("INSERT INTO test (test) VALUES (null)")
             connection.queryFirstOrNull("SELECT test FROM test") {
                 setRowMapper { row -> row.getStringOrNull("test") }
@@ -77,7 +79,7 @@ internal class DBConnectionTest {
 
     @Test
     fun `Skriver og henter key og verdier fra DB`() {
-        val (result, key) = InitTestDatabase.dataSource.transaction { connection ->
+        val (result, key) = dataSource.transaction { connection ->
             connection.execute("INSERT INTO test (test) VALUES ('a')")
             val key = connection.executeReturnKey("INSERT INTO test (test) VALUES ('b')")
             connection.queryList("SELECT test FROM test") {
@@ -93,7 +95,7 @@ internal class DBConnectionTest {
 
     @Test
     fun `Skriver og henter keys og verdier fra DB`() {
-        val (result, keys) = InitTestDatabase.dataSource.transaction { connection ->
+        val (result, keys) = dataSource.transaction { connection ->
             connection.execute("INSERT INTO test (test) VALUES ('a'), ('b')")
             val keys = connection.executeReturnKeys("INSERT INTO test (test) VALUES ('c'), ('d')")
             connection.queryList("SELECT test FROM test") {
@@ -111,7 +113,7 @@ internal class DBConnectionTest {
 
     @Test
     fun `Henter tom liste fra DB`() {
-        val result = InitTestDatabase.dataSource.transaction { connection ->
+        val result = dataSource.transaction { connection ->
             connection.queryList("SELECT test FROM test") {
                 setRowMapper { row -> row.getString("test") }
             }
@@ -123,7 +125,7 @@ internal class DBConnectionTest {
     @Test
     fun `Skriver og henter batch mot DB`() {
         val elements = listOf("a", "b", "c")
-        val result = InitTestDatabase.dataSource.transaction { connection ->
+        val result = dataSource.transaction { connection ->
             connection.executeBatch("INSERT INTO test (test) VALUES (?)", elements) {
                 setParams { element ->
                     setString(1, element)
