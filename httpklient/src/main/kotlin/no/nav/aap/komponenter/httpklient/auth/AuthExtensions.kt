@@ -32,7 +32,14 @@ public fun ApplicationCall.audience(): String {
     val aud = principal<JWTPrincipal>()?.getClaim("aud", String::class)
         ?: error("aud mangler i tokenx claims")
     return aud
+}
 
+public fun ApplicationCall.groups(): List<String> {
+    val groups = principal<JWTPrincipal>()?.getListClaim(
+        "groups",
+        String::class
+    ) ?: error("groups mangler i AzureAd claims")
+    return groups
 }
 
 public fun ApplicationCall.token(): OidcToken {
