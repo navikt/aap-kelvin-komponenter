@@ -30,6 +30,7 @@ public class RepositoryProvider internal constructor (
         if (companionObjectType == null && repositoryKlass.objectInstance != null
             && repositoryKlass.isSubclassOf(Repository::class)
         ) {
+            @Suppress("UNCHECKED_CAST")
             return repositoryKlass.objectInstance as T
         }
 
@@ -38,6 +39,7 @@ public class RepositoryProvider internal constructor (
             "Repository må ha companion object"
         }
         if (companionObject is RepositoryFactory<*>) {
+            @Suppress("UNCHECKED_CAST")
             return companionObject.konstruer(connection) as T
         }
         throw IllegalStateException("Repository må ha et companion object som implementerer Factory<T> interfacet.")
