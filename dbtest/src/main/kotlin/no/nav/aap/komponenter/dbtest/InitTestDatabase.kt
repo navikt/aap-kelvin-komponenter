@@ -26,8 +26,10 @@ public object InitTestDatabase {
         postgres.start()
         clerkDataSource = newDataSource("clerk")
 
-        flywayFor(newDataSource("template1"))
+        val templateDataSource = newDataSource("template1")
+        flywayFor(templateDataSource)
             .migrate()
+        templateDataSource.close()
 
         dataSource = freshDatabase()
         flyway = flywayFor(dataSource)
@@ -68,9 +70,9 @@ public object InitTestDatabase {
         }
     }
 
-    private fun newDataSource(dbname: String): DataSource {
+    private fun newDataSource(dbname: String): HikariDataSource {
         return HikariDataSource(HikariConfig().apply {
-            this.jdbcUrl = postgres.jdbcUrl.replace("template1", dbname)
+            this.jdbcUrl = postgres.jdbcUrl.replace(clerkDatabase, dbname)
             this.username = postgres.username
             this.password = postgres.password
             minimumIdle = 1
