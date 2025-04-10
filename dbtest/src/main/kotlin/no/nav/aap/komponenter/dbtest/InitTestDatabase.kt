@@ -19,7 +19,10 @@ public object InitTestDatabase {
     private val clerkDataSource: DataSource
     private var flyway: FlywayOps
 
-    @Deprecated("skaff deg din egen private og tomme database ved å kalle `InitTestDatabase.freshDatabase()`")
+    @Deprecated(
+        "skaff deg din egen private og tomme database ved å kalle `InitTestDatabase.freshDatabase()`",
+        ReplaceWith("freshDatabase()")
+    )
     public val dataSource: DataSource
 
     init {
