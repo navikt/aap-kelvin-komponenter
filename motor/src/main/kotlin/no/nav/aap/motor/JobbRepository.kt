@@ -154,7 +154,7 @@ internal class JobbRepository(private val connection: DBConnection) {
                 setLong(2, jobbInput.id)
             }
             setResultValidator {
-                require(it == 1)
+                require(it == 1) { "Kun én jobb skal bli markert kjørt. Jobb-id: ${jobbInput.id}"}
             }
         }
 
