@@ -21,7 +21,7 @@ jobs:
               with:
                   gradle-version: wrapper
             - name: Bygg & test
-              run: gradle test --continue --no-daemon --configuration-cache --stacktrace --info
+              run: gradle test --continue --no-daemon --configuration-cache --stacktrace
 
 
     merge:
