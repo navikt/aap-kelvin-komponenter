@@ -216,7 +216,7 @@ class TidslinjeTest {
             )
         )
 
-        val res = tidslinje.disjoint(Periode(LocalDate.now().minusDays(5), LocalDate.now().plusDays(5)))
+        val res = tidslinje.begrensTil(Periode(LocalDate.now().minusDays(5), LocalDate.now().plusDays(5)))
         assertThat(res.segmenter()).containsExactly(
             Segment(
                 Periode(LocalDate.now().minusDays(5), LocalDate.now().minusDays(1)),

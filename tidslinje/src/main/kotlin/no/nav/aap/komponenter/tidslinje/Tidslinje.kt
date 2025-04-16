@@ -112,7 +112,23 @@ public class Tidslinje<T>(initSegmenter: NavigableSet<Segment<T>> = TreeSet()) :
     /**
      * Begrens tidslinjen til [periode].
      */
+    public fun begrensTil(periode: Periode): Tidslinje<T> {
+        return kombiner(
+            Tidslinje(periode, null),
+            StandardSammenslåere.kunVenstre()
+        )
+    }
+
+    @Deprecated("Benytt begrensTil", ReplaceWith("begrensTil"))
     public fun disjoint(periode: Periode): Tidslinje<T> {
+        return kombiner(
+            Tidslinje(periode, null),
+            StandardSammenslåere.kunVenstre()
+        )
+    }
+
+    @Deprecated("Benytt begrensTil", ReplaceWith("begrensTil"))
+    public fun kryss(periode: Periode): Tidslinje<T> {
         return kombiner(
             Tidslinje(periode, null),
             StandardSammenslåere.kunVenstre()
@@ -126,9 +142,6 @@ public class Tidslinje<T>(initSegmenter: NavigableSet<Segment<T>> = TreeSet()) :
         return kombiner(other, JoinStyle.DISJOINT(combinator))
     }
 
-    public fun kryss(periode: Periode): Tidslinje<T> {
-        return kombiner(Tidslinje(periode, null), StandardSammenslåere.kunVenstre())
-    }
 
     public fun kryss(other: Tidslinje<Any?>): Tidslinje<T> {
         return kombiner(other, StandardSammenslåere.kunVenstre())
@@ -203,7 +216,7 @@ public class Tidslinje<T>(initSegmenter: NavigableSet<Segment<T>> = TreeSet()) :
         while (!dt.isAfter(maxLocalDate)) {
             val nextDt = dt.plus(period)
 
-            val nesteSegmenter: NavigableSet<Segment<T>> = kryss(Periode(dt, nextDt.minusDays(1))).segmenter
+            val nesteSegmenter: NavigableSet<Segment<T>> = begrensTil(Periode(dt, nextDt.minusDays(1))).segmenter
             segmenter.addAll(nesteSegmenter)
             dt = nextDt
         }
@@ -244,7 +257,7 @@ public class Tidslinje<T>(initSegmenter: NavigableSet<Segment<T>> = TreeSet()) :
         while (!dt.isAfter(maxLocalDate)) {
             val nextDt = dt.plus(period)
 
-            val nesteSegmenter: NavigableSet<Segment<T>> = kryss(Periode(dt, nextDt.minusDays(1))).segmenter
+            val nesteSegmenter: NavigableSet<Segment<T>> = begrensTil(Periode(dt, nextDt.minusDays(1))).segmenter
             segmenter.addAll(mapper(nesteSegmenter))
             dt = nextDt
         }
@@ -277,7 +290,7 @@ public class Tidslinje<T>(initSegmenter: NavigableSet<Segment<T>> = TreeSet()) :
         while (!dt.isAfter(maxLocalDate)) {
             val nextDt = dt.plus(period)
             val p = Periode(dt, nextDt.minusDays(1))
-            tidslinjer.add(Segment(p, kryss(p)))
+            tidslinjer.add(Segment(p, begrensTil(p)))
             dt = nextDt
         }
 
@@ -390,4 +403,52 @@ public class Tidslinje<T>(initSegmenter: NavigableSet<Segment<T>> = TreeSet()) :
             if (verdi == null) null else Segment(periode, verdi)
         })
     }
+}
+
+public fun <T> Tidslinje<T?>.filterNotNull(): Tidslinje<T> {
+    return Tidslinje(this.segmenter().mapNotNull {
+        if (it.verdi == null)
+            null
+        else
+            Segment(it.periode, it.verdi)
+    })
+}
+
+public fun <T> Iterable<Tidslinje<T>>.outerJoinKeepNulls(): Tidslinje<List<T?>> {
+    return this.fold(Tidslinje()) { listeTidslinje, elementTidslinje ->
+        listeTidslinje.outerJoin(elementTidslinje) { liste, element ->
+            liste.orEmpty() + listOf(element)
+        }
+    }
+}
+
+public fun <T, S> Iterable<Tidslinje<T>>.outerJoinKeepNulls(action: (List<T?>) -> S): Tidslinje<S> {
+    return this.outerJoinKeepNulls().mapValue(action)
+}
+
+public fun <T, S> Iterable<Tidslinje<T>>.outerJoinKeepNullsNotNull(action: (List<T?>) -> S?): Tidslinje<S> {
+    return Tidslinje(this.outerJoinKeepNulls().mapNotNull {
+        val result = action(it.verdi)
+        if (result == null)
+            null
+        else
+            Segment(it.periode, result)
+    })
+}
+
+
+public fun <T> Iterable<Tidslinje<T>>.outerJoin(): Tidslinje<List<T>> {
+    return this.fold(Tidslinje()) { listeTidslinje, elementTidslinje ->
+        listeTidslinje.outerJoin(elementTidslinje) { liste, element ->
+            liste.orEmpty() + listOfNotNull(element)
+        }
+    }
+}
+
+public fun <T, S> Iterable<Tidslinje<T>>.outerJoin(action: (List<T>) -> S): Tidslinje<S> {
+    return this.outerJoin().mapValue(action)
+}
+
+public fun <T, S> Iterable<Tidslinje<T>>.outerJoinNotNull(action: (List<T>) -> S?): Tidslinje<S> {
+    return this.outerJoin(action).filterNotNull()
 }
