@@ -112,14 +112,14 @@ public class Tidslinje<T>(initSegmenter: NavigableSet<Segment<T>> = TreeSet()) :
     /**
      * Begrens tidslinjen til [periode].
      */
-    public fun begrensTil(periode: Periode): Tidslinje<T> {
+    public fun begrensetTil(periode: Periode): Tidslinje<T> {
         return kombiner(
             Tidslinje(periode, null),
             StandardSammenslåere.kunVenstre()
         )
     }
 
-    @Deprecated("Benytt begrensTil", ReplaceWith("begrensTil"))
+    @Deprecated("Benytt begrensTil", ReplaceWith("begrensetTil"))
     public fun disjoint(periode: Periode): Tidslinje<T> {
         return kombiner(
             Tidslinje(periode, null),
@@ -127,7 +127,7 @@ public class Tidslinje<T>(initSegmenter: NavigableSet<Segment<T>> = TreeSet()) :
         )
     }
 
-    @Deprecated("Benytt begrensTil", ReplaceWith("begrensTil"))
+    @Deprecated("Benytt begrensTil", ReplaceWith("begrensetTil"))
     public fun kryss(periode: Periode): Tidslinje<T> {
         return kombiner(
             Tidslinje(periode, null),
@@ -216,7 +216,7 @@ public class Tidslinje<T>(initSegmenter: NavigableSet<Segment<T>> = TreeSet()) :
         while (!dt.isAfter(maxLocalDate)) {
             val nextDt = dt.plus(period)
 
-            val nesteSegmenter: NavigableSet<Segment<T>> = begrensTil(Periode(dt, nextDt.minusDays(1))).segmenter
+            val nesteSegmenter: NavigableSet<Segment<T>> = begrensetTil(Periode(dt, nextDt.minusDays(1))).segmenter
             segmenter.addAll(nesteSegmenter)
             dt = nextDt
         }
@@ -257,7 +257,7 @@ public class Tidslinje<T>(initSegmenter: NavigableSet<Segment<T>> = TreeSet()) :
         while (!dt.isAfter(maxLocalDate)) {
             val nextDt = dt.plus(period)
 
-            val nesteSegmenter: NavigableSet<Segment<T>> = begrensTil(Periode(dt, nextDt.minusDays(1))).segmenter
+            val nesteSegmenter: NavigableSet<Segment<T>> = begrensetTil(Periode(dt, nextDt.minusDays(1))).segmenter
             segmenter.addAll(mapper(nesteSegmenter))
             dt = nextDt
         }
@@ -290,7 +290,7 @@ public class Tidslinje<T>(initSegmenter: NavigableSet<Segment<T>> = TreeSet()) :
         while (!dt.isAfter(maxLocalDate)) {
             val nextDt = dt.plus(period)
             val p = Periode(dt, nextDt.minusDays(1))
-            tidslinjer.add(Segment(p, begrensTil(p)))
+            tidslinjer.add(Segment(p, begrensetTil(p)))
             dt = nextDt
         }
 
