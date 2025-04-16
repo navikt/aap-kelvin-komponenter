@@ -465,6 +465,10 @@ public class Tidslinje<T>(initSegmenter: NavigableSet<Segment<T>> = TreeSet()) :
     }
 }
 
+public fun <T> tidslinjeOf(vararg segments: Pair<Periode, T>): Tidslinje<T> {
+    return Tidslinje(segments.map { Segment(it.first, it.second) })
+}
+
 public fun <T> Tidslinje<T?>.filterNotNull(): Tidslinje<T> {
     return Tidslinje(this.segmenter().mapNotNull {
         if (it.verdi == null)

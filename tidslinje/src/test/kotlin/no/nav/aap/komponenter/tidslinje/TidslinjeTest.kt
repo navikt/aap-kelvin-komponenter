@@ -22,32 +22,26 @@ class TidslinjeTest {
 
         assertThat(t1.outerJoin(t2) { v1, v2 -> Pair(v1, v2) })
             .isEqualTo(
-                Tidslinje(
-                    listOf(
-                        Segment(periode1, Pair(1, null)),
-                        Segment(periode2, Pair(1, 2)),
-                        Segment(periode3, Pair(null, 2)),
-                    )
+                tidslinjeOf(
+                    periode1 to Pair(1, null),
+                    periode2 to Pair(1, 2),
+                    periode3 to Pair(null, 2),
                 )
             )
 
         assertThat(t1.leftJoin(t2) { v1, v2 -> Pair(v1, v2) })
             .isEqualTo(
-                Tidslinje(
-                    listOf(
-                        Segment(periode1, Pair(1, null)),
-                        Segment(periode2, Pair(1, 2)),
-                    )
+                tidslinjeOf(
+                    periode1 to Pair(1, null),
+                    periode2 to Pair(1, 2),
                 )
             )
 
         assertThat(t1.rightJoin(t2) { v1, v2 -> Pair(v1, v2) })
             .isEqualTo(
-                Tidslinje(
-                    listOf(
-                        Segment(periode2, Pair(1, 2)),
-                        Segment(periode3, Pair(null, 2)),
-                    )
+                tidslinjeOf(
+                    periode2 to Pair(1, 2),
+                    periode3 to Pair(null, 2),
                 )
             )
     }
