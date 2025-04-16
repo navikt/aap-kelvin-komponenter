@@ -65,23 +65,19 @@ public class Tidslinje<T>(initSegmenter: NavigableSet<Segment<T>> = TreeSet()) :
         return segmenter.mapTo(TreeSet(), Segment<T>::periode)
     }
 
-    /**
-     * Merge av to tidslinjer, prioriterer verdier fra den som merges over den som det kalles på
-     * oppretter en tredje slik at orginale verdier bevares
-     */
-    public fun <E, V> kombiner(
+    private fun <E, V> lowLevelOuterJoin(
         other: Tidslinje<E>,
-        joinStyle: JoinStyle<T, E, V>
+        body: (Periode, Segment<T>?, Segment<E>?) -> Segment<V>?,
     ): Tidslinje<V> {
         if (this.segmenter.isEmpty()) {
             val nyeSegmenter = other.segmenter.mapNotNullTo(TreeSet()) { segment ->
-                joinStyle.kombiner(segment.periode, null, segment)
+                body(segment.periode, null, segment)
             }
             return Tidslinje(nyeSegmenter)
         }
         if (other.segmenter.isEmpty()) {
             val nyeSegmenter = this.segmenter.mapNotNullTo(TreeSet()) { segment ->
-                joinStyle.kombiner(segment.periode, segment, null)
+                body(segment.periode, segment, null)
             }
             return Tidslinje(nyeSegmenter)
         }
@@ -100,13 +96,24 @@ public class Tidslinje<T>(initSegmenter: NavigableSet<Segment<T>> = TreeSet()) :
             val right = other.segmenter.firstOrNull { segment -> segment.periode.overlapper(periode) }
                 ?.tilpassetPeriode(periode)
 
-            val kombinert = joinStyle.kombiner(periode, left, right)
+            val kombinert = body(periode, left, right)
             if (kombinert != null) {
                 nySammensetning.add(kombinert)
             }
         }
 
         return Tidslinje(nySammensetning)
+    }
+
+    /**
+     * Merge av to tidslinjer, prioriterer verdier fra den som merges over den som det kalles på
+     * oppretter en tredje slik at orginale verdier bevares
+     */
+    public fun <E, V> kombiner(
+        other: Tidslinje<E>,
+        joinStyle: JoinStyle<T, E, V>
+    ): Tidslinje<V> {
+        return lowLevelOuterJoin(other, joinStyle::kombiner)
     }
 
     /**
@@ -392,16 +399,69 @@ public class Tidslinje<T>(initSegmenter: NavigableSet<Segment<T>> = TreeSet()) :
     }
 
     public fun <U, R> outerJoin(other: Tidslinje<U>, body: (T?, U?) -> R): Tidslinje<R> {
-        return kombiner(other, JoinStyle.OUTER_JOIN { periode, thisSegment, otherSegment ->
+        return lowLevelOuterJoin(other) { periode, thisSegment, otherSegment ->
             Segment(periode, body(thisSegment?.verdi, otherSegment?.verdi))
-        })
+        }
+    }
+
+    public fun <U, R> outerJoinNotNull(other: Tidslinje<U>, body: (Periode, T?, U?) -> R?): Tidslinje<R> {
+        return lowLevelOuterJoin(other) { periode, thisSegment, otherSegment ->
+            val verdi = body(periode, thisSegment?.verdi, otherSegment?.verdi)
+            if (verdi == null) null else Segment(periode, verdi)
+        }
     }
 
     public fun <U, R> outerJoinNotNull(other: Tidslinje<U>, body: (T?, U?) -> R?): Tidslinje<R> {
-        return kombiner(other, JoinStyle.OUTER_JOIN { periode, thisSegment, otherSegment ->
-            val verdi = body(thisSegment?.verdi, otherSegment?.verdi)
-            if (verdi == null) null else Segment(periode, verdi)
-        })
+        return outerJoinNotNull(other) { _, left, right -> body(left, right) }
+    }
+
+    public fun <U, R> innerJoin(other: Tidslinje<U>, body: (Periode, T, U) -> R): Tidslinje<R> {
+        return lowLevelOuterJoin(other) { periode, thisSegment, otherSegment ->
+            if (thisSegment == null || otherSegment == null) {
+                null
+            } else {
+                Segment(periode, body(periode, thisSegment.verdi, otherSegment.verdi))
+            }
+        }
+    }
+
+    public fun <U, R> innerJoin(other: Tidslinje<U>, body: (T, U) -> R): Tidslinje<R> {
+        return innerJoin(other) { _, left, right -> body(left, right) }
+    }
+
+    public fun <U, R> leftJoin(other: Tidslinje<U>, body: (Periode, T, U?) -> R): Tidslinje<R> {
+        return lowLevelOuterJoin(other) { periode, leftSegment, rightSegment ->
+            if (leftSegment == null) {
+                null
+            } else {
+                Segment(periode, body(periode, leftSegment.verdi, rightSegment?.verdi))
+            }
+        }
+    }
+
+    public fun <U, R> leftJoin(other: Tidslinje<U>, body: (T, U?) -> R): Tidslinje<R> {
+        return leftJoin(other) { _, left, right -> body(left, right) }
+    }
+
+    public fun <U, R> rightJoin(other: Tidslinje<U>, body: (Periode, T?, U) -> R): Tidslinje<R> {
+        return other.leftJoin(this) { periode, right, left ->
+            body(periode, left, right)
+        }
+    }
+
+    public fun <U, R> rightJoin(other: Tidslinje<U>, body: (T?, U) -> R): Tidslinje<R> {
+        return rightJoin(other) { _, left, right -> body(left, right) }
+    }
+
+    /** Lag tidslinje for de periodene som ikke er i [this]. */
+    public fun <U> komplement(periode: Periode, body: (Periode) -> U): Tidslinje<U> {
+        return outerJoinNotNull(Tidslinje(periode, Unit)) { segmentPeriode, eksisterende, _ ->
+            if (eksisterende == null) {
+                body(segmentPeriode)
+            } else {
+                null
+            }
+        }
     }
 }
 

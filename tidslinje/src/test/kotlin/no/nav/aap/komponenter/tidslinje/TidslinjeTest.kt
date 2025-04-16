@@ -11,6 +11,48 @@ import java.time.LocalDate
 class TidslinjeTest {
 
     @Test
+    fun `Enkle tidslinjetester`() {
+        val now = LocalDate.now()
+        val periode1 = Periode(now, now.plusDays(4))
+        val periode2 = Periode(now.plusDays(5), now.plusDays(10))
+        val periode3 = Periode(now.plusDays(11), now.plusDays(15))
+
+        val t1 = Tidslinje(Periode(periode1.fom, periode2.tom), 1)
+        val t2 = Tidslinje(Periode(periode2.fom, periode3.tom), 2)
+
+        assertThat(t1.outerJoin(t2) { v1, v2 -> Pair(v1, v2) })
+            .isEqualTo(
+                Tidslinje(
+                    listOf(
+                        Segment(periode1, Pair(1, null)),
+                        Segment(periode2, Pair(1, 2)),
+                        Segment(periode3, Pair(null, 2)),
+                    )
+                )
+            )
+
+        assertThat(t1.leftJoin(t2) { v1, v2 -> Pair(v1, v2) })
+            .isEqualTo(
+                Tidslinje(
+                    listOf(
+                        Segment(periode1, Pair(1, null)),
+                        Segment(periode2, Pair(1, 2)),
+                    )
+                )
+            )
+
+        assertThat(t1.rightJoin(t2) { v1, v2 -> Pair(v1, v2) })
+            .isEqualTo(
+                Tidslinje(
+                    listOf(
+                        Segment(periode2, Pair(1, 2)),
+                        Segment(periode3, Pair(null, 2)),
+                    )
+                )
+            )
+    }
+
+    @Test
     fun `skal lage tidslinje med verdier`() {
         val firstSegment = Segment(Periode(LocalDate.now(), LocalDate.now().plusDays(10)), Beløp(100))
         val secondSegment = Segment(Periode(LocalDate.now().minusDays(10), LocalDate.now().minusDays(1)), Beløp(200))
