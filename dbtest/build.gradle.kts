@@ -4,7 +4,7 @@ plugins {
 
 dependencies {
     implementation("com.zaxxer:HikariCP:6.3.0")
-    implementation("org.flywaydb:flyway-database-postgresql:11.7.1")
+    implementation("org.flywaydb:flyway-database-postgresql:11.7.2")
     runtimeOnly("org.postgresql:postgresql:42.7.5")
 
     implementation("org.testcontainers:postgresql:1.20.6")
