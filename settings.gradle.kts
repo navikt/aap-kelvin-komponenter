@@ -17,6 +17,7 @@ include(
     "dbmigrering",
     "dbconnect",
     "dbtest",
+    "gateway",
     "json",
     "motor",
     "motor-test-utils",
