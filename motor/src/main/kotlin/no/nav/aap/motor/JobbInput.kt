@@ -18,6 +18,7 @@ public class JobbInput(internal val jobb: Jobb) {
     private var status: JobbStatus = JobbStatus.KLAR
     internal var properties = Properties()
     internal var payload: String? = null
+    internal var opprettetTidspunkt: LocalDateTime? = null
 
     internal fun medId(id: Long): JobbInput {
         this.id = id
@@ -26,6 +27,11 @@ public class JobbInput(internal val jobb: Jobb) {
 
     internal fun medStatus(status: JobbStatus): JobbInput {
         this.status = status
+        return this
+    }
+
+    internal fun medOpprettetTidspunkt(opprettetTidspunkt: LocalDateTime): JobbInput {
+        this.opprettetTidspunkt = opprettetTidspunkt
         return this
     }
 
@@ -166,6 +172,10 @@ public class JobbInput(internal val jobb: Jobb) {
 
     public fun nesteKjøring(): LocalDateTime {
         return requireNotNull(nesteKjøring)
+    }
+
+    public fun opprettetTidspunkt(): LocalDateTime {
+        return requireNotNull(opprettetTidspunkt)
     }
 
     public fun navn(): String {

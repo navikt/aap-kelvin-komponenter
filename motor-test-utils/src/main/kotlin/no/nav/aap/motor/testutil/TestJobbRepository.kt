@@ -4,7 +4,6 @@ import no.nav.aap.komponenter.dbconnect.DBConnection
 import no.nav.aap.motor.JobbInput
 import no.nav.aap.motor.JobbInputParser
 import no.nav.aap.motor.JobbStatus
-import kotlin.collections.isNotEmpty
 
 public class TestJobbRepository(
     private val connection: DBConnection,
@@ -62,6 +61,16 @@ public class TestJobbRepository(
         return antall
     }
 
+    public fun hentJobberAvTypeMedAttributter(
+        type: String,
+        sakId: Long?,
+        behandlingId: Long?,
+    ): List<JobbInput> {
+        @Suppress("DEPRECATION")
+        return hentJobberAvTypeMedAttributter(type, sakId, behandlingId, null)
+    }
+
+    @Deprecated("Bruk hentJobberAvTypeMedAttributter(type, sakId, behandlingId) i stedet.")
     public fun hentJobberAvTypeMedAttributter(
         type: String,
         sakId: Long?,

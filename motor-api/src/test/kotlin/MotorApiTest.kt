@@ -1,18 +1,24 @@
 import com.papsign.ktor.openapigen.model.info.InfoModel
 import com.papsign.ktor.openapigen.route.apiRouting
+import io.ktor.client.call.body
 import io.ktor.client.request.*
+import io.ktor.client.statement.bodyAsText
 import io.ktor.server.application.*
 import io.ktor.server.routing.*
 import io.ktor.server.testing.*
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import no.nav.aap.komponenter.dbconnect.DBConnection
+import no.nav.aap.komponenter.dbconnect.transaction
 import no.nav.aap.komponenter.dbtest.InitTestDatabase
 import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.azurecc.AzureConfig
+import no.nav.aap.komponenter.json.DefaultJsonMapper
 import no.nav.aap.komponenter.server.commonKtorModule
+import no.nav.aap.motor.FlytJobbRepositoryImpl
 import no.nav.aap.motor.Jobb
 import no.nav.aap.motor.JobbInput
 import no.nav.aap.motor.JobbUtfører
 import no.nav.aap.motor.Motor
+import no.nav.aap.motor.api.JobbInfoDto
 import no.nav.aap.motor.api.motorApi
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -32,6 +38,33 @@ class MotorApiTest {
             val response = client.get("/drift/api/jobb/planlagte-jobber")
 
             assertThat(response.status.value).isEqualTo(200)
+        }
+
+        motor.stop()
+    }
+
+    @Test
+    fun `kan hente opprettet tidspunkt i listen over kjørte jobber`() {
+        val ds = InitTestDatabase.freshDatabase()
+        val motor = Motor(ds, jobber = listOf(TøysTestJobbUtfører))
+
+        ds.transaction {
+            FlytJobbRepositoryImpl(it).leggTil(JobbInput(TøysTestJobbUtfører))
+        }
+
+        motor.start()
+
+        testApplication {
+            application { module(ds) }
+
+            val response = client.get("/drift/api/jobb/sisteKjørte")
+
+            assertThat(response.status.value).isEqualTo(200)
+            val body = response.bodyAsText()
+            val jobbInfoDto = DefaultJsonMapper.fromJson< List<JobbInfoDto>>(body)
+            assertThat(jobbInfoDto).hasSize(1)
+            assertThat(jobbInfoDto.first().navn).isEqualTo("tøys")
+            assertThat(jobbInfoDto.first().opprettetTidspunkt).isNotNull()
         }
 
         motor.stop()

@@ -48,7 +48,8 @@ public fun NormalOpenAPIRoute.motorApi(dataSource: DataSource) {
                             metadata = mapOf(),
                             antallFeilendeForsøk = 0,
                             beskrivelse = info.beskrivelse(),
-                            navn = info.navn()
+                            navn = info.navn(),
+                            opprettetTidspunkt = info.opprettetTidspunkt()
                         )
                     }
                 }
@@ -63,7 +64,7 @@ public fun NormalOpenAPIRoute.motorApi(dataSource: DataSource) {
                 }
                 if (oppdatert == 0) {
                     respond("Kunne ikke oppdatere tidspunkt for neste kjøring for jobb med ID $jobbId")
-                } 
+                }
                 respond("Setter neste kjøring for jobb med ID $jobbId til $nå.")
             }
         }
@@ -120,6 +121,7 @@ private fun jobbInfoDto(
         antallFeilendeForsøk = jobbInput.antallRetriesForsøkt(),
         feilmelding = feilmelding,
         planlagtKjøretidspunkt = jobbInput.nesteKjøring(),
+        opprettetTidspunkt = jobbInput.opprettetTidspunkt(),
         metadata = JobbLogInfoProviderHolder.get()
             .hentInformasjon(connection, jobbInput)?.felterMedVerdi
             ?: mapOf()

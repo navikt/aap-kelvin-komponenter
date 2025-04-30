@@ -14,7 +14,7 @@ public class RetryService(connection: DBConnection) {
         planlagteFeilhåndteringOppgaver.forEach { oppgave ->
             if (oppgave.status == JobbStatus.FERDIG) {
                 repository.planleggNyKjøring(oppgave.type)
-            } else if(oppgave.status == JobbStatus.FEILET) {
+            } else if (oppgave.status == JobbStatus.FEILET) {
                 repository.markerSomKlar(oppgave)
             }
         }

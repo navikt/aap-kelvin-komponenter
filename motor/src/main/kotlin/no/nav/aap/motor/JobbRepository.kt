@@ -106,6 +106,7 @@ internal class JobbRepository(private val connection: DBConnection) {
                    jobb.neste_kjoring,
                    jobb.parameters,
                    jobb.payload,
+                   jobb.opprettet_tid,
                    (select count(1)
                     from jobb_historikk
                     where jobb_historikk.jobb_id = jobb.id
