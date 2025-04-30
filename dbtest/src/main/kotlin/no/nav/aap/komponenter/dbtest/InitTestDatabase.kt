@@ -7,7 +7,6 @@ import org.testcontainers.containers.PostgreSQLContainer
 import java.util.concurrent.atomic.AtomicInteger
 import javax.sql.DataSource
 
-@Suppress("DEPRECATION")
 public object InitTestDatabase {
     private const val clerkDatabase = "clerk"
     private val databaseNumber = AtomicInteger()
@@ -19,11 +18,7 @@ public object InitTestDatabase {
     private val clerkDataSource: DataSource
     private var flyway: FlywayOps
 
-    @Deprecated(
-        "skaff deg din egen private og tomme database ved å kalle `InitTestDatabase.freshDatabase()`",
-        ReplaceWith("freshDatabase()")
-    )
-    public val dataSource: DataSource
+    private val dataSource: DataSource
 
     init {
         postgres.start()
