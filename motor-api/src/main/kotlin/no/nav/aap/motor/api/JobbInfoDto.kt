@@ -14,7 +14,7 @@ public data class JobbInfoDto(
     public val id: Long,
     public val type: String,
     public val status: JobbStatus,
-    public val opprettetTidspunkt: LocalDateTime,
+    public val opprettetTidspunkt: LocalDateTime? = null,
     public val planlagtKjøretidspunkt: LocalDateTime,
     public val metadata: Map<String, String>,
     public val antallFeilendeForsøk: Int = 0,
