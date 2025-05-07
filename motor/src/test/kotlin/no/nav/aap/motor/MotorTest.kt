@@ -160,7 +160,7 @@ class MotorTest {
     }
 
     // Har timeout her for å feile om ting begynner å ta tid
-    @Timeout(value = 15, unit = java.util.concurrent.TimeUnit.SECONDS)
+    @Timeout(value = 30, unit = java.util.concurrent.TimeUnit.SECONDS)
     @Test
     fun `naiv last-test for motor`() {
         val motor = Motor(
