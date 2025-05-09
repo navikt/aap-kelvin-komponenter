@@ -141,7 +141,7 @@ public class Motor(
                     log.info("Starter på jobb :: {}", jobbInput.toString())
 
 
-                    val jobbUtfører = when (val konstruktør = jobbInput.jobbSpesifikasjon) {
+                    val jobbUtfører = when (val konstruktør = jobbInput.jobb) {
                         is ConnectionJobbSpesifikasjon -> konstruktør.konstruer(nyConnection)
                         is ProviderJobbSpesifikasjon -> konstruktør.konstruer(repositoryRegistry!!.provider(nyConnection))
                     }

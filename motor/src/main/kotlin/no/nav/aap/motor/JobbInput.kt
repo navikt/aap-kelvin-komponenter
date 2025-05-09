@@ -9,7 +9,7 @@ import java.util.*
 private const val CALL_ID_KEY = "CallId"
 
 public class JobbInput(
-    internal val jobbSpesifikasjon: JobbSpesifikasjon,
+    internal val jobb: JobbSpesifikasjon,
 )  {
 
     internal var id: Long? = null
@@ -113,7 +113,7 @@ public class JobbInput(
     }
 
     public fun type(): String {
-        return jobbSpesifikasjon.type
+        return jobb.type
     }
 
     public fun medNesteKjøring(nesteKjøring: LocalDateTime): JobbInput {
@@ -122,11 +122,11 @@ public class JobbInput(
     }
 
     public fun skalMarkeresSomFeilet(): Boolean {
-        return jobbSpesifikasjon.retries <= antallFeil + 1
+        return jobb.retries <= antallFeil + 1
     }
 
     public fun cron(): CronExpression? {
-        return jobbSpesifikasjon.cron
+        return jobb.cron
     }
 
     public fun erScheduledOppgave(): Boolean {
@@ -154,7 +154,7 @@ public class JobbInput(
     }
 
     override fun toString(): String {
-        return "[${jobbSpesifikasjon.type}] - ${nesteKjøringTidspunkt()} - id = $id, sakId = $sakId, behandlingId = $behandlingId"
+        return "[${jobb.type}] - ${nesteKjøringTidspunkt()} - id = $id, sakId = $sakId, behandlingId = $behandlingId"
     }
 
     public fun medProperties(properties: Properties?): JobbInput {
@@ -181,11 +181,11 @@ public class JobbInput(
     }
 
     public fun navn(): String {
-        return jobbSpesifikasjon.navn
+        return jobb.navn
     }
 
     public fun beskrivelse(): String {
-        return jobbSpesifikasjon.beskrivelse
+        return jobb.beskrivelse
     }
 
     public fun callId(): String? {
