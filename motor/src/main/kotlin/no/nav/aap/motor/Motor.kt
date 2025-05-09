@@ -4,6 +4,7 @@ import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import no.nav.aap.komponenter.dbconnect.DBConnection
 import no.nav.aap.komponenter.dbconnect.transaction
+import no.nav.aap.komponenter.repository.RepositoryRegistry
 import no.nav.aap.motor.mdc.JobbLogInfoProvider
 import no.nav.aap.motor.mdc.JobbLogInfoProviderHolder
 import no.nav.aap.motor.mdc.NoExtraLogInfoProvider
@@ -22,14 +23,23 @@ public class Motor(
     private val dataSource: DataSource,
     private val antallKammer: Int = 8,
     logInfoProvider: JobbLogInfoProvider = NoExtraLogInfoProvider,
-    jobber: List<Jobb>,
-    private val prometheus: MeterRegistry = SimpleMeterRegistry()
+    jobber: List<JobbSpesifikasjon>,
+    private val prometheus: MeterRegistry = SimpleMeterRegistry(),
+    private val repositoryRegistry: RepositoryRegistry? = null,
 ) {
 
     init {
         JobbLogInfoProviderHolder.set(logInfoProvider)
         for (oppgave in jobber) {
             JobbType.leggTil(oppgave)
+        }
+
+        for (jobb in jobber) {
+            if (jobb is ProviderJobbSpesifikasjon) {
+                require(repositoryRegistry != null) {
+                    "kan ikke ha jobber med ProviderJobbKonstruktør uten at Motor er gitt et RepositoryRegistry"
+                }
+            }
         }
     }
 
@@ -130,7 +140,13 @@ public class Motor(
                     val startTid = System.currentTimeMillis()
                     log.info("Starter på jobb :: {}", jobbInput.toString())
 
-                    jobbInput.jobb.konstruer(nyConnection).utfør(jobbInput)
+
+                    val jobbUtfører = when (val konstruktør = jobbInput.jobbSpesifikasjon) {
+                        is ConnectionJobbSpesifikasjon -> konstruktør.konstruer(nyConnection)
+                        is ProviderJobbSpesifikasjon -> konstruktør.konstruer(repositoryRegistry!!.provider(nyConnection))
+                    }
+
+                    jobbUtfører.utfør(jobbInput)
 
                     val tid = System.currentTimeMillis() - startTid
 
@@ -182,6 +198,7 @@ public class Motor(
             }
         }
     }
+
     /**
      * Watchdog som sjekker om alle workers kjører
      */

@@ -1,7 +1,7 @@
 package no.nav.aap.motor.retry
 
 import no.nav.aap.komponenter.dbconnect.DBConnection
-import no.nav.aap.motor.Jobb
+import no.nav.aap.motor.ConnectionJobbSpesifikasjon
 import no.nav.aap.motor.JobbInput
 import no.nav.aap.motor.JobbUtfører
 import no.nav.aap.motor.cron.CronExpression
@@ -18,25 +18,19 @@ internal class RekjørFeiledeJobb(private val repository: RetryFeiledeJobberRepo
         log.info("Markert {} oppgaver for rekjøring", feilendeOppgaverMarkertForRekjøring)
     }
 
-    companion object : Jobb {
+    companion object : ConnectionJobbSpesifikasjon   {
         override fun konstruer(connection: DBConnection): JobbUtfører {
             return RekjørFeiledeJobb(RetryFeiledeJobberRepository(connection))
         }
 
-        override fun type(): String {
-            return OPPGAVE_TYPE
-        }
+        override val type = OPPGAVE_TYPE
 
-        override fun navn(): String {
-            return "Rekjør feilende jobber"
-        }
+        override val navn = "Rekjør feilende jobber"
 
-        override fun beskrivelse(): String {
-            return "Finner feilende jobber og markerer disse som klar for nytt forsøk ved hver kjøring av denne jobben."
-        }
+        override val beskrivelse =
+            "Finner feilende jobber og markerer disse som klar for nytt forsøk ved hver kjøring av denne jobben."
 
-        override fun cron(): CronExpression {
-            return CronExpression.create("0 0,15,30,45 7-17,20 * * *")
-        }
+        override val cron = CronExpression.create("0 0,15,30,45 7-17,20 * * *")
+
     }
 }

@@ -8,7 +8,9 @@ import java.util.*
 
 private const val CALL_ID_KEY = "CallId"
 
-public class JobbInput(internal val jobb: Jobb) {
+public class JobbInput(
+    internal val jobbSpesifikasjon: JobbSpesifikasjon,
+)  {
 
     internal var id: Long? = null
     private var sakId: Long? = null
@@ -111,7 +113,7 @@ public class JobbInput(internal val jobb: Jobb) {
     }
 
     public fun type(): String {
-        return jobb.type()
+        return jobbSpesifikasjon.type
     }
 
     public fun medNesteKjøring(nesteKjøring: LocalDateTime): JobbInput {
@@ -120,11 +122,11 @@ public class JobbInput(internal val jobb: Jobb) {
     }
 
     public fun skalMarkeresSomFeilet(): Boolean {
-        return jobb.retries() <= antallFeil + 1
+        return jobbSpesifikasjon.retries <= antallFeil + 1
     }
 
     public fun cron(): CronExpression? {
-        return jobb.cron()
+        return jobbSpesifikasjon.cron
     }
 
     public fun erScheduledOppgave(): Boolean {
@@ -152,7 +154,7 @@ public class JobbInput(internal val jobb: Jobb) {
     }
 
     override fun toString(): String {
-        return "[${jobb.type()}] - ${nesteKjøringTidspunkt()} - id = $id, sakId = $sakId, behandlingId = $behandlingId"
+        return "[${jobbSpesifikasjon.type}] - ${nesteKjøringTidspunkt()} - id = $id, sakId = $sakId, behandlingId = $behandlingId"
     }
 
     public fun medProperties(properties: Properties?): JobbInput {
@@ -179,11 +181,11 @@ public class JobbInput(internal val jobb: Jobb) {
     }
 
     public fun navn(): String {
-        return jobb.navn()
+        return jobbSpesifikasjon.navn
     }
 
     public fun beskrivelse(): String {
-        return jobb.beskrivelse()
+        return jobbSpesifikasjon.beskrivelse
     }
 
     public fun callId(): String? {

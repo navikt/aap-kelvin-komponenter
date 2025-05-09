@@ -140,7 +140,7 @@ internal class RetryFeiledeJobberRepository(private val connection: DBConnection
         val oppgave = JobbType.parse(type)
         oppgaverRepository.leggTil(
             JobbInput(oppgave)
-                .medNesteKjøring(requireNotNull(oppgave.cron()?.nextLocalDateTimeAfter(LocalDateTime.now())))
+                .medNesteKjøring(requireNotNull(oppgave.cron?.nextLocalDateTimeAfter(LocalDateTime.now())))
         )
     }
 
