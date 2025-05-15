@@ -1,5 +1,6 @@
 package no.nav.aap.motor.cron
 
+import org.intellij.lang.annotations.Language
 import java.time.DayOfWeek
 import java.time.Duration
 import java.time.LocalDate
@@ -480,11 +481,11 @@ public class CronExpression private constructor(private val expr: String, withSe
     }
 
     public companion object {
-        public fun create(expr: String): CronExpression {
+        public fun create(@Language("CronExp") expr: String): CronExpression {
             return CronExpression(expr, true)
         }
 
-        public fun createWithoutSeconds(expr: String): CronExpression {
+        public fun createWithoutSeconds(@Language("CronExp")  expr: String): CronExpression {
             return CronExpression(expr, false)
         }
 
