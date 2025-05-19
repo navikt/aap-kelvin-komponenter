@@ -33,7 +33,7 @@ jobs:
 
             -   name: Build and run tests
                 run: gradle test --info
-            -   uses: dorny/test-reporter@v2.0.0
+            -   uses: dorny/test-reporter@v2.1.0
                 if: success() || failure()
                 with:
                     name: test
