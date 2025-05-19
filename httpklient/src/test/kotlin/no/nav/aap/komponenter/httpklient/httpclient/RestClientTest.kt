@@ -5,6 +5,7 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import no.nav.aap.komponenter.httpklient.httpclient.error.DefaultResponseHandler
 import no.nav.aap.komponenter.httpklient.httpclient.error.IkkeFunnetException
+import no.nav.aap.komponenter.httpklient.httpclient.error.InternalServerErrorHttpResponsException
 import no.nav.aap.komponenter.httpklient.httpclient.request.ContentType
 import no.nav.aap.komponenter.httpklient.httpclient.request.DeleteRequest
 import no.nav.aap.komponenter.httpklient.httpclient.request.GetRequest
@@ -17,6 +18,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.io.InputStream
 import java.net.URI
+import java.net.http.HttpConnectTimeoutException
 import java.net.http.HttpHeaders
 
 class RestClientTest {
@@ -25,10 +27,20 @@ class RestClientTest {
 
     private val mapper =
         { body: InputStream, _: HttpHeaders -> body.bufferedReader(Charsets.UTF_8).use { it.readText() } }
+    private var failGetCounter = 0
+    private var failPostCounter = 0
+    private val MAX_FAIL_COUNT = 3
     private val server = createFakeServer {
         routing {
             get("/test") {
                 call.respondText("you got me")
+            }
+            get("/test-connection-exception") {
+                failGetCounter++
+                if (failGetCounter > MAX_FAIL_COUNT) {
+                    call.respondText("Ok")
+                }
+                throw HttpConnectTimeoutException("Test-feil")
             }
             post("/test") {
                 call.respondText(call.receiveText())
@@ -37,6 +49,14 @@ class RestClientTest {
                 val req = call.receive<MyCustomRequest>()
 
                 call.respondText(req.id)
+            }
+
+            post("/test-connection-exception") {
+                failPostCounter++
+                if (failPostCounter > MAX_FAIL_COUNT) {
+                    call.respondText("Ok")
+                }
+                throw HttpConnectTimeoutException("Test-feil")
             }
             put("/test") {
                 call.respondText(call.receiveText())
@@ -108,6 +128,58 @@ class RestClientTest {
                 mapper
             )
         }
+    }
+
+    @Test
+    fun `Skal retrye med ok resultat når man får http-connection-exception og nok retry-forsøk`() {
+        failGetCounter = 0
+        client.retryableGet(
+            URI("http://localhost:${server.port()}/test-connection-exception"),
+            GetRequest(),
+            mapper,
+            5
+        )
+        assertThat(failGetCounter).isGreaterThan(1)
+    }
+
+    @Test
+    fun `Skal feile med retry når man får http-connection-exception med for få retries`() {
+        failGetCounter = 0
+        assertThrows<InternalServerErrorHttpResponsException> {
+            client.retryableGet(
+                URI("http://localhost:${server.port()}/test-connection-exception"),
+                GetRequest(),
+                mapper,
+                2
+            )
+        }
+        assertThat(failGetCounter).isGreaterThan(1)
+    }
+
+    @Test
+    fun `Skal retrye med ok resultat når man får http-connection-exception ved post og nok retry-forsøk`() {
+        failPostCounter = 0
+        client.retryablePost(
+            URI("http://localhost:${server.port()}/test-connection-exception"),
+            PostRequest(MyCustomRequest("post me"), ContentType.APPLICATION_JSON),
+            mapper,
+            5
+        )
+        assertThat(failPostCounter).isGreaterThan(1)
+    }
+
+    @Test
+    fun `Skal feile med retries når man får http-connection-exception ved post med for få retries`() {
+        failPostCounter = 0
+        assertThrows<InternalServerErrorHttpResponsException> {
+            client.retryablePost(
+                URI("http://localhost:${server.port()}/test-connection-exception"),
+                PostRequest(MyCustomRequest("post me"), ContentType.APPLICATION_JSON),
+                mapper,
+                2
+            )
+        }
+        assertThat(failPostCounter).isGreaterThan(1)
     }
 
 
