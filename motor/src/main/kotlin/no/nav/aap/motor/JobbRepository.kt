@@ -35,7 +35,7 @@ internal class JobbRepository(private val connection: DBConnection) {
                 setEnumName(2, JobbStatus.KLAR)
             }
         }
-        log.info("Planlagt kjøring av jobb[${jobbInput.type()}] med kjøring etter ${jobbInput.nesteKjøringTidspunkt()}")
+        log.info("Planlagt kjøring av jobb[${jobbInput.type()}] med kjøring etter ${jobbInput.nesteKjøringTidspunkt()}. Jobb-ID: $oppgaveId")
     }
 
     internal fun plukkJobb(): JobbInput? {
