@@ -38,7 +38,9 @@ public class JobbInput(
     }
 
     /**
-     * Når man trenger å gruppere jobber etter flere enn et parameter
+     * Når man trenger å gruppere jobber etter flere enn ett parameter.
+     *
+     * Om det finnes flere jobbber med samme sakId og behandlingId, så vil de kjøres sekvensielt.
      */
     public fun forBehandling(sakID: Long, behandlingId: Long): JobbInput {
         this.sakId = sakID
@@ -55,7 +57,7 @@ public class JobbInput(
     }
 
     /**
-     * For gruppering etter en enkelt felles nøkkel
+     * For gruppering etter en enkelt felles nøkkel. Tvinger sekvensiell kjøring.
      */
     public fun forSak(sakId: Long): JobbInput {
         this.sakId = sakId
