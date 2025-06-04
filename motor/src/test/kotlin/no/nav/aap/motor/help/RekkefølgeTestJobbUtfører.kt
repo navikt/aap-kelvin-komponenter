@@ -6,7 +6,7 @@ import no.nav.aap.motor.JobbInput
 import no.nav.aap.motor.JobbUtfører
 import org.slf4j.LoggerFactory
 
-class RekkefølgeTestJobbUtfører(private val connection: DBConnection) : JobbUtfører {
+open class RekkefølgeTestJobbUtfører(private val connection: DBConnection) : JobbUtfører {
 
     private val logger = LoggerFactory.getLogger(TullTestJobbUtfører::class.java)
 
