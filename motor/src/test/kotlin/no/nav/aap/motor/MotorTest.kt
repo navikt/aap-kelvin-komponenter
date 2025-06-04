@@ -172,16 +172,20 @@ class MotorTest {
             jobber = listOf(jobb1, jobb2)
         )
 
+        var nesteKjøring = LocalDateTime.now().minusDays(1)
+
         // Oppretter oppgaver for både jobb1 og for jobb2
         dataSource.transaction { conn ->
             (1..50).forEach { counter ->
+                nesteKjøring = nesteKjøring.plusSeconds(1)
                 JobbRepository(conn).leggTil(
-                    JobbInput(jobb1).medPayload("${jobb1.navn}$separator$counter").forBehandling(0, 1)
+                    JobbInput(jobb1).medPayload("${jobb1.navn}$separator$counter").medNesteKjøring(nesteKjøring).forBehandling(0, 1)
                 )
             }
             (51..100).forEach { counter ->
+                nesteKjøring = nesteKjøring.plusSeconds(1)
                 JobbRepository(conn).leggTil(
-                    JobbInput(jobb2).medPayload("${jobb2.navn}$separator$counter").forBehandling(0, 1)
+                    JobbInput(jobb2).medPayload("${jobb2.navn}$separator$counter").medNesteKjøring(nesteKjøring).forBehandling(0, 1)
                 )
             }
         }
