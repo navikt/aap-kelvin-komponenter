@@ -40,6 +40,7 @@ public object InitTestDatabase {
                 stmt.executeUpdate("create database $databaseName template template1")
             }
         }
+        println("Startet fresh Postgres med URL ${postgres.jdbcUrl}. Brukernavn: ${postgres.username}. Passord: ${postgres.password}. Db-navn: $databaseName")
         return newDataSource(databaseName)
     }
 
