@@ -151,7 +151,9 @@ class MotorTest {
             }
         }
 
-        // Verifiser at vi faktisk kjører på flere kjerner
+        // Verifiser at vi faktisk kjører på flere kjerner - dette fungerer ikke nå fordi det ligger en Thread.sleep(500)
+        // som blokkerer alle andre forbrenningskammer enn den som først starter å konsumere dersom de ikke får resultat
+        // når plukkJobb kalles. Burde se på en løsning for å konfigurere dette.
         //assertThat(resultat.map { it.trådNavn }.toSet().size).isGreaterThan(1)
         assertThat(resultat.map { it.opprettet }).isSorted()
         assertThat(resultat.map { it.value }.map { it.toInt() }).isSorted()
