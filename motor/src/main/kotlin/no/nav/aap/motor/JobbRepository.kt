@@ -72,12 +72,12 @@ internal class JobbRepository(private val connection: DBConnection) {
          */
         val query = """
             with ekskluderende_jobb as (
-                select distinct on (sak_id, behandling_id) id, status, neste_kjoring
+                select distinct on (sak_id, behandling_id, type) id, status, neste_kjoring
                 from jobb
                 where status IN ('${JobbStatus.FEILET.name}', '${JobbStatus.KLAR.name}')
                   and (sak_id is not null or (sak_id is null and behandling_id is not null))
                   and neste_kjoring < ?
-                order by sak_id, behandling_id, neste_kjoring asc
+                order by sak_id, behandling_id, type, neste_kjoring asc
             ),
             klar_ekskluderende_jobb as (
                 select id, neste_kjoring
