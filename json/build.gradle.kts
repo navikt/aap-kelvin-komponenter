@@ -7,6 +7,6 @@ plugins {
 kotlin.explicitApi = ExplicitApiMode.Warning
 
 dependencies {
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.19.0")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.19.1")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.19.0")
 }
