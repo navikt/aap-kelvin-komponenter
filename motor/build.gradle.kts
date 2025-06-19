@@ -20,7 +20,7 @@ dependencies {
     testImplementation("org.assertj:assertj-core:3.27.3")
 
     testImplementation(project(":motor-test-utils"))
-    testImplementation("org.testcontainers:postgresql:1.21.1")
+    testImplementation("org.testcontainers:postgresql:1.21.2")
     constraints {
         implementation("org.apache.commons:commons-compress:1.27.1") {
             because("https://github.com/advisories/GHSA-4g9r-vxhx-9pgx")
