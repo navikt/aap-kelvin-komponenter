@@ -74,7 +74,6 @@ public object InitTestDatabase {
             this.jdbcUrl = postgres.jdbcUrl.replace(clerkDatabase, dbname)
             this.username = postgres.username
             this.password = postgres.password
-            minimumIdle = 1
             initializationFailTimeout = 5000
             idleTimeout = 600000
             connectionTimeout = 30000
