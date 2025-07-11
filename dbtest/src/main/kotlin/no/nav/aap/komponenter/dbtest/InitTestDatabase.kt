@@ -79,7 +79,7 @@ public object InitTestDatabase {
             connectionTimeout = 30000
             maxLifetime = 1800000
             connectionTestQuery = "SELECT 1"
-            maximumPoolSize = 2
+            minimumIdle = 1
 
             /* Postgres i GCP kjører med UTC som timezone. Testcontainers-postgres
             * vil bruke samme timezone som maskinen den kjører fra (Europe/Oslo). Så
