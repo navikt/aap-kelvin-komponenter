@@ -74,12 +74,12 @@ public object InitTestDatabase {
             this.jdbcUrl = postgres.jdbcUrl.replace(clerkDatabase, dbname)
             this.username = postgres.username
             this.password = postgres.password
-            minimumIdle = 1
             initializationFailTimeout = 10000
             idleTimeout = 600000
             connectionTimeout = 30000
             maxLifetime = 1800000
             connectionTestQuery = "SELECT 1"
+            maximumPoolSize = 2
 
             /* Postgres i GCP kjører med UTC som timezone. Testcontainers-postgres
             * vil bruke samme timezone som maskinen den kjører fra (Europe/Oslo). Så
