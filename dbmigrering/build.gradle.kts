@@ -4,6 +4,6 @@ plugins {
 
 dependencies {
     implementation(project(":infrastructure"))
-    implementation("org.flywaydb:flyway-database-postgresql:11.10.1")
+    implementation("org.flywaydb:flyway-database-postgresql:11.10.2")
     runtimeOnly("org.postgresql:postgresql:42.7.7")
 }
