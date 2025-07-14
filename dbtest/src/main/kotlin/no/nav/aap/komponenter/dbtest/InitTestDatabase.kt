@@ -4,14 +4,19 @@ import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import org.flywaydb.core.Flyway
 import org.testcontainers.containers.PostgreSQLContainer
+import org.testcontainers.shaded.org.bouncycastle.util.Objects
+import java.io.Closeable
+import java.util.UUID
 import java.util.concurrent.atomic.AtomicInteger
 import javax.sql.DataSource
+import kotlin.math.max
 
-public object InitTestDatabase {
+public object InitTestDatabase  : Closeable {
     private const val clerkDatabase = "clerk"
     private val databaseNumber = AtomicInteger()
 
     // Postgres 16 korresponderer til versjon i nais.yaml
+    @JvmStatic
     private val postgres: PostgreSQLContainer<*> = PostgreSQLContainer<_>("postgres:16")
         .withDatabaseName(clerkDatabase)
 
@@ -95,5 +100,10 @@ public object InitTestDatabase {
 
     public fun clean() {
         flyway.clean()
+    }
+
+    override fun close() {
+        // as, siden denne alltid er HikariDatasource.
+        (dataSource as Closeable).close()
     }
 }

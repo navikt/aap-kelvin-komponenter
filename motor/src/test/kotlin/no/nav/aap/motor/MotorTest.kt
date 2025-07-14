@@ -11,6 +11,7 @@ import no.nav.aap.motor.help.TullTestJobbUtfører
 import no.nav.aap.motor.mdc.NoExtraLogInfoProvider
 import no.nav.aap.motor.testutil.TestUtil
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AutoClose
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
@@ -22,6 +23,7 @@ import kotlin.system.measureTimeMillis
 private val logger = LoggerFactory.getLogger(MotorTest::class.java)
 
 class MotorTest {
+    @AutoClose
     private val dataSource = InitTestDatabase.freshDatabase()
 
     @BeforeEach
@@ -112,6 +114,8 @@ class MotorTest {
 
         assertThat(x).isEqualTo(antallRetries)
         assertThat(prometheus.counter("motor_jobb_feilet", "type", "type").count()).isEqualTo(1.0)
+
+        motor.stop()
     }
 
     @Test
@@ -217,6 +221,8 @@ class MotorTest {
         // Sjekker så at de to jobbtypene prosesseres om hverandre og at resultatet i helhet derfor ikke er sortert
         val values = resultat.map { it.value.split(separator)[1].toInt() }
         assertThat(values).isNotEqualTo(values.sorted())
+
+        motor.stop()
     }
 
     // Har timeout her for å feile om ting begynner å ta tid

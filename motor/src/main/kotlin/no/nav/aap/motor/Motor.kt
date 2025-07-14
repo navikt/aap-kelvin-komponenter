@@ -12,6 +12,7 @@ import no.nav.aap.motor.trace.JobbInfoSpanBuilder
 import no.nav.aap.motor.trace.OpentelemetryUtil
 import org.slf4j.LoggerFactory
 import org.slf4j.MDC
+import java.io.Closeable
 import java.time.LocalDateTime
 import java.util.*
 import java.util.concurrent.Executors
@@ -26,7 +27,7 @@ public class Motor(
     jobber: List<JobbSpesifikasjon>,
     private val prometheus: MeterRegistry = SimpleMeterRegistry(),
     private val repositoryRegistry: RepositoryRegistry? = null,
-) {
+) : Closeable {
 
     init {
         JobbLogInfoProviderHolder.set(logInfoProvider)
@@ -87,6 +88,10 @@ public class Motor(
 
     public fun kjører(): Boolean {
         return started && !stopped
+    }
+
+    override fun close() {
+        stop()
     }
 
     private inner class Forbrenningskammer(private val dataSource: DataSource) : Runnable {
