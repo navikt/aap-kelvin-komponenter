@@ -11,7 +11,7 @@ dependencies {
     // Skille ut disse til egen modul for motor-api
     implementation("no.nav:ktor-openapi-generator:1.0.118")
     implementation("io.ktor:ktor-http-jvm:$ktorVersion")
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.19.1")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.19.2")
 
     testImplementation(project(":dbtest"))
     testImplementation(project(":server"))
