@@ -103,7 +103,10 @@ public object InitTestDatabase  : Closeable {
     }
 
     override fun close() {
-        // as, siden denne alltid er HikariDatasource.
-        (dataSource as Closeable).close()
+        postgres.stop()
+    }
+
+    public fun closerFor(dataSource: DataSource) {
+        (dataSource as HikariDataSource).close()
     }
 }
