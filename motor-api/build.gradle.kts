@@ -26,6 +26,7 @@ dependencies {
         implementation("org.apache.commons:commons-compress:1.27.1") {
             because("https://github.com/advisories/GHSA-4g9r-vxhx-9pgx")
         }
+        implementation("org.apache.commons:commons-lang3:3.18.0")
     }
     testImplementation("ch.qos.logback:logback-classic:1.5.18")
     testImplementation("net.logstash.logback:logstash-logback-encoder:8.1")

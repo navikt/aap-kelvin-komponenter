@@ -61,6 +61,8 @@ class MotorTest {
         assertThat(svare).isEqualTo(randomString)
 
         motor.stop()
+
+        InitTestDatabase.closerFor(dataSource)
     }
 
     @Test

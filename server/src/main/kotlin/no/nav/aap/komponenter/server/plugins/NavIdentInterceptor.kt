@@ -3,7 +3,7 @@ package no.nav.aap.komponenter.server.plugins
 import io.ktor.server.application.*
 import io.ktor.util.*
 import io.ktor.util.pipeline.*
-import no.nav.aap.komponenter.httpklient.auth.bruker
+import no.nav.aap.komponenter.server.auth.bruker
 import no.nav.aap.komponenter.server.common.MdcKeys
 import org.slf4j.MDC
 

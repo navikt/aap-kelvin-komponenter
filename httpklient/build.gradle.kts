@@ -13,6 +13,7 @@ kotlin.explicitApi = ExplicitApiMode.Warning
 dependencies {
     api(project(":json"))
     implementation(project(":infrastructure"))
+    implementation(project(":verdityper"))
     implementation("io.ktor:ktor-server-auth-jwt:$ktorVersion")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.19.2")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.19.2")
