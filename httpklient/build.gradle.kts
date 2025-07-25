@@ -18,7 +18,7 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.19.2")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.19.2")
     implementation("ch.qos.logback:logback-classic:1.5.18")
-    implementation("no.nav:ktor-openapi-generator:1.0.81")
+    implementation("no.nav:ktor-openapi-generator:1.0.118")
     api("io.micrometer:micrometer-registry-prometheus:1.15.2")
 
     testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
