@@ -1,7 +1,6 @@
 package no.nav.aap.motor
 
 import no.nav.aap.komponenter.dbconnect.DBConnection
-import no.nav.aap.komponenter.gateway.GatewayProvider
 import no.nav.aap.komponenter.repository.RepositoryProvider
 import no.nav.aap.motor.cron.CronExpression
 
@@ -26,7 +25,7 @@ public sealed interface JobbSpesifikasjon {
 }
 
 public interface ProviderJobbSpesifikasjon: JobbSpesifikasjon {
-    public fun konstruer(repositoryProvider: RepositoryProvider, gatewayProvider: GatewayProvider?): JobbUtfører
+    public fun konstruer(repositoryProvider: RepositoryProvider): JobbUtfører
 }
 
 public interface ConnectionJobbSpesifikasjon: JobbSpesifikasjon {
