@@ -28,7 +28,7 @@ public class Motor(
     jobber: List<JobbSpesifikasjon>,
     private val prometheus: MeterRegistry = SimpleMeterRegistry(),
     private val repositoryRegistry: RepositoryRegistry? = null,
-    private val gatewayProvider: GatewayProvider = GatewayProvider(setOf()),
+    private val gatewayProvider: GatewayProvider? = null,
 ) : Closeable {
 
     init {

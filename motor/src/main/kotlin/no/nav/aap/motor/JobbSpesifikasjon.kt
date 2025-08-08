@@ -26,7 +26,7 @@ public sealed interface JobbSpesifikasjon {
 }
 
 public interface ProviderJobbSpesifikasjon: JobbSpesifikasjon {
-    public fun konstruer(repositoryProvider: RepositoryProvider, gatewayProvider: GatewayProvider): JobbUtfører
+    public fun konstruer(repositoryProvider: RepositoryProvider, gatewayProvider: GatewayProvider?): JobbUtfører
 }
 
 public interface ConnectionJobbSpesifikasjon: JobbSpesifikasjon {
