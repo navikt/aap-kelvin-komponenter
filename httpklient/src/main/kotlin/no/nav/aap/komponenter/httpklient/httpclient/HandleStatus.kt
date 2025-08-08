@@ -4,6 +4,7 @@ import no.nav.aap.komponenter.httpklient.httpclient.error.BadRequestHttpResponsE
 import no.nav.aap.komponenter.httpklient.httpclient.error.ConflictHttpResponseException
 import no.nav.aap.komponenter.httpklient.httpclient.error.IkkeFunnetException
 import no.nav.aap.komponenter.httpklient.httpclient.error.InternalServerErrorHttpResponsException
+import no.nav.aap.komponenter.httpklient.httpclient.error.LockedHttpResponsException
 import no.nav.aap.komponenter.httpklient.httpclient.error.ManglerTilgangException
 import no.nav.aap.komponenter.httpklient.httpclient.error.UhåndtertHttpResponsException
 import java.net.HttpURLConnection
@@ -40,6 +41,10 @@ internal fun <E, R> håndterStatus(response: HttpResponse<E>, errorBlock: () -> 
 
     if (status == HttpURLConnection.HTTP_CONFLICT) {
         throw ConflictHttpResponseException("$response :: $responseBody", responseBody)
+    }
+
+    if (status == 423) { //423 = Locked (finnes ikke i HttpURLConnection klassen)
+        throw LockedHttpResponsException("$response :: $responseBody", responseBody)
     }
 
     throw UhåndtertHttpResponsException("Uventet HTTP-responskode $response")
