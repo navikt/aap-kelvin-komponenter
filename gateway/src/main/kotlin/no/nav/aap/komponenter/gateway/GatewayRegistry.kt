@@ -11,7 +11,7 @@ import kotlin.reflect.full.starProjectedType
 public object GatewayRegistry {
 
     private val log = LoggerFactory.getLogger(javaClass)
-    private val registry = HashSet<KClass<Gateway>>()
+    public val registry: HashSet<KClass<Gateway>> = HashSet()
     private val lock = Object()
 
     public inline fun <reified T : Gateway> register(): GatewayRegistry {
