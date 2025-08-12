@@ -4,6 +4,7 @@ import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import no.nav.aap.komponenter.dbconnect.DBConnection
 import no.nav.aap.komponenter.dbconnect.transaction
+import no.nav.aap.komponenter.gateway.GatewayProvider
 import no.nav.aap.komponenter.repository.RepositoryRegistry
 import no.nav.aap.motor.mdc.JobbLogInfoProvider
 import no.nav.aap.motor.mdc.JobbLogInfoProviderHolder
@@ -27,6 +28,7 @@ public class Motor(
     jobber: List<JobbSpesifikasjon>,
     private val prometheus: MeterRegistry = SimpleMeterRegistry(),
     private val repositoryRegistry: RepositoryRegistry? = null,
+    private val gatewayProvider: GatewayProvider? = null,
 ) : Closeable {
 
     init {
@@ -39,6 +41,14 @@ public class Motor(
             if (jobb is ProviderJobbSpesifikasjon) {
                 require(repositoryRegistry != null) {
                     "kan ikke ha jobber med ProviderJobbKonstruktør uten at Motor er gitt et RepositoryRegistry"
+                }
+            }
+            if (jobb is ProvidersJobbSpesifikasjon) {
+                require(repositoryRegistry != null) {
+                    "kan ikke ha jobber med ProvidersJobbKonstruktør uten at Motor er gitt et RepositoryRegistry"
+                }
+                require(gatewayProvider != null) {
+                    "kan ikke ha jobber med ProvidersJobbKonstruktør uten at Motor er gitt en GatewayProvider"
                 }
             }
         }
@@ -149,6 +159,7 @@ public class Motor(
                     val jobbUtfører = when (val konstruktør = jobbInput.jobb) {
                         is ConnectionJobbSpesifikasjon -> konstruktør.konstruer(nyConnection)
                         is ProviderJobbSpesifikasjon -> konstruktør.konstruer(repositoryRegistry!!.provider(nyConnection))
+                        is ProvidersJobbSpesifikasjon -> konstruktør.konstruer(repositoryRegistry!!.provider(nyConnection), gatewayProvider!!)
                     }
 
                     jobbUtfører.utfør(jobbInput)
