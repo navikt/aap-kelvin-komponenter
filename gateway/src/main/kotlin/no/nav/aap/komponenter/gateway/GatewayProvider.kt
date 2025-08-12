@@ -6,25 +6,26 @@ import kotlin.reflect.full.companionObjectInstance
 import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.full.starProjectedType
 
-public object GatewayProvider {
+public class GatewayProvider internal constructor(
+    private val gatewayRegistry: GatewayRegistry
+) {
 
-    public inline fun <reified T : Gateway> provide(type: KClass<T>): T {
-        val gatewayKlass = GatewayRegistry.fetch(type.starProjectedType)
+    public fun <T : Gateway> provide(type: KClass<T>): T {
+        val gatewayKlass = gatewayRegistry.fetch(type.starProjectedType)
 
         return internalCreate(gatewayKlass)
     }
 
     public inline fun <reified T : Gateway> provide(): T {
-        val repositoryKlass = GatewayRegistry.fetch(T::class.starProjectedType)
-
-        return internalCreate(repositoryKlass)
+        return provide(T::class)
     }
 
-    public inline fun <reified T : Gateway> internalCreate(gatewayKlass: KClass<Gateway>): T {
+    private fun <T : Gateway> internalCreate(gatewayKlass: KClass<Gateway>): T {
         val companionObjectType = gatewayKlass.companionObject
         if (companionObjectType == null && gatewayKlass.objectInstance != null
             && gatewayKlass.isSubclassOf(Gateway::class)
         ) {
+            @Suppress("UNCHECKED_CAST")
             return gatewayKlass.objectInstance as T
         }
 
@@ -33,6 +34,7 @@ public object GatewayProvider {
             "Gateway må ha companion object"
         }
         if (companionObject is Factory<*>) {
+            @Suppress("UNCHECKED_CAST")
             return companionObject.konstruer() as T
         }
         throw IllegalStateException("Gateway må ha et companion object som implementerer Factory<T> interfacet.")

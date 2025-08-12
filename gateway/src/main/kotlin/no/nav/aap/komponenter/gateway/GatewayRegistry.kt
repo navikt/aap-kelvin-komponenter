@@ -8,7 +8,7 @@ import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.full.isSubtypeOf
 import kotlin.reflect.full.starProjectedType
 
-public object GatewayRegistry {
+public class GatewayRegistry {
 
     private val log = LoggerFactory.getLogger(javaClass)
     private val registry = HashSet<KClass<Gateway>>()
@@ -69,5 +69,9 @@ public object GatewayRegistry {
             "{} gateway registrert har følgende '{}'",
             registry.size,
             registry.map { kclass -> kclass.starProjectedType })
+    }
+
+    public fun provider(): GatewayProvider {
+        return GatewayProvider(this)
     }
 }
