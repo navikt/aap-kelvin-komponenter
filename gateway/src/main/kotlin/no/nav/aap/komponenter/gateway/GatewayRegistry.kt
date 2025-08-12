@@ -8,7 +8,7 @@ import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.full.isSubtypeOf
 import kotlin.reflect.full.starProjectedType
 
-public object GatewayRegistry {
+public open class GatewayRegistry {
 
     private val log = LoggerFactory.getLogger(javaClass)
     private val registry = HashSet<KClass<Gateway>>()
@@ -70,4 +70,7 @@ public object GatewayRegistry {
             registry.size,
             registry.map { kclass -> kclass.starProjectedType })
     }
+
+    @Deprecated("Ikke bruk global GatewayRegistry, men inject egen instans.")
+    public companion object: GatewayRegistry()
 }

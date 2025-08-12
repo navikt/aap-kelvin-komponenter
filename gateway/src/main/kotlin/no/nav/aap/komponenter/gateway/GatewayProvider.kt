@@ -6,10 +6,12 @@ import kotlin.reflect.full.companionObjectInstance
 import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.full.starProjectedType
 
-public object GatewayProvider {
+public open class GatewayProvider(
+    public val gatewayRegistry: GatewayRegistry,
+) {
 
     public inline fun <reified T : Gateway> provide(type: KClass<T>): T {
-        val gatewayKlass = GatewayRegistry.fetch(type.starProjectedType)
+        val gatewayKlass = gatewayRegistry.fetch(type.starProjectedType)
 
         return internalCreate(gatewayKlass)
     }
@@ -38,4 +40,6 @@ public object GatewayProvider {
         throw IllegalStateException("Gateway må ha et companion object som implementerer Factory<T> interfacet.")
     }
 
+    @Deprecated("Ikke bruk global GatewayProvider, men inject egen instans.")
+    public companion object: GatewayProvider(GatewayRegistry)
 }
