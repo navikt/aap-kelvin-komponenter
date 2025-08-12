@@ -4,6 +4,7 @@ plugins {
 
 dependencies {
     api(project(":dbconnect"))
+    api(project(":gateway"))
     api(project(":json"))
     api("io.opentelemetry.instrumentation:opentelemetry-instrumentation-api:2.18.1")
     implementation("org.slf4j:slf4j-api:2.0.17")
