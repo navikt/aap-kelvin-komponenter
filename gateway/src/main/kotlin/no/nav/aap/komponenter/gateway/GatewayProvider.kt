@@ -17,7 +17,7 @@ public open class GatewayProvider(
     }
 
     public inline fun <reified T : Gateway> provide(): T {
-        val repositoryKlass = GatewayRegistry.fetch(T::class.starProjectedType)
+        val repositoryKlass = gatewayRegistry.fetch(T::class.starProjectedType)
 
         return internalCreate(repositoryKlass)
     }
