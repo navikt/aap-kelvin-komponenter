@@ -1,6 +1,9 @@
 package no.nav.aap.motor
 
+import no.nav.aap.komponenter.dbconnect.DBConnection
+import no.nav.aap.komponenter.gateway.GatewayProvider
 import no.nav.aap.komponenter.json.DefaultJsonMapper
+import no.nav.aap.komponenter.repository.RepositoryRegistry
 import no.nav.aap.motor.cron.CronExpression
 import org.slf4j.MDC
 import java.time.LocalDateTime
@@ -205,4 +208,19 @@ public class JobbInput(
         return this
     }
 
+    public fun kjør(connection: DBConnection, repositoryRegistry: RepositoryRegistry?, gatewayProvider: GatewayProvider?) {
+        konstruer(connection, repositoryRegistry, gatewayProvider).utfør(this)
+    }
+
+    private fun konstruer(
+        connection: DBConnection,
+        repositoryRegistry: RepositoryRegistry?,
+        gatewayProvider: GatewayProvider?,
+    ): JobbUtfører {
+        return when (jobb) {
+            is ConnectionJobbSpesifikasjon -> jobb.konstruer(connection)
+            is ProviderJobbSpesifikasjon -> jobb.konstruer(repositoryRegistry!!.provider(connection))
+            is ProvidersJobbSpesifikasjon -> jobb.konstruer(repositoryRegistry!!.provider(connection), gatewayProvider!!)
+        }
+    }
 }

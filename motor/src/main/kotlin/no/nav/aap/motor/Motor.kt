@@ -21,7 +21,33 @@ import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import javax.sql.DataSource
 
-public class Motor(
+public interface Motor : Closeable {
+    public fun start()
+    public fun stop()
+    public fun kjører(): Boolean
+
+    public companion object {
+        public operator fun invoke(
+            dataSource: DataSource,
+            antallKammer: Int = 8,
+            logInfoProvider: JobbLogInfoProvider = NoExtraLogInfoProvider,
+            jobber: List<JobbSpesifikasjon>,
+            prometheus: MeterRegistry = SimpleMeterRegistry(),
+            repositoryRegistry: RepositoryRegistry? = null,
+            gatewayProvider: GatewayProvider? = null,
+        ): Motor = MotorImpl(
+            dataSource = dataSource,
+            antallKammer = antallKammer,
+            logInfoProvider = logInfoProvider,
+            jobber = jobber,
+            prometheus = prometheus,
+            repositoryRegistry = repositoryRegistry,
+            gatewayProvider = gatewayProvider,
+        )
+    }
+}
+
+public class MotorImpl(
     private val dataSource: DataSource,
     private val antallKammer: Int = 8,
     logInfoProvider: JobbLogInfoProvider = NoExtraLogInfoProvider,
@@ -29,7 +55,7 @@ public class Motor(
     private val prometheus: MeterRegistry = SimpleMeterRegistry(),
     private val repositoryRegistry: RepositoryRegistry? = null,
     private val gatewayProvider: GatewayProvider? = null,
-) : Closeable {
+) : Motor {
 
     init {
         JobbLogInfoProviderHolder.set(logInfoProvider)
@@ -70,7 +96,7 @@ public class Motor(
     private val workers = HashMap<Int, Future<*>>()
     private var lastWatchdogLog = LocalDateTime.now()
 
-    public fun start() {
+    public override fun start() {
         log.info("Starter prosessering av jobber")
         IntRange(1, antallKammer).forEach { i ->
             val kammer = Forbrenningskammer(dataSource)
@@ -84,7 +110,7 @@ public class Motor(
         started = true
     }
 
-    public fun stop() {
+    public override fun stop() {
         log.info("Avslutter prosessering av jobber")
         stopped = true
         watchdogExecutor.shutdownNow()
@@ -96,7 +122,7 @@ public class Motor(
         log.info("Avsluttet prosessering av jobber")
     }
 
-    public fun kjører(): Boolean {
+    public override fun kjører(): Boolean {
         return started && !stopped
     }
 
@@ -107,11 +133,11 @@ public class Motor(
     private inner class Forbrenningskammer(private val dataSource: DataSource) : Runnable {
         private val log = LoggerFactory.getLogger(Forbrenningskammer::class.java)
 
-        private var plukker = true
         override fun run() {
             while (!stopped) {
                 log.debug("Starter plukking av jobber")
                 try {
+                    var plukker = true
                     while (plukker && !stopped) {
                         dataSource.transaction { connection ->
                             val repository = JobbRepository(connection)
@@ -143,7 +169,6 @@ public class Motor(
                 if (!stopped) {
                     Thread.sleep(500)
                 }
-                plukker = true
             }
         }
 
@@ -154,21 +179,11 @@ public class Motor(
 
                     val startTid = System.currentTimeMillis()
                     log.info("Starter på jobb :: {}", jobbInput.toString())
-
-
-                    val jobbUtfører = when (val konstruktør = jobbInput.jobb) {
-                        is ConnectionJobbSpesifikasjon -> konstruktør.konstruer(nyConnection)
-                        is ProviderJobbSpesifikasjon -> konstruktør.konstruer(repositoryRegistry!!.provider(nyConnection))
-                        is ProvidersJobbSpesifikasjon -> konstruktør.konstruer(repositoryRegistry!!.provider(nyConnection), gatewayProvider!!)
-                    }
-
-                    jobbUtfører.utfør(jobbInput)
-
+                    jobbInput.kjør(nyConnection, repositoryRegistry, gatewayProvider)
                     val tid = System.currentTimeMillis() - startTid
-
                     prometheus.timer(jobbInput).record(tid, TimeUnit.MILLISECONDS)
-
                     log.info("Fullført jobb :: {}. Tok $tid ms.", jobbInput.toString())
+
                     if (jobbInput.erScheduledOppgave()) {
                         JobbRepository(nyConnection).leggTil(
                             jobbInput.medNesteKjøring(

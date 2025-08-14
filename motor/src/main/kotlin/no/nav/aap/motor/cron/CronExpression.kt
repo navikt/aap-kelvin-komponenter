@@ -150,7 +150,7 @@ public class CronExpression private constructor(private val expr: String, withSe
         this.dayOfWeekField = DayOfWeekField(parts[ix++])
     }
 
-    internal fun nextLocalDateTimeAfter(dateTime: LocalDateTime): LocalDateTime {
+    public fun nextLocalDateTimeAfter(dateTime: LocalDateTime): LocalDateTime {
         return nextTimeAfter(ZonedDateTime.of(dateTime, ZoneId.systemDefault())).toLocalDateTime()
     }
 
