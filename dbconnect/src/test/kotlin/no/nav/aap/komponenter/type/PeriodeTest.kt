@@ -58,24 +58,26 @@ class PeriodeTest {
 
     @Test
     fun `teste inneholder`() {
-        val periode = Periode(LocalDate.now().minusDays(4), LocalDate.now().minusDays(2))
+        val nå = LocalDate.now()
+        val periode = Periode(nå.minusDays(4), nå.minusDays(2))
 
-        assertThat(periode.inneholder(LocalDate.now().minusDays(5))).isFalse()
-        assertThat(periode.inneholder(LocalDate.now().minusDays(4))).isTrue()
-        assertThat(periode.inneholder(LocalDate.now().minusDays(3))).isTrue()
-        assertThat(periode.inneholder(LocalDate.now().minusDays(2))).isTrue()
-        assertThat(periode.inneholder(LocalDate.now().minusDays(1))).isFalse()
+        assertThat(periode.inneholder(nå.minusDays(5))).isFalse()
+        assertThat(periode.inneholder(nå.minusDays(4))).isTrue()
+        assertThat(periode.inneholder(nå.minusDays(3))).isTrue()
+        assertThat(periode.inneholder(nå.minusDays(2))).isTrue()
+        assertThat(periode.inneholder(nå.minusDays(1))).isFalse()
     }
 
     @Test
     fun `teste inneholder periode`() {
-        val periode = Periode(LocalDate.now().minusDays(4), LocalDate.now().minusDays(2))
+        val nå = LocalDate.now()
+        val periode = Periode(nå.minusDays(4), nå.minusDays(2))
 
-        assertThat(periode.inneholder(Periode(LocalDate.now().minusDays(5), LocalDate.now().minusDays(3)))).isFalse()
-        assertThat(periode.inneholder(Periode(LocalDate.now().minusDays(4), LocalDate.now().minusDays(3)))).isTrue()
-        assertThat(periode.inneholder(Periode(LocalDate.now().minusDays(4), LocalDate.now().minusDays(2)))).isTrue()
-        assertThat(periode.inneholder(Periode(LocalDate.now().minusDays(3), LocalDate.now().minusDays(2)))).isTrue()
-        assertThat(periode.inneholder(Periode(LocalDate.now().minusDays(3), LocalDate.now().minusDays(1)))).isFalse()
+        assertThat(periode.inneholder(Periode(nå.minusDays(5), nå.minusDays(3)))).isFalse()
+        assertThat(periode.inneholder(Periode(nå.minusDays(4), nå.minusDays(3)))).isTrue()
+        assertThat(periode.inneholder(Periode(nå.minusDays(4), nå.minusDays(2)))).isTrue()
+        assertThat(periode.inneholder(Periode(nå.minusDays(3), nå.minusDays(2)))).isTrue()
+        assertThat(periode.inneholder(Periode(nå.minusDays(3), nå.minusDays(1)))).isFalse()
     }
 
     @Test

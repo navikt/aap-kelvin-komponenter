@@ -21,6 +21,10 @@ public class Periode(
     public fun inneholder(dato: LocalDate): Boolean {
         return dato in fom..tom
     }
+
+    /**
+     * Sjekker om `this` er inneholdt i [periode].
+     */
     public fun inneholder(periode: Periode): Boolean {
         return this.inneholder(periode.fom) && this.inneholder(periode.tom)
     }
