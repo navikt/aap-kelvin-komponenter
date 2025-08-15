@@ -2,14 +2,14 @@ package no.nav.aap.motor
 
 import no.nav.aap.motor.retry.RekjørFeiledeJobb
 
-internal object JobbType {
+public object JobbType {
     private val jobber = HashMap<String, JobbSpesifikasjon>()
 
     init {
         jobber[RekjørFeiledeJobb.type] = RekjørFeiledeJobb
     }
 
-    internal fun leggTil(jobb: JobbSpesifikasjon) {
+    public fun leggTil(jobb: JobbSpesifikasjon) {
         jobber[jobb.type] = jobb
     }
 

@@ -4,10 +4,10 @@ import no.nav.aap.komponenter.dbconnect.DBConnection
 import org.slf4j.LoggerFactory
 import java.time.LocalDateTime
 
-internal class JobbRepository(private val connection: DBConnection) {
+public class JobbRepository(private val connection: DBConnection) {
     private val log = LoggerFactory.getLogger(JobbRepository::class.java)
 
-    fun leggTil(jobbInput: JobbInput) {
+    public fun leggTil(jobbInput: JobbInput) {
         val oppgaveId = connection.executeReturnKey(
             """
             INSERT INTO JOBB 
@@ -38,7 +38,7 @@ internal class JobbRepository(private val connection: DBConnection) {
         log.info("Planlagt kjøring av jobb[${jobbInput.type()}] med kjøring etter ${jobbInput.nesteKjøringTidspunkt()}. Jobb-ID: $oppgaveId")
     }
 
-    internal fun plukkJobb(): JobbInput? {
+    fun plukkJobb(): JobbInput? {
         /** Selv om `jobb_kandidat` kun inneholder jobber med `status = 'KLAR'`, så er det ikke
          * noe som forhindrer at flere transaksjoner startet med samme snapshot og derfor
          * anser samme rad som ledig. `FOR UPDATE` er ikke tilstrekkelig for å forhindre at
@@ -148,7 +148,7 @@ internal class JobbRepository(private val connection: DBConnection) {
         return plukketJobb
     }
 
-    internal fun markerKjørt(jobbInput: JobbInput) {
+    public fun markerKjørt(jobbInput: JobbInput) {
         connection.execute("UPDATE JOBB SET status = ? WHERE id = ? AND status = 'KLAR'") {
             setParams {
                 setEnumName(1, JobbStatus.FERDIG)
@@ -172,7 +172,7 @@ internal class JobbRepository(private val connection: DBConnection) {
         }
     }
 
-    internal fun markerFeilet(jobbInput: JobbInput, exception: Throwable) {
+    public fun markerFeilet(jobbInput: JobbInput, exception: Throwable) {
         // Da denne kjører i en ny transaksjon bør oppgaven låses slik at den ikke plukkes på nytt mens det logges
         connection.queryFirst("SELECT id FROM JOBB WHERE id = ? FOR UPDATE") {
             setParams {
