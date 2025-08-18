@@ -94,7 +94,7 @@ public class JobbRepository(private val connection: DBConnection) {
             ),
             jobb_kandidat as (
                 (select * from klar_ekskluderende_jobb)
-                union
+                union ALL
                 (select * from klar_selvstendig_jobb)
             )
 
