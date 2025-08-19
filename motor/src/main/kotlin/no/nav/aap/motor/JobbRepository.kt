@@ -113,7 +113,6 @@ public class JobbRepository(private val connection: DBConnection) {
                       and jobb_historikk.status = '${JobbStatus.FEILET.name}') as antall_feil
             from jobb
             inner join jobb_kandidat on jobb_kandidat.id = jobb.id
-            where jobb.status = '${JobbStatus.KLAR.name}'
             order by jobb_kandidat.neste_kjoring asc
             for update skip locked
             limit 1
