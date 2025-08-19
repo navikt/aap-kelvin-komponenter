@@ -83,6 +83,7 @@ public class JobbRepository(private val connection: DBConnection) {
                 select id, neste_kjoring
                 from ekskluderende_jobb
                 where status = '${JobbStatus.KLAR.name}'
+                order by neste_kjoring
             ),
             klar_selvstendig_jobb as (
                 select id, neste_kjoring
@@ -91,6 +92,7 @@ public class JobbRepository(private val connection: DBConnection) {
                   and sak_id is null
                   and behandling_id is null
                   and neste_kjoring < ?
+                  order by neste_kjoring
             ),
             jobb_kandidat as (
                 (select * from klar_ekskluderende_jobb)
