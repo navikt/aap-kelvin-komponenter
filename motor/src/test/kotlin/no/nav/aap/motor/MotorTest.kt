@@ -230,7 +230,7 @@ class MotorTest {
     // Har timeout her for å feile om ting begynner å ta tid
     @Timeout(value = 30, unit = java.util.concurrent.TimeUnit.SECONDS)
     @Test
-    fun `naiv last-test for motor`() {
+    fun `naiv last-test for motor som skal unngå duplikat-kjøring av jobber`() {
         val motor = Motor(
             dataSource = dataSource,
             antallKammer = 8,
@@ -241,9 +241,8 @@ class MotorTest {
         val antallJobber = 1000
 
         dataSource.transaction { conn ->
-            (1..antallJobber).forEach { _ ->
-                val randomString = UUID.randomUUID().toString()
-                JobbRepository(conn).leggTil(JobbInput(TullTestJobbUtfører).medPayload(randomString))
+            (1..antallJobber).forEach { verdi ->
+                JobbRepository(conn).leggTil(JobbInput(TullTestJobbUtfører).medPayload(verdi))
             }
         }
 
@@ -251,6 +250,14 @@ class MotorTest {
 
         util.ventPåSvar()
 
+        val verdier: List<String> = dataSource.transaction { conn ->
+             conn.queryList<String>("""
+                select * from test_table 
+            """.trimIndent()){
+                setRowMapper { row -> row.getString("value") }
+            }
+        }
+        assertThat(verdier).isEqualTo(verdier.distinct()).withFailMessage("Skal ikke ha duplikate verdier i test_table-tabellen - da har samme jobb blitt plukket og kjørt flere ganger")
         motor.stop()
     }
 
