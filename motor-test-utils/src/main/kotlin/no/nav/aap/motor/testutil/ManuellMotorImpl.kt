@@ -15,7 +15,7 @@ import no.nav.aap.motor.ProviderJobbSpesifikasjon
 import no.nav.aap.motor.ProvidersJobbSpesifikasjon
 import org.slf4j.LoggerFactory
 
-public class ManuellMotorImpl(
+class ManuellMotorImpl(
     private val dataSource: DataSource,
     jobber: List<JobbSpesifikasjon>,
     private val repositoryRegistry: RepositoryRegistry? = null,
@@ -74,8 +74,8 @@ public class ManuellMotorImpl(
                     }
                 }
             }
-        } catch (excetion: Throwable) {
-            log.warn("Feil under plukking av jobber", excetion)
+        } catch (exception: Throwable) {
+            log.error("Feil under plukking av jobber", exception)
         }
     }
 
