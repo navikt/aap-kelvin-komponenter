@@ -15,7 +15,7 @@ import no.nav.aap.motor.ProviderJobbSpesifikasjon
 import no.nav.aap.motor.ProvidersJobbSpesifikasjon
 import org.slf4j.LoggerFactory
 
-class ManuellMotorImpl(
+public class ManuellMotorImpl(
     private val dataSource: DataSource,
     jobber: List<JobbSpesifikasjon>,
     private val repositoryRegistry: RepositoryRegistry? = null,

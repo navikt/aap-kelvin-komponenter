@@ -38,7 +38,7 @@ public class JobbRepository(private val connection: DBConnection) {
         log.info("Planlagt kjøring av jobb[${jobbInput.type()}] med kjøring etter ${jobbInput.nesteKjøringTidspunkt()}. Jobb-ID: $oppgaveId")
     }
 
-    fun plukkJobb(): JobbInput? {
+    public fun plukkJobb(): JobbInput? {
         /** Selv om `jobb_kandidat` kun inneholder jobber med `status = 'KLAR'`, så er det ikke
          * noe som forhindrer at flere transaksjoner startet med samme snapshot og derfor
          * anser samme rad som ledig. `FOR UPDATE` er ikke tilstrekkelig for å forhindre at

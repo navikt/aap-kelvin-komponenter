@@ -22,4 +22,8 @@ public class TimerArbeid(antallTimer: BigDecimal) {
     override fun hashCode(): Int {
         return antallTimer.hashCode()
     }
+
+    override fun toString(): String {
+        return "TimerArbeid(antallTimer=$antallTimer)"
+    }
 }
