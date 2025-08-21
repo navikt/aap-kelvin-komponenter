@@ -1,6 +1,5 @@
 package no.nav.aap.komponenter.verdityper.validering
 
-import no.nav.aap.komponenter.verdityper.validering.FolkeregisterIdentValidering
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
 
