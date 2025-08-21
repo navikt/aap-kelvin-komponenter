@@ -224,6 +224,22 @@ class MotorTest {
         val values = resultat.map { it.value.split(separator)[1].toInt() }
         assertThat(values).isNotEqualTo(values.sorted())
 
+
+        val jobbHistorikk = dataSource.transaction {
+            it.queryList("select id, jobb_id, status, opprettet_tid from jobb_historikk") {
+                setRowMapper(mapJobbHistorikk())
+            }
+        }
+        assertThat(jobbHistorikk.size).isGreaterThan(0)
+        val jobbHistorikkPerJobb = jobbHistorikk.groupBy { it.jobbId }
+        jobbHistorikkPerJobb.forEach { jobb ->
+            val klar = jobb.value.first { it.status == JobbStatus.KLAR }
+            val plukket = jobb.value.first { it.status == JobbStatus.PLUKKET }
+            val ferdig = jobb.value.first { it.status == JobbStatus.FERDIG }
+            assertThat(klar.opprettet).isBefore(plukket.opprettet)
+            assertThat(plukket.opprettet).isBefore(ferdig.opprettet)
+            println("Klart ${klar.opprettet}, Plukket ${plukket.opprettet}, Ferdig ${ferdig.opprettet}")
+        }
         motor.stop()
     }
 
@@ -290,6 +306,16 @@ class MotorTest {
         )
     }
 
+    private fun mapJobbHistorikk(): (Row) -> JobbHistorikk = { row ->
+        JobbHistorikk(
+            id = row.getLong("id"),
+            jobbId = row.getLong("jobb_id"),
+            opprettet = row.getLocalDateTime("opprettet_tid"),
+            status = row.getEnum("status"),
+        )
+    }
+
     private data class OrderResultat(val value: String, val opprettet: LocalDateTime, val trådNavn: String)
+    private data class JobbHistorikk(val id: Long, val jobbId: Long, val status: JobbStatus, val opprettet: LocalDateTime)
 
 }
