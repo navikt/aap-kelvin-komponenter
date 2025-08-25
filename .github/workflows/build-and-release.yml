@@ -75,7 +75,7 @@ jobs:
                     gradle dokkaGenerate
 
             -   name: upload-artifact for docs
-                uses: actions/upload-pages-artifact@v3
+                uses: actions/upload-pages-artifact@v4
                 with:
                     path: './build/dokka/html'
 
