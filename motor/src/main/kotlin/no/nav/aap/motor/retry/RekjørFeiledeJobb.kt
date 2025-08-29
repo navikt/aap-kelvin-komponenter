@@ -30,7 +30,7 @@ internal class RekjørFeiledeJobb(private val repository: RetryFeiledeJobberRepo
         override val beskrivelse =
             "Finner feilende jobber og markerer disse som klar for nytt forsøk ved hver kjøring av denne jobben."
 
-        override val cron = CronExpression.create("0 0,15,30,45 7-17,20 * * *")
+        override val cron = CronExpression.create("0 0 7,12,15,20 * * *")
 
     }
 }
