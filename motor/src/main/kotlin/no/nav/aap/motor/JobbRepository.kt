@@ -27,18 +27,19 @@ public class JobbRepository(private val connection: DBConnection) {
         connection.execute(
             """
             INSERT INTO JOBB_HISTORIKK 
-            (jobb_id, status) VALUES (?, ?)
+            (jobb_id, status, opprettet_tid) VALUES (?, ?, ?)
             """.trimIndent()
         ) {
             setParams {
                 setLong(1, oppgaveId)
                 setEnumName(2, JobbStatus.KLAR)
+                setLocalDateTime(3, LocalDateTime.now())
             }
         }
         log.info("Planlagt kjøring av jobb[${jobbInput.type()}] med kjøring etter ${jobbInput.nesteKjøringTidspunkt()}. Jobb-ID: $oppgaveId")
     }
 
-    fun plukkJobb(): JobbInput? {
+    public fun plukkJobb(): JobbInput? {
         /** Selv om `jobb_kandidat` kun inneholder jobber med `status = 'KLAR'`, så er det ikke
          * noe som forhindrer at flere transaksjoner startet med samme snapshot og derfor
          * anser samme rad som ledig. `FOR UPDATE` er ikke tilstrekkelig for å forhindre at
@@ -138,12 +139,13 @@ public class JobbRepository(private val connection: DBConnection) {
         connection.execute(
             """
             INSERT INTO JOBB_HISTORIKK 
-            (jobb_id, status) VALUES (?, ?)
+            (jobb_id, status, opprettet_tid) VALUES (?, ?, ?)
             """.trimIndent()
         ) {
             setParams {
                 setLong(1, plukketJobb.id)
                 setEnumName(2, JobbStatus.PLUKKET)
+                setLocalDateTime(3, LocalDateTime.now())
             }
         }
 
@@ -164,12 +166,13 @@ public class JobbRepository(private val connection: DBConnection) {
         connection.execute(
             """
             INSERT INTO JOBB_HISTORIKK 
-            (jobb_id, status) VALUES (?, ?)
+            (jobb_id, status, opprettet_tid) VALUES (?, ?, ?)
             """.trimIndent()
         ) {
             setParams {
                 setLong(1, jobbInput.id)
                 setEnumName(2, JobbStatus.FERDIG)
+                setLocalDateTime(3, LocalDateTime.now())
             }
         }
     }
@@ -200,13 +203,14 @@ public class JobbRepository(private val connection: DBConnection) {
         connection.execute(
             """
             INSERT INTO JOBB_HISTORIKK 
-            (jobb_id, status, feilmelding) VALUES (?, ?, ?)
+            (jobb_id, status, feilmelding, opprettet_tid) VALUES (?, ?, ?, ?)
             """.trimIndent()
         ) {
             setParams {
                 setLong(1, jobbInput.id)
                 setEnumName(2, JobbStatus.FEILET)
                 setString(3, exception.stackTraceToString())
+                setLocalDateTime(4, LocalDateTime.now())
             }
         }
     }

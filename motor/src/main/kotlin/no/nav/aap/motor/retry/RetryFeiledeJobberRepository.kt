@@ -199,5 +199,5 @@ internal class RetryFeiledeJobberRepository(private val connection: DBConnection
         return JobbInputParser.mapJobb(row) to row.getStringOrNull("feilmelding")
     }
 
-    inner class FeilhåndteringOppgaveStatus(val id: Long, val type: String, val status: JobbStatus)
+    class FeilhåndteringOppgaveStatus(val id: Long, val type: String, val status: JobbStatus)
 }

@@ -74,8 +74,8 @@ public class ManuellMotorImpl(
                     }
                 }
             }
-        } catch (excetion: Throwable) {
-            log.warn("Feil under plukking av jobber", excetion)
+        } catch (exception: Throwable) {
+            log.error("Feil under plukking av jobber", exception)
         }
     }
 

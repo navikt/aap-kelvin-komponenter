@@ -20,6 +20,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import javax.sql.DataSource
+import kotlin.system.measureTimeMillis
 
 public interface Motor : Closeable {
     public fun start()
@@ -65,15 +66,15 @@ public class MotorImpl(
 
         for (jobb in jobber) {
             if (jobb is ProviderJobbSpesifikasjon) {
-                require(repositoryRegistry != null) {
+                requireNotNull(repositoryRegistry) {
                     "kan ikke ha jobber med ProviderJobbKonstruktør uten at Motor er gitt et RepositoryRegistry"
                 }
             }
             if (jobb is ProvidersJobbSpesifikasjon) {
-                require(repositoryRegistry != null) {
+                requireNotNull(repositoryRegistry) {
                     "kan ikke ha jobber med ProvidersJobbKonstruktør uten at Motor er gitt et RepositoryRegistry"
                 }
-                require(gatewayProvider != null) {
+                requireNotNull(gatewayProvider) {
                     "kan ikke ha jobber med ProvidersJobbKonstruktør uten at Motor er gitt en GatewayProvider"
                 }
             }
@@ -162,8 +163,8 @@ public class MotorImpl(
                             }
                         }
                     }
-                } catch (excetion: Throwable) {
-                    log.warn("Feil under plukking av jobber", excetion)
+                } catch (exception: Throwable) {
+                    log.error("Feil under plukking av jobber", exception)
                 }
                 log.debug("Ingen flere jobber å plukke, hviler litt")
                 if (!stopped) {
@@ -177,12 +178,13 @@ public class MotorImpl(
                 dataSource.transaction { nyConnection ->
                     setteLogginformasjonForOppgave(connection, jobbInput)
 
-                    val startTid = System.currentTimeMillis()
-                    log.info("Starter på jobb :: {}", jobbInput.toString())
-                    jobbInput.kjør(nyConnection, repositoryRegistry, gatewayProvider)
-                    val tid = System.currentTimeMillis() - startTid
-                    prometheus.timer(jobbInput).record(tid, TimeUnit.MILLISECONDS)
-                    log.info("Fullført jobb :: {}. Tok $tid ms.", jobbInput.toString())
+                    val millis = measureTimeMillis {
+                        log.info("Starter på jobb :: $jobbInput")
+                        jobbInput.kjør(nyConnection, repositoryRegistry, gatewayProvider)
+                    }
+
+                    prometheus.timer(jobbInput).record(millis, TimeUnit.MILLISECONDS)
+                    log.info("Fullført jobb :: $jobbInput. Tok $millis ms.")
 
                     if (jobbInput.erScheduledOppgave()) {
                         JobbRepository(nyConnection).leggTil(
@@ -197,11 +199,8 @@ public class MotorImpl(
                 JobbRepository(connection).markerKjørt(jobbInput)
             } catch (exception: Throwable) {
                 // Kjører feil
-                log.warn(
-                    "Feil under prosessering av jobb {}",
-                    jobbInput,
-                    exception
-                )
+                log.warn("Feil under prosessering av jobb :: $jobbInput", exception)
+
                 if (jobbInput.skalMarkeresSomFeilet()) {
                     prometheus.motorFeiletTeller(jobbInput).increment()
                 }
