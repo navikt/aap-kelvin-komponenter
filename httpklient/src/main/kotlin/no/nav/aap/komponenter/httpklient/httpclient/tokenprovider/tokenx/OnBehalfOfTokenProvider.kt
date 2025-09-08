@@ -13,7 +13,8 @@ import java.net.URI
 import kotlin.IllegalArgumentException
 
 public class OnBehalfOfTokenProvider(
-    private val texasUri: URI = URI(requiredConfigForKey("nais.token.exchange.endpoint"))
+    private val texasUri: URI = URI(requiredConfigForKey("nais.token.exchange.endpoint")),
+    private val identityProvider: String = "tokenx"
 ): TokenProvider {
     private val client = RestClient.withDefaultResponseHandler(
         config = ClientConfig(),
@@ -25,7 +26,7 @@ public class OnBehalfOfTokenProvider(
         if (currentToken == null) throw IllegalArgumentException("token må være tilstede for tokenx")
 
         val response: OidcTokenResponse = client.post(texasUri, PostRequest(body = mapOf(
-            "identity_provider" to "tokenx",
+            "identity_provider" to identityProvider,
             "target" to scope,
             "user_token" to currentToken.token(),
         ))) ?: error("oidc-token-response forventet fra texas")
