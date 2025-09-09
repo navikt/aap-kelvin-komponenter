@@ -283,15 +283,15 @@ internal class ParamsOgRowTest {
                 """.trimMargin()
             ) {
                 setParams {
-                    setPeriode(1, Periode(LocalDate.now(), LocalDate.now()))
+                    setPeriode(1, Periode(LocalDate.now(), LocalDate.of(9999, 12, 31)))
                     setPeriode(2, null)
                 }
             }
             connection.queryFirst("SELECT * FROM TEST_DATERANGE") {
                 setRowMapper { row ->
                     assertThat(row.getPeriodeOrNull("TEST"))
-                        .isEqualTo(Periode(LocalDate.now(), LocalDate.now()))
-                    assertThat(row.getPeriode("TEST")).isEqualTo(Periode(LocalDate.now(), LocalDate.now()))
+                        .isEqualTo(Periode(LocalDate.now(), LocalDate.of(9999, 12, 31)))
+                    assertThat(row.getPeriode("TEST")).isEqualTo(Periode(LocalDate.now(), LocalDate.of(9999, 12, 31)))
                     assertThat(row.getPeriodeOrNull("TEST_NULL")).isNull()
                     assertThrows<IllegalArgumentException> { row.getPeriode("TEST_NULL") }
                 }
@@ -500,6 +500,30 @@ internal class ParamsOgRowTest {
 
             assertThat(array).containsExactly("ff", "hei", "df")
         }
+    }
+
+    @Test
+    fun `set array of UUIDS`() {
+        val uuid1 = UUID.fromString("3d891fb3-036c-4065-8b17-d5b604d7f23c")
+        val uuid2 = UUID.fromString("b76d3b82-d6bc-47d6-bf20-ff3d4cbe5b77")
+
+        dataSource.transaction { connection ->
+            connection.execute("""
+                insert into test_uuid_array values (?::UUID[])
+            """.trimIndent()
+            ) {
+                setParams {
+                    setUUIDArray(1, listOf(uuid1, uuid2))
+                }
+            }
+        }
+
+        val array = dataSource.transaction {  connection ->
+            connection.queryFirst("select test from test_uuid_array") {
+                setRowMapper { it.getArray("test", UUID::class) }
+            }
+        }
+        assertThat(array).containsExactlyElementsOf(listOf(uuid1, uuid2))
     }
 
     companion object {
