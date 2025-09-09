@@ -10,12 +10,19 @@ import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.NoTokenTokenPr
 import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.OidcToken
 import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.OidcTokenResponse
 import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.TokenProvider
+import no.nav.aap.komponenter.miljo.Miljø
 import java.net.URLEncoder
 import java.time.Duration
 import kotlin.text.Charsets.UTF_8
 
-public object OnBehalfOfTokenProvider : TokenProvider {
+@Deprecated("Bruk AzureOBOTokenProvider eller ClientCredentialsTokenProvider")
+public object OnBehalfOfTokenProvider : TokenProvider by
+if (Miljø.erProd())
+    GammelOnBehalfOfTokenProvider
+else
+    AzureOBOTokenProvider()
 
+private object GammelOnBehalfOfTokenProvider : TokenProvider {
     private val client = RestClient.withDefaultResponseHandler(
         config = ClientConfig(),
         tokenProvider = NoTokenTokenProvider(),
@@ -59,6 +66,6 @@ public object OnBehalfOfTokenProvider : TokenProvider {
                 "&client_secret=" + config.clientSecret +
                 "&assertion=" + oidcToken.token() +
                 "&scope=" + encodedScope +
-                "&requested_token_use=on_behalf_of";
+                "&requested_token_use=on_behalf_of"
     }
 }
