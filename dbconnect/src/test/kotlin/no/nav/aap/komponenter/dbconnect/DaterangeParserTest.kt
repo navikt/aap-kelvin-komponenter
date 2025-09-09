@@ -55,4 +55,12 @@ internal class DaterangeParserTest {
         assertThat(periode.fom.minusDays(1)).isEqualTo(fom)
         assertThat(periode.tom.plusDays(1)).isEqualTo(tom)
     }
+
+    @Test
+    fun `Parser daterange der fom er 10_000`() {
+        val periode = DaterangeParser.fromSQL("[2012-09-17,10000-12-31)")
+
+        assertThat(periode.fom).isEqualTo(LocalDate.of(2012, 9, 17))
+        assertThat(periode.tom.plusDays(1)).isEqualTo(LocalDate.of(10000, 12, 31))
+    }
 }
