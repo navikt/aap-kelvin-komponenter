@@ -15,7 +15,7 @@ dependencies {
     implementation(project(":infrastructure"))
     implementation(project(":verdityper"))
     implementation("io.ktor:ktor-server-auth-jwt:$ktorVersion")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.19.2")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.20.0")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.20.0")
     implementation("ch.qos.logback:logback-classic:1.5.18")
     implementation("no.nav:ktor-openapi-generator:1.0.122")
