@@ -283,15 +283,15 @@ internal class ParamsOgRowTest {
                 """.trimMargin()
             ) {
                 setParams {
-                    setPeriode(1, Periode(LocalDate.now(), LocalDate.now()))
+                    setPeriode(1, Periode(LocalDate.now(), LocalDate.of(9999, 12, 31)))
                     setPeriode(2, null)
                 }
             }
             connection.queryFirst("SELECT * FROM TEST_DATERANGE") {
                 setRowMapper { row ->
                     assertThat(row.getPeriodeOrNull("TEST"))
-                        .isEqualTo(Periode(LocalDate.now(), LocalDate.now()))
-                    assertThat(row.getPeriode("TEST")).isEqualTo(Periode(LocalDate.now(), LocalDate.now()))
+                        .isEqualTo(Periode(LocalDate.now(), LocalDate.of(9999, 12, 31)))
+                    assertThat(row.getPeriode("TEST")).isEqualTo(Periode(LocalDate.now(), LocalDate.of(9999, 12, 31)))
                     assertThat(row.getPeriodeOrNull("TEST_NULL")).isNull()
                     assertThrows<IllegalArgumentException> { row.getPeriode("TEST_NULL") }
                 }

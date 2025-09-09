@@ -6,7 +6,7 @@ import java.time.format.DateTimeFormatter
 
 internal object DaterangeParser {
 
-    private val formater = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+    private val formater = DateTimeFormatter.ofPattern("y-MM-dd")
 
     internal fun toSQL(periode: Periode): String {
         return "[${formater.format(periode.fom)},${formater.format(periode.tom)}]"
