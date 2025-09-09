@@ -502,6 +502,30 @@ internal class ParamsOgRowTest {
         }
     }
 
+    @Test
+    fun `set array of UUIDS`() {
+        val uuid1 = UUID.fromString("3d891fb3-036c-4065-8b17-d5b604d7f23c")
+        val uuid2 = UUID.fromString("b76d3b82-d6bc-47d6-bf20-ff3d4cbe5b77")
+
+        dataSource.transaction { connection ->
+            connection.execute("""
+                insert into test_uuid_array values (?::UUID[])
+            """.trimIndent()
+            ) {
+                setParams {
+                    setUUIDArray(1, listOf(uuid1, uuid2))
+                }
+            }
+        }
+
+        val array = dataSource.transaction {  connection ->
+            connection.queryFirst("select test from test_uuid_array") {
+                setRowMapper { it.getArray("test", UUID::class) }
+            }
+        }
+        assertThat(array).containsExactlyElementsOf(listOf(uuid1, uuid2))
+    }
+
     companion object {
         @JvmStatic
         @BeforeAll
