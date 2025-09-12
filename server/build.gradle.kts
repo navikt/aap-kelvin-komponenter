@@ -16,6 +16,9 @@ dependencies {
     api("io.ktor:ktor-server-content-negotiation:$ktorVersion")
     api("io.ktor:ktor-server-metrics-micrometer:$ktorVersion")
     api("io.ktor:ktor-server-netty:$ktorVersion")
+    constraints {
+        implementation("io.netty:netty-codec-http2:4.2.4.Final")
+    }
     api(project(":verdityper"))
     api("io.ktor:ktor-server-cors:$ktorVersion")
     api("io.ktor:ktor-server-status-pages:$ktorVersion")
