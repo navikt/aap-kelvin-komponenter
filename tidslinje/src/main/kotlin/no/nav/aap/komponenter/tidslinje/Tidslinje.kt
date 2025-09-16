@@ -516,3 +516,5 @@ public fun <T, S> Iterable<Tidslinje<T>>.outerJoin(action: (List<T>) -> S): Tids
 public fun <T, S> Iterable<Tidslinje<T>>.outerJoinNotNull(action: (List<T>) -> S?): Tidslinje<S> {
     return this.outerJoin(action).filterNotNull()
 }
+
+public fun <T> Tidslinje<T>?.orEmpty(): Tidslinje<T> = this ?: Tidslinje.empty()
