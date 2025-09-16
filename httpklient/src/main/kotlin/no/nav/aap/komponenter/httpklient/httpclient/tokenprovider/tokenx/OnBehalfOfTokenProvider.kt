@@ -10,9 +10,9 @@ import java.net.URI
 @Deprecated("Brukt TokenxOBOTokenProvider")
 public class OnBehalfOfTokenProvider(
     texasUri: URI = URI(requiredConfigForKey("nais.token.exchange.endpoint")),
-    prometheus: MeterRegistry = SimpleMeterRegistry(),
+    identityProvider: String = "tokenx",
 ) : TokenProvider by TexasTokenProvider(
     texasUri = texasUri,
-    identityProvider = "tokenx",
-    prometheus = prometheus,
+    identityProvider = identityProvider,
+    prometheus = SimpleMeterRegistry(),
 )
