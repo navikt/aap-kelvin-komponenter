@@ -187,27 +187,34 @@ public class MotorImpl(
                     log.info("Fullført jobb :: $jobbInput. Tok $millis ms.")
 
                     if (jobbInput.erScheduledOppgave()) {
-                        JobbRepository(nyConnection).leggTil(
-                            jobbInput.medNesteKjøring(
-                                jobbInput.cron()!!.nextLocalDateTimeAfter(
-                                    LocalDateTime.now()
-                                )
-                            )
-                        )
+                        scheduleNesteKjøring(nyConnection, jobbInput)
                     }
                 }
-                JobbRepository(connection).markerKjørt(jobbInput)
+                JobbRepository(connection).markerSomFerdig(jobbInput)
             } catch (exception: Throwable) {
-                // Kjører feil
+                // Feil under kjøring av jobb, eller under oppdatering av status til 'kjørt'
                 log.warn("Feil under prosessering av jobb :: $jobbInput", exception)
 
-                if (jobbInput.skalMarkeresSomFeilet()) {
+                if (jobbInput.maksFeilNådd()) {
                     prometheus.motorFeiletTeller(jobbInput).increment()
                 }
-                JobbRepository(connection).markerFeilet(jobbInput, exception)
+                JobbRepository(connection).markerSomFeilet(jobbInput, exception)
             } finally {
                 MDC.clear()
             }
+        }
+
+        private fun scheduleNesteKjøring(
+            nyConnection: DBConnection,
+            jobbInput: JobbInput
+        ) {
+            JobbRepository(nyConnection).leggTil(
+                jobbInput.medNesteKjøring(
+                    jobbInput.cron()!!.nextLocalDateTimeAfter(
+                        LocalDateTime.now()
+                    )
+                )
+            )
         }
 
         private fun setteLogginformasjonForOppgave(

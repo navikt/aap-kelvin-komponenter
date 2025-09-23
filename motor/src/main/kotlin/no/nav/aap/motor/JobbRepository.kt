@@ -152,14 +152,15 @@ public class JobbRepository(private val connection: DBConnection) {
         return plukketJobb
     }
 
-    public fun markerKjørt(jobbInput: JobbInput) {
-        connection.execute("UPDATE JOBB SET status = ? WHERE id = ? AND status = 'KLAR'") {
+    public fun markerSomFerdig(jobbInput: JobbInput) {
+        connection.execute("UPDATE JOBB SET status = ? WHERE id = ? AND status = ?") {
             setParams {
                 setEnumName(1, JobbStatus.FERDIG)
                 setLong(2, jobbInput.id)
+                setEnumName(3, JobbStatus.KLAR)
             }
             setResultValidator {
-                require(it == 1) { "Kun én jobb skal bli markert kjørt. Jobb-id: ${jobbInput.id}"}
+                require(it == 1) { "Kun én jobb skal bli markert kjørt. Jobb-id: ${jobbInput.id}" }
             }
         }
 
@@ -177,8 +178,8 @@ public class JobbRepository(private val connection: DBConnection) {
         }
     }
 
-    public fun markerFeilet(jobbInput: JobbInput, exception: Throwable) {
-        // Da denne kjører i en ny transaksjon bør oppgaven låses slik at den ikke plukkes på nytt mens det logges
+    public fun markerSomFeilet(jobbInput: JobbInput, exception: Throwable) {
+        // Da denne kjører i en ny transaksjon bør Jobbens rad låses slik at Jobben ikke plukkes på nytt mens det logges
         connection.queryFirst("SELECT id FROM JOBB WHERE id = ? FOR UPDATE") {
             setParams {
                 setLong(1, jobbInput.id)
@@ -188,14 +189,15 @@ public class JobbRepository(private val connection: DBConnection) {
             }
         }
 
-        if (jobbInput.skalMarkeresSomFeilet()) {
-            connection.execute("UPDATE JOBB SET status = ? WHERE id = ? AND status = 'KLAR'") {
+        if (jobbInput.maksFeilNådd()) {
+            connection.execute("UPDATE JOBB SET status = ? WHERE id = ? AND status = ?") {
                 setParams {
                     setEnumName(1, JobbStatus.FEILET)
                     setLong(2, jobbInput.id)
+                    setEnumName(3, JobbStatus.KLAR)
                 }
                 setResultValidator {
-                    require(it == 1)
+                    require(it == 1) { "Kun én jobb skal bli markert feilet. Jobb-id: ${jobbInput.id}" }
                 }
             }
         }
@@ -216,10 +218,11 @@ public class JobbRepository(private val connection: DBConnection) {
     }
 
     internal fun settNesteKjøring(jobbId: Long, tidspunkt: LocalDateTime): Int {
-        return connection.executeReturnUpdated("UPDATE JOBB SET neste_kjoring = ? WHERE id = ? AND status = 'KLAR'") {
+        return connection.executeReturnUpdated("UPDATE JOBB SET neste_kjoring = ? WHERE id = ? AND status = ?") {
             setParams {
                 setLocalDateTime(1, tidspunkt)
                 setLong(2, jobbId)
+                setEnumName(3, JobbStatus.KLAR)
             }
             setResultValidator { require(it <= 1) }
         }

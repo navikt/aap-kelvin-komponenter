@@ -99,11 +99,11 @@ public class ManuellMotorImpl(
                     )
                 }
             }
-            JobbRepository(connection).markerKjørt(jobbInput)
+            JobbRepository(connection).markerSomFerdig(jobbInput)
         } catch (exception: Throwable) {
             // Kjører feil
             log.warn("Feil under prosessering av jobb {}", jobbInput, exception)
-            JobbRepository(connection).markerFeilet(jobbInput, exception)
+            JobbRepository(connection).markerSomFeilet(jobbInput, exception)
         }
     }
 }
