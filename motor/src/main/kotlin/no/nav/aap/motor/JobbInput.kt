@@ -126,7 +126,7 @@ public class JobbInput(
         return this
     }
 
-    public fun skalMarkeresSomFeilet(): Boolean {
+    public fun maksFeilNådd(): Boolean {
         return jobb.retries <= antallFeil + 1
     }
 

@@ -52,7 +52,7 @@ class JobbRepositoryTest {
             var plukket = jobbRepository.plukkJobb()
             while (plukket != null) {
                 plukketIRekkefølge.add(plukket)
-                jobbRepository.markerKjørt(plukket)
+                jobbRepository.markerSomFerdig(plukket)
                 plukket = jobbRepository.plukkJobb()
             }
         }
@@ -96,9 +96,9 @@ class JobbRepositoryTest {
             while (plukket != null) {
                 plukketIRekkefølge.add(plukket)
                 if (plukket.type() == TullTestJobbUtfører.type()) {
-                    jobbRepository.markerFeilet(plukket, IllegalStateException())
+                    jobbRepository.markerSomFeilet(plukket, IllegalStateException())
                 } else {
-                    jobbRepository.markerKjørt(plukket)
+                    jobbRepository.markerSomFerdig(plukket)
                 }
                 plukket = jobbRepository.plukkJobb()
             }
