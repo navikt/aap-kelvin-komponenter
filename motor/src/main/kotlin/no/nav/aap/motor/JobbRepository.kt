@@ -7,8 +7,8 @@ import java.time.LocalDateTime
 public class JobbRepository(private val connection: DBConnection) {
     private val log = LoggerFactory.getLogger(JobbRepository::class.java)
 
-    public fun leggTil(jobbInput: JobbInput) {
-        val oppgaveId = connection.executeReturnKey(
+    public fun leggTil(jobbInput: JobbInput): Long {
+        val jobbId = connection.executeReturnKey(
             """
             INSERT INTO JOBB 
             (sak_id, behandling_id, type, neste_kjoring, parameters, payload) VALUES (?, ?, ?, ?, ?, ?)
@@ -31,12 +31,13 @@ public class JobbRepository(private val connection: DBConnection) {
             """.trimIndent()
         ) {
             setParams {
-                setLong(1, oppgaveId)
+                setLong(1, jobbId)
                 setEnumName(2, JobbStatus.KLAR)
                 setLocalDateTime(3, LocalDateTime.now())
             }
         }
-        log.info("Planlagt kjøring av jobb[${jobbInput.type()}] med kjøring etter ${jobbInput.nesteKjøringTidspunkt()}. Jobb-ID: $oppgaveId")
+        log.info("Planlagt kjøring av jobb[${jobbInput.type()}] med kjøring etter ${jobbInput.nesteKjøringTidspunkt()}. Jobb-ID: $jobbId")
+        return jobbId
     }
 
     public fun plukkJobb(): JobbInput? {
@@ -226,5 +227,23 @@ public class JobbRepository(private val connection: DBConnection) {
             }
             setResultValidator { require(it <= 1) }
         }
+    }
+
+    public fun antallJobber(statusVerdi: JobbStatus): Long {
+        val query = """
+                SELECT count(*) as antall
+                FROM JOBB
+                WHERE status = ?
+            """.trimIndent()
+
+        return connection.queryFirst(query) {
+            setParams {
+                setEnumName(1, statusVerdi)
+            }
+            setRowMapper { row ->
+                row.getLong("antall")
+            }
+        }
+
     }
 }

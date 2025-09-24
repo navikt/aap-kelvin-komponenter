@@ -142,6 +142,12 @@ public class MotorImpl(
                     while (plukker && !stopped) {
                         dataSource.transaction { connection ->
                             val repository = JobbRepository(connection)
+
+                            prometheus.gauge("motor_antall_jobber_klar",
+                                repository.antallJobber(JobbStatus.KLAR))
+                            prometheus.gauge("motor_antall_jobber_feilet",
+                                repository.antallJobber(JobbStatus.FEILET))
+
                             val plukketJobb = repository.plukkJobb()
                             if (plukketJobb != null) {
                                 val behandlingId = plukketJobb.behandlingIdOrNull()
