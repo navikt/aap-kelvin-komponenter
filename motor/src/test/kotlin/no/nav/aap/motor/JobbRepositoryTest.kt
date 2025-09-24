@@ -6,18 +6,25 @@ import no.nav.aap.motor.help.TullTestJobbUtfører
 import no.nav.aap.motor.help.TøysOgTullTestJobbUtfører
 import no.nav.aap.motor.help.TøysTestJobbUtfører
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
 import java.util.*
+import javax.sql.DataSource
 
 class JobbRepositoryTest {
 
-    private val dataSource = InitTestDatabase.freshDatabase()
+    private lateinit var dataSource: DataSource
 
     init {
         JobbType.leggTil(TøysOgTullTestJobbUtfører)
         JobbType.leggTil(TøysTestJobbUtfører)
         JobbType.leggTil(TullTestJobbUtfører)
+    }
+
+    @BeforeEach
+    fun setup() {
+        dataSource = InitTestDatabase.freshDatabase()
     }
 
     @Test
@@ -111,4 +118,31 @@ class JobbRepositoryTest {
         assertThat(plukketIRekkefølge[3].type()).isEqualTo(TullTestJobbUtfører.type())
         assertThat(plukketIRekkefølge[4].type()).isEqualTo(TøysOgTullTestJobbUtfører.type())
     }
+
+    @Test
+    fun `kan telle riktig antall jobber`() {
+        val typer = listOf(TøysOgTullTestJobbUtfører, TullTestJobbUtfører, TøysTestJobbUtfører)
+
+        dataSource.transaction { connection ->
+            val jobbRepository = JobbRepository(connection)
+
+            // Opprett noen jobber i forskjellige statuser
+            repeat(2) {
+                val jobbInput = JobbInput(typer.random())
+                val dbId = jobbRepository.leggTil(jobbInput)
+                jobbRepository.markerSomFerdig(jobbInput.medId(dbId)) // Får status FERDIG
+            }
+            repeat(3) {
+                jobbRepository.leggTil(JobbInput(typer.random())) // Får status KLAR
+            }
+
+            // Kontroller at vi kan telle dem riktig
+            val antallKlar = jobbRepository.antallJobber(JobbStatus.KLAR)
+            assertThat(antallKlar).isEqualTo(3)
+            val antallFerdig = jobbRepository.antallJobber(JobbStatus.FERDIG)
+            assertThat(antallFerdig).isEqualTo(2)
+        }
+
+    }
+
 }
