@@ -4,8 +4,8 @@ import no.nav.aap.komponenter.type.Periode
 import java.util.*
 
 public class PeriodeIterator(
-    leftPerioder: NavigableSet<Periode>,
-    rightPerioder: NavigableSet<Periode>
+    leftPerioder: Iterable<Periode>,
+    rightPerioder: Iterable<Periode>
 ) : Iterator<Periode> {
 
     private var unikePerioder: NavigableSet<Periode> = TreeSet()

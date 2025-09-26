@@ -6,7 +6,7 @@ import java.time.Period
 import java.util.*
 
 
-public class Tidslinje<T>(initSegmenter: NavigableSet<Segment<T>> = TreeSet()) : Iterable<Segment<T>> {
+public class Tidslinje<T>(initSegmenter: NavigableSet<Segment<T>> = TreeSet()) {
 
     public companion object {
         public fun <T> empty(): Tidslinje<T> = Tidslinje<T>(TreeSet())
@@ -57,11 +57,11 @@ public class Tidslinje<T>(initSegmenter: NavigableSet<Segment<T>> = TreeSet()) :
         return segmenter.isNotEmpty()
     }
 
-    public fun segmenter(): NavigableSet<Segment<T>> {
-        return TreeSet(segmenter)
+    public fun segmenter(): Iterable<Segment<T>> {
+        return segmenter
     }
 
-    public fun perioder(): NavigableSet<Periode> {
+    public fun perioder(): Iterable<Periode> {
         return segmenter.mapTo(TreeSet(), Segment<T>::periode)
     }
 
@@ -180,14 +180,28 @@ public class Tidslinje<T>(initSegmenter: NavigableSet<Segment<T>> = TreeSet()) :
         return Tidslinje(compressedSegmenter)
     }
 
+    public fun <R> map(mapper: (T) -> R): Tidslinje<R> {
+        return map { _, verdi -> mapper(verdi) }
+    }
+    public fun <R> map(mapper: (Periode, T) -> R): Tidslinje<R> {
+        return Tidslinje(segmenter.mapTo(TreeSet()) { s ->
+            Segment(s.periode, mapper(s.periode, s.verdi))
+        })
+    }
+
+    public fun <R> mapNotNull(mapper: (T) -> R?): Tidslinje<R> {
+        return mapNotNull { _, verdi -> mapper(verdi) }
+    }
+
+    public fun <R> mapNotNull(mapper: (Periode, T) -> R?): Tidslinje<R> {
+        return Tidslinje(segmenter.mapNotNullTo(TreeSet()) { s ->
+            mapper(s.periode, s.verdi)?.let { Segment(s.periode, it) }
+        })
+    }
+
+
     public fun <R> mapValue(mapper: (T) -> R): Tidslinje<R> {
-        val newSegments: NavigableSet<Segment<R>> = segmenter.mapTo(TreeSet()) { s ->
-            Segment(
-                s.periode,
-                mapper(s.verdi)
-            )
-        }
-        return Tidslinje(newSegments)
+        return map(mapper)
     }
 
     public fun splittOppEtter(period: Period): Tidslinje<T> {
@@ -335,6 +349,7 @@ public class Tidslinje<T>(initSegmenter: NavigableSet<Segment<T>> = TreeSet()) :
             })
 
         return verdierMedPeriodeTidslinje
+            .segmenter()
             .groupBy(
                 { segment -> segment.verdi.periode },
                 { segment -> Segment(segment.periode, segment.verdi.verdi) }
@@ -350,10 +365,6 @@ public class Tidslinje<T>(initSegmenter: NavigableSet<Segment<T>> = TreeSet()) :
      */
     public fun segment(dato: LocalDate): Segment<T>? {
         return segmenter.firstOrNull { segment -> segment.inneholder(dato) }
-    }
-
-    override fun iterator(): Iterator<Segment<T>> {
-        return segmenter.iterator()
     }
 
     public fun minDato(): LocalDate {
@@ -463,6 +474,18 @@ public class Tidslinje<T>(initSegmenter: NavigableSet<Segment<T>> = TreeSet()) :
             }
         }
     }
+
+    public fun <Resultat> fold(init: Resultat, f: (Resultat, Periode, T) -> Resultat): Resultat {
+        return segmenter.fold(init) { acc, segment -> f(acc, segment.periode, segment.verdi) }
+    }
+
+    public fun <Resultat> fold(init: Resultat, f: (Resultat, T) -> Resultat): Resultat {
+        return segmenter.fold(init) { acc, segment -> f(acc, segment.verdi) }
+    }
+
+    public fun mergePrioriterHøyre(other: Tidslinje<T>): Tidslinje<T> {
+        return this.outerJoin(other) { venstreVerdi, høyreVerdi -> høyreVerdi ?: venstreVerdi ?: error("ikke mulig") }
+    }
 }
 
 public fun <T> tidslinjeOf(vararg segments: Pair<Periode, T>): Tidslinje<T> {
@@ -470,12 +493,7 @@ public fun <T> tidslinjeOf(vararg segments: Pair<Periode, T>): Tidslinje<T> {
 }
 
 public fun <T> Tidslinje<T?>.filterNotNull(): Tidslinje<T> {
-    return Tidslinje(this.segmenter().mapNotNull {
-        if (it.verdi == null)
-            null
-        else
-            Segment(it.periode, it.verdi)
-    })
+    return this.mapNotNull { it }
 }
 
 public fun <T> Iterable<Tidslinje<T>>.outerJoinKeepNulls(): Tidslinje<List<T?>> {
@@ -491,15 +509,8 @@ public fun <T, S> Iterable<Tidslinje<T>>.outerJoinKeepNulls(action: (List<T?>) -
 }
 
 public fun <T, S> Iterable<Tidslinje<T>>.outerJoinKeepNullsNotNull(action: (List<T?>) -> S?): Tidslinje<S> {
-    return Tidslinje(this.outerJoinKeepNulls().mapNotNull {
-        val result = action(it.verdi)
-        if (result == null)
-            null
-        else
-            Segment(it.periode, result)
-    })
+    return this.outerJoinKeepNulls().mapNotNull(action)
 }
-
 
 public fun <T> Iterable<Tidslinje<T>>.outerJoin(): Tidslinje<List<T>> {
     return this.fold(Tidslinje()) { listeTidslinje, elementTidslinje ->
