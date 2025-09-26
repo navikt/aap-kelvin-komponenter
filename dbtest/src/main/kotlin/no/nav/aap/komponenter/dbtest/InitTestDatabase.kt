@@ -3,22 +3,31 @@ package no.nav.aap.komponenter.dbtest
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import org.flywaydb.core.Flyway
+import org.slf4j.Logger
 import org.testcontainers.containers.PostgreSQLContainer
-import org.testcontainers.shaded.org.bouncycastle.util.Objects
+import org.testcontainers.containers.output.Slf4jLogConsumer
 import java.io.Closeable
-import java.util.UUID
 import java.util.concurrent.atomic.AtomicInteger
 import javax.sql.DataSource
-import kotlin.math.max
 
-public object InitTestDatabase  : Closeable {
-    private const val clerkDatabase = "clerk"
+public class InitTestDatabase private constructor(private val logger: Logger?=null)  : Closeable {
+    public companion object {
+        public operator fun invoke(): InitTestDatabase {
+            return InitTestDatabase(null)
+        }
+        public operator fun invoke(logger:Logger?): InitTestDatabase {
+            return InitTestDatabase(logger)
+        }
+    }
+    // TODO kanskje droppe det invoke-opplegget og gå tilbake til object med lazy init?
+
+    private val clerkDatabase = "clerk"
     private val databaseNumber = AtomicInteger()
 
     // Postgres 16 korresponderer til versjon i nais.yaml
-    @JvmStatic
     private val postgres: PostgreSQLContainer<*> = PostgreSQLContainer<_>("postgres:16")
         .withDatabaseName(clerkDatabase)
+        .withLogConsumer(Slf4jLogConsumer(logger))
 
     private val clerkDataSource: DataSource
     private var flyway: FlywayOps
@@ -26,6 +35,7 @@ public object InitTestDatabase  : Closeable {
     private val dataSource: DataSource
 
     init {
+        // TODO lazy kall på dette under, slik at det ikke starter postgres før noen ber om freshDatabase
         postgres.start()
         clerkDataSource = newDataSource("clerk")
 
