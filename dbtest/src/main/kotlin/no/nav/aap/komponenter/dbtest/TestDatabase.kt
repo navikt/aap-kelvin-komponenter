@@ -18,7 +18,7 @@ public class TestDatabaseExtension : TestInstancePreDestroyCallback, TestInstanc
         findAnnotatedFields(context!!.requiredTestClass, TestDatabase::class.java)
             .forEach<Field> { field ->
                 field.setAccessible(true)
-                field.set(testInstance, InitTestDatabase.freshDatabase())
+                field.set(testInstance, InitTestDatabase().freshDatabase())
             }
     }
 
