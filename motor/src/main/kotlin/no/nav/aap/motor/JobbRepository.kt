@@ -233,12 +233,13 @@ public class JobbRepository(private val connection: DBConnection) {
         val query = """
                 SELECT count(*) as antall
                 FROM JOBB
-                WHERE status = ?
+                WHERE status = ? AND neste_kjoring < ?
             """.trimIndent()
 
         return connection.queryFirst(query) {
             setParams {
                 setEnumName(1, statusVerdi)
+                setLocalDateTime(2, LocalDateTime.now())
             }
             setRowMapper { row ->
                 row.getLong("antall")
