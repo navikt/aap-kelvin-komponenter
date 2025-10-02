@@ -1,6 +1,7 @@
 package no.nav.aap.motor
 
 import io.micrometer.core.instrument.MeterRegistry
+import io.micrometer.core.instrument.Tag
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import no.nav.aap.komponenter.dbconnect.DBConnection
 import no.nav.aap.komponenter.dbconnect.transaction
@@ -14,11 +15,14 @@ import no.nav.aap.motor.trace.OpentelemetryUtil
 import org.slf4j.LoggerFactory
 import org.slf4j.MDC
 import java.io.Closeable
+import java.time.Instant
 import java.time.LocalDateTime
 import java.util.*
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 import javax.sql.DataSource
 import kotlin.system.measureTimeMillis
 
@@ -135,6 +139,13 @@ public class MotorImpl(
         private val log = LoggerFactory.getLogger(Forbrenningskammer::class.java)
 
         override fun run() {
+            val sistePlukk = AtomicReference(Instant.now())
+            prometheus.gauge(
+                "motor_siste_plukk_timestamp_seconds",
+                listOf(Tag.of("forbrenningskammer", kammernummer.incrementAndGet().toString())),
+                { sistePlukk.get().epochSecond.toDouble() },
+            )
+
             while (!stopped) {
                 log.debug("Starter plukking av jobber")
                 try {
@@ -149,6 +160,19 @@ public class MotorImpl(
                                 repository.antallJobber(JobbStatus.FEILET))
 
                             val plukketJobb = repository.plukkJobb()
+
+                            /* Ønsker å oppdage trege jobber før jobben har kjørt ferdig (f.eks. pga deadlock).
+                            * Registrerer derfor hvert (potensielle) start-tidspunkt for en jobb, slikt at vi i
+                            * grafana kan regne ut hvor lenge siden vi sist prøvde å plukke en jobb.
+                            *
+                            * Metricen gir mening først når jobber tar lenger tid (>= 1 sekund, gitt
+                            * Thread.sleep(500) nedenfor).
+                            *
+                            * Tenkt bruk:
+                            * timestamp(motor_siste_plukk_timestamp_seconds) - motor_siste_plukk_timestamp_seconds
+                            **/
+                            sistePlukk.set(Instant.now())
+
                             if (plukketJobb != null) {
                                 val behandlingId = plukketJobb.behandlingIdOrNull()
                                 val sakId = plukketJobb.sakIdOrNull()
@@ -281,5 +305,9 @@ public class MotorImpl(
             }
             watchdogExecutor.schedule(Watchdog(), 1, TimeUnit.MINUTES)
         }
+    }
+
+    private companion object {
+        private val kammernummer = AtomicInteger(0)
     }
 }
