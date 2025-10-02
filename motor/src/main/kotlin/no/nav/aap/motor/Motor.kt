@@ -22,7 +22,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.atomic.AtomicLong
 import javax.sql.DataSource
 import kotlin.system.measureTimeMillis
 
@@ -137,13 +137,13 @@ public class MotorImpl(
 
     private inner class Forbrenningskammer(private val dataSource: DataSource) : Runnable {
         private val log = LoggerFactory.getLogger(Forbrenningskammer::class.java)
+        private val sistePlukkEpochSeconds = AtomicLong(Instant.now().epochSecond)
 
         override fun run() {
-            val sistePlukk = AtomicReference(Instant.now())
             prometheus.gauge(
                 "motor_siste_plukk_timestamp_seconds",
                 listOf(Tag.of("forbrenningskammer", kammernummer.incrementAndGet().toString())),
-                { sistePlukk.get().epochSecond.toDouble() },
+                sistePlukkEpochSeconds
             )
 
             while (!stopped) {
@@ -171,7 +171,7 @@ public class MotorImpl(
                             * Tenkt bruk:
                             * timestamp(motor_siste_plukk_timestamp_seconds) - motor_siste_plukk_timestamp_seconds
                             **/
-                            sistePlukk.set(Instant.now())
+                            sistePlukkEpochSeconds.set(Instant.now().epochSecond)
 
                             if (plukketJobb != null) {
                                 val behandlingId = plukketJobb.behandlingIdOrNull()
