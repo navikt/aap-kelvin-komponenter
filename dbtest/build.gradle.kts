@@ -6,7 +6,7 @@ dependencies {
     implementation("com.zaxxer:HikariCP:7.0.2")
     implementation("org.flywaydb:flyway-database-postgresql:11.13.2")
     runtimeOnly("org.postgresql:postgresql:42.7.7")
-    api("org.junit.jupiter:junit-jupiter-api:5.13.1")
+    api("org.junit.jupiter:junit-jupiter-api:6.0.0")
 
     implementation("org.testcontainers:postgresql:1.21.3")
     constraints {

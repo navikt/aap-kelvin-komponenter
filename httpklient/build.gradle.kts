@@ -5,7 +5,7 @@ plugins {
 }
 
 val ktorVersion = "3.3.0"
-val junitVersion = "5.13.1"
+val junitVersion = "6.0.0"
 
 kotlin.explicitApi = ExplicitApiMode.Warning
 

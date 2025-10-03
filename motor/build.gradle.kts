@@ -16,8 +16,8 @@ dependencies {
     testImplementation("io.micrometer:micrometer-registry-prometheus:1.15.4")
     testImplementation("ch.qos.logback:logback-classic:1.5.19")
     testImplementation("net.logstash.logback:logstash-logback-encoder:8.1")
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.13.1")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.13.1")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:6.0.0")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:6.0.0")
     testImplementation("org.assertj:assertj-core:3.27.6")
 
     testImplementation(project(":motor-test-utils"))

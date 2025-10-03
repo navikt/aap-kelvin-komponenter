@@ -6,7 +6,6 @@ import org.junit.jupiter.api.extension.TestInstancePostProcessor
 import org.junit.jupiter.api.extension.TestInstancePreDestroyCallback
 import org.junit.platform.commons.support.AnnotationSupport.findAnnotatedFields
 import java.io.Closeable
-import java.lang.reflect.Field
 
 @Target(AnnotationTarget.FIELD)
 @Retention(AnnotationRetention.RUNTIME)
@@ -14,18 +13,18 @@ import java.lang.reflect.Field
 public annotation class TestDatabase
 
 public class TestDatabaseExtension : TestInstancePreDestroyCallback, TestInstancePostProcessor {
-    override fun postProcessTestInstance(testInstance: Any?, context: ExtensionContext?) {
-        findAnnotatedFields(context!!.requiredTestClass, TestDatabase::class.java)
-            .forEach<Field> { field ->
+    override fun postProcessTestInstance(testInstance: Any, context: ExtensionContext) {
+        findAnnotatedFields(context.requiredTestClass, TestDatabase::class.java)
+            .forEach { field ->
                 field.setAccessible(true)
                 field.set(testInstance, InitTestDatabase.freshDatabase())
             }
     }
 
-    override fun preDestroyTestInstance(context: ExtensionContext?) {
+    override fun preDestroyTestInstance(context: ExtensionContext) {
         TestInstancePreDestroyCallback.preDestroyTestInstances(context) { testInstance ->
-            findAnnotatedFields(context!!.requiredTestClass, TestDatabase::class.java)
-                .forEach<Field> {
+            findAnnotatedFields(context.requiredTestClass, TestDatabase::class.java)
+                .forEach {
                     (it.get(testInstance) as Closeable).close()
                 }
         }
