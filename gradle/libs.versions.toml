@@ -1,0 +1,5 @@
+[versions]
+slfj = "2.0.17"
+
+[libraries]
+slfj = { module = "org.slf4j:slf4j-api", version.ref = "slfj" }
