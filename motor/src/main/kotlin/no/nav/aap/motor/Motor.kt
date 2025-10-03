@@ -1,7 +1,8 @@
 package no.nav.aap.motor
 
 import io.micrometer.core.instrument.MeterRegistry
-import io.micrometer.core.instrument.Tag
+import io.micrometer.core.instrument.MultiGauge
+import io.micrometer.core.instrument.Tags
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import no.nav.aap.komponenter.dbconnect.DBConnection
 import no.nav.aap.komponenter.dbconnect.transaction
@@ -21,8 +22,6 @@ import java.util.*
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicLong
 import javax.sql.DataSource
 import kotlin.system.measureTimeMillis
 
@@ -137,15 +136,11 @@ public class MotorImpl(
 
     private inner class Forbrenningskammer(private val dataSource: DataSource) : Runnable {
         private val log = LoggerFactory.getLogger(Forbrenningskammer::class.java)
-        private val sistePlukkEpochSeconds = AtomicLong(Instant.now().epochSecond)
+        private val aktivJobbGauge = MultiGauge.builder("motor_siste_plukk_timestamp_seconds")
+            .tag("thread", Thread.currentThread().name)
+            .register(prometheus)
 
         override fun run() {
-            prometheus.gauge(
-                "motor_siste_plukk_timestamp_seconds",
-                listOf(Tag.of("forbrenningskammer", kammernummer.incrementAndGet().toString())),
-                sistePlukkEpochSeconds
-            )
-
             while (!stopped) {
                 log.debug("Starter plukking av jobber")
                 try {
@@ -171,7 +166,14 @@ public class MotorImpl(
                             * Tenkt bruk:
                             * timestamp(motor_siste_plukk_timestamp_seconds) - motor_siste_plukk_timestamp_seconds
                             **/
-                            sistePlukkEpochSeconds.set(Instant.now().epochSecond)
+
+                            aktivJobbGauge.register(
+                                listOfNotNull(plukketJobb)
+                                    .map { jobbInput ->
+                                        MultiGauge.Row.of(Tags.of("jobb_type", jobbInput.type()), Instant.now().epochSecond)
+                                    },
+                                true,
+                            )
 
                             if (plukketJobb != null) {
                                 val behandlingId = plukketJobb.behandlingIdOrNull()
@@ -197,6 +199,7 @@ public class MotorImpl(
                     log.error("Feil under plukking av jobber", exception)
                 }
                 log.debug("Ingen flere jobber å plukke, hviler litt")
+                aktivJobbGauge.register(setOf(), true)
                 if (!stopped) {
                     Thread.sleep(500)
                 }
@@ -305,9 +308,5 @@ public class MotorImpl(
             }
             watchdogExecutor.schedule(Watchdog(), 1, TimeUnit.MINUTES)
         }
-    }
-
-    private companion object {
-        private val kammernummer = AtomicInteger(0)
     }
 }
