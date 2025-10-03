@@ -22,6 +22,7 @@ import java.util.*
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 import javax.sql.DataSource
 import kotlin.system.measureTimeMillis
 
@@ -137,7 +138,7 @@ public class MotorImpl(
     private inner class Forbrenningskammer(private val dataSource: DataSource) : Runnable {
         private val log = LoggerFactory.getLogger(Forbrenningskammer::class.java)
         private val aktivJobbGauge = MultiGauge.builder("motor_siste_plukk_timestamp_seconds")
-            .tag("thread", Thread.currentThread().name)
+            .tag("forbrenningskammer", forbrenningskammerId.getAndIncrement().toString())
             .register(prometheus)
 
         override fun run() {
@@ -308,5 +309,9 @@ public class MotorImpl(
             }
             watchdogExecutor.schedule(Watchdog(), 1, TimeUnit.MINUTES)
         }
+    }
+
+    companion object {
+        private val forbrenningskammerId = AtomicInteger()
     }
 }
