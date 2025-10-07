@@ -177,6 +177,7 @@ public class MotorImpl(
                             )
 
                             if (plukketJobb != null) {
+                                log.info("Plukket jobb $plukketJobb.")
                                 val behandlingId = plukketJobb.behandlingIdOrNull()
                                 val sakId = plukketJobb.sakIdOrNull()
                                 OpentelemetryUtil.span(
