@@ -25,10 +25,13 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import javax.sql.DataSource
 import kotlin.system.measureTimeMillis
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 public interface Motor : Closeable {
     public fun start()
-    public fun stop()
+    public fun stop(timeout: Duration = 10.seconds)
     public fun kjører(): Boolean
 
     public companion object {
@@ -115,14 +118,14 @@ public class MotorImpl(
         started = true
     }
 
-    public override fun stop() {
+    public override fun stop(timeout: Duration) {
         log.info("Avslutter prosessering av jobber")
         stopped = true
         watchdogExecutor.shutdownNow()
         executor.shutdown()
-        val res = executor.awaitTermination(10L, TimeUnit.SECONDS)
+        val res = executor.awaitTermination(timeout.inWholeSeconds, TimeUnit.SECONDS)
         if (!res) {
-            log.warn("Forbrenningskammer kunne ikke avsluttes innen 10 sekunder.")
+            log.warn("Forbrenningskammer kunne ikke avsluttes innen ${timeout.inWholeSeconds} sekunder.")
         }
         log.info("Avsluttet prosessering av jobber")
     }
