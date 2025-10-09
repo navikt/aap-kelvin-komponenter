@@ -14,6 +14,7 @@ import no.nav.aap.motor.Motor
 import no.nav.aap.motor.ProviderJobbSpesifikasjon
 import no.nav.aap.motor.ProvidersJobbSpesifikasjon
 import org.slf4j.LoggerFactory
+import kotlin.time.Duration
 
 public class ManuellMotorImpl(
     private val dataSource: DataSource,
@@ -48,7 +49,7 @@ public class ManuellMotorImpl(
     override fun start() {
     }
 
-    override fun stop() {
+    override fun stop(timeout: Duration) {
     }
 
     override fun kjører(): Boolean {
