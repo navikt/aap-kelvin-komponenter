@@ -2,7 +2,7 @@ plugins {
     id("komponenter.conventions")
 }
 
-val ktorVersion = "3.3.0"
+val ktorVersion = "3.3.1"
 
 dependencies {
     implementation(project(":dbconnect"))
