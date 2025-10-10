@@ -18,6 +18,10 @@ public class Beløp(verdi: BigDecimal) {
         return Beløp(this.verdi.add(beløp.verdi))
     }
 
+    public fun minus(beløp: Beløp): Beløp {
+        return Beløp(this.verdi.subtract(beløp.verdi))
+    }
+
     public fun multiplisert(faktor: Int): Beløp {
         return Beløp(this.verdi.multiply(BigDecimal(faktor)))
     }
