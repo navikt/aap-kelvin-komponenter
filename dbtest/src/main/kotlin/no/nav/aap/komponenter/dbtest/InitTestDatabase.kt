@@ -45,7 +45,8 @@ public object InitTestDatabase  : Closeable {
                 stmt.executeUpdate("create database $databaseName template template1")
             }
         }
-        println("Startet fresh Postgres med URL ${postgres.jdbcUrl}. Brukernavn: ${postgres.username}. Passord: ${postgres.password}. Db-navn: $databaseName")
+        val freshUrl = (clerkDataSource as HikariConfig).jdbcUrl
+        println("Startet fresh Postgres med URL $freshUrl. Brukernavn: ${postgres.username}. Passord: ${postgres.password}. Db-navn: $databaseName")
         return newDataSource(databaseName)
     }
 
