@@ -87,6 +87,11 @@ public object InitTestDatabase  : Closeable {
             connectionTimeout = 30000
             maxLifetime = 1800000
             connectionTestQuery = "SELECT 1"
+            dataSourceProperties.putAll(mapOf(
+                "logUnclosedConnections" to true, // vår kode skal lukke alle connections
+                "assumeMinServerVersion" to "16.0" // raskere oppstart av driver
+            ))
+
             minimumIdle = 1
 
             /* Postgres i GCP kjører med UTC som timezone. Testcontainers-postgres
