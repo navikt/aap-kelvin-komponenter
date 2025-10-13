@@ -3,22 +3,24 @@ package no.nav.aap.komponenter.dbtest
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import org.flywaydb.core.Flyway
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.testcontainers.containers.PostgreSQLContainer
-import org.testcontainers.shaded.org.bouncycastle.util.Objects
+import org.testcontainers.containers.output.Slf4jLogConsumer
 import java.io.Closeable
-import java.util.UUID
 import java.util.concurrent.atomic.AtomicInteger
 import javax.sql.DataSource
-import kotlin.math.max
 
 public object InitTestDatabase  : Closeable {
     private const val clerkDatabase = "clerk"
     private val databaseNumber = AtomicInteger()
+    private val logger: Logger = LoggerFactory.getLogger(InitTestDatabase::class.java)
 
     // Postgres 16 korresponderer til versjon i nais.yaml
     @JvmStatic
     private val postgres: PostgreSQLContainer<*> = PostgreSQLContainer<_>("postgres:16")
         .withDatabaseName(clerkDatabase)
+        .withLogConsumer(Slf4jLogConsumer(logger))
 
     private val clerkDataSource: DataSource
     private var flyway: FlywayOps
