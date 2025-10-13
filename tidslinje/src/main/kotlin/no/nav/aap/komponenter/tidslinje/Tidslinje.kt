@@ -8,26 +8,6 @@ import java.util.*
 
 public class Tidslinje<T>(initSegmenter: NavigableSet<Segment<T>> = TreeSet()) {
 
-    public companion object {
-        public fun <T> empty(): Tidslinje<T> = Tidslinje<T>(TreeSet())
-
-        public fun <A, B, C> zip3(
-            aTidslinje: Tidslinje<A>,
-            bTidslinje: Tidslinje<B>,
-            cTidslinje: Tidslinje<C>
-        ): Tidslinje<Triple<A?, B?, C?>> {
-            return aTidslinje
-                .kombiner(bTidslinje, JoinStyle.OUTER_JOIN { periode, aSegment, bSegment ->
-                    Segment(periode, Pair(aSegment?.verdi, bSegment?.verdi))
-                })
-                .kombiner(cTidslinje, JoinStyle.OUTER_JOIN { periode, abSegment, cSegment ->
-                    Segment(
-                        periode,
-                        Triple(abSegment?.verdi?.first, abSegment?.verdi?.second, cSegment?.verdi)
-                    )
-                })
-        }
-    }
 
     public constructor(initSegmenter: List<Segment<T>>) : this(TreeSet(initSegmenter))
     public constructor(periode: Periode, verdi: T) : this(TreeSet(listOf(Segment(periode, verdi))))
@@ -183,6 +163,7 @@ public class Tidslinje<T>(initSegmenter: NavigableSet<Segment<T>> = TreeSet()) {
     public fun <R> map(mapper: (T) -> R): Tidslinje<R> {
         return map { _, verdi -> mapper(verdi) }
     }
+
     public fun <R> map(mapper: (Periode, T) -> R): Tidslinje<R> {
         return Tidslinje(segmenter.mapTo(TreeSet()) { s ->
             Segment(s.periode, mapper(s.periode, s.verdi))
@@ -486,6 +467,86 @@ public class Tidslinje<T>(initSegmenter: NavigableSet<Segment<T>> = TreeSet()) {
     public fun mergePrioriterHøyre(other: Tidslinje<T>): Tidslinje<T> {
         return this.outerJoin(other) { venstreVerdi, høyreVerdi -> høyreVerdi ?: venstreVerdi ?: error("ikke mulig") }
     }
+
+    public companion object {
+        public fun <T> empty(): Tidslinje<T> = Tidslinje<T>(TreeSet())
+
+        public fun <A, B> zip2(
+            aTidslinje: Tidslinje<A>,
+            bTidslinje: Tidslinje<B>,
+        ): Tidslinje<Pair<A?, B?>> {
+            return aTidslinje.outerJoin(bTidslinje) { a, b -> Pair(a, b) }
+        }
+
+        public fun <A, B, C> zip3(
+            aTidslinje: Tidslinje<A>,
+            bTidslinje: Tidslinje<B>,
+            cTidslinje: Tidslinje<C>
+        ): Tidslinje<Triple<A?, B?, C?>> {
+            return zip2(aTidslinje, bTidslinje)
+                .outerJoin(cTidslinje) { ab, c ->
+                    Triple(ab?.first, ab?.second, c)
+                }
+        }
+
+        public fun <A, B, R> map2(
+            aTidslinje: Tidslinje<A>,
+            bTidslinje: Tidslinje<B>,
+            body: (A?, B?) -> R,
+        ): Tidslinje<R> {
+            return zip2(aTidslinje, bTidslinje).map { (a, b) -> body(a, b) }
+        }
+
+        public fun <A, B, C, R> map3(
+            aTidslinje: Tidslinje<A>,
+            bTidslinje: Tidslinje<B>,
+            cTidslinje: Tidslinje<C>,
+            body: (A?, B?, C?) -> R,
+        ): Tidslinje<R> {
+            return zip3(aTidslinje, bTidslinje, cTidslinje).map { (a, b, c) -> body(a, b, c) }
+        }
+
+        public fun <A, B, C, D, R> map4(
+            aTidslinje: Tidslinje<A>,
+            bTidslinje: Tidslinje<B>,
+            cTidslinje: Tidslinje<C>,
+            dTidslinje: Tidslinje<D>,
+            body: (A?, B?, C?, D?) -> R,
+        ): Tidslinje<R> {
+            return zip3(aTidslinje, bTidslinje, cTidslinje).outerJoin(dTidslinje) { abc, d ->
+                body(abc?.first, abc?.second, abc?.third, d)
+            }
+        }
+
+        public fun <A, B, C, D, E, R> map5(
+            aTidslinje: Tidslinje<A>,
+            bTidslinje: Tidslinje<B>,
+            cTidslinje: Tidslinje<C>,
+            dTidslinje: Tidslinje<D>,
+            eTidslinje: Tidslinje<E>,
+            body: (A?, B?, C?, D?, E?) -> R,
+        ): Tidslinje<R> {
+            return zip3(aTidslinje, bTidslinje, cTidslinje)
+                .outerJoin(zip2(dTidslinje, eTidslinje)) { abc, de ->
+                    body(abc?.first, abc?.second, abc?.third, de?.first, de?.second)
+                }
+        }
+
+        public fun <A, B, C, D, E, F, R> map6(
+            aTidslinje: Tidslinje<A>,
+            bTidslinje: Tidslinje<B>,
+            cTidslinje: Tidslinje<C>,
+            dTidslinje: Tidslinje<D>,
+            eTidslinje: Tidslinje<E>,
+            fTidslinje: Tidslinje<F>,
+            body: (A?, B?, C?, D?, E?, F?) -> R,
+        ): Tidslinje<R> {
+            return zip3(aTidslinje, bTidslinje, cTidslinje)
+                .outerJoin(zip3(dTidslinje, eTidslinje, fTidslinje)) { abc, def ->
+                    body(abc?.first, abc?.second, abc?.third, def?.first, def?.second, def?.third)
+                }
+        }
+}
 }
 
 public fun <T> tidslinjeOf(vararg segments: Pair<Periode, T>): Tidslinje<T> {
