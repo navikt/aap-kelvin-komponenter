@@ -590,3 +590,18 @@ public fun <T, S> Iterable<Tidslinje<T>>.outerJoinNotNull(action: (List<T>) -> S
 }
 
 public fun <T> Tidslinje<T>?.orEmpty(): Tidslinje<T> = this ?: Tidslinje.empty()
+
+/** Lag tidslinje basert på verdiene ved å knytte dem til perioder. Verdier lenger ut
+ * i lista får høyere prioritet, og legger seg over tidligere verdier. */
+public fun <T, R> Iterable<T>.somTidslinje(periodeSelector: (T) -> Periode, valueSelector: (T) -> R): Tidslinje<R> {
+    return fold(Tidslinje<R>()) { tidslinje, neste ->
+        tidslinje.mergePrioriterHøyre(Tidslinje(periodeSelector(neste), valueSelector(neste)))
+    }
+}
+
+/** Lag tidslinje basert på verdiene ved å knytte dem til perioder. Verdier lenger ut
+ * i lista får høyere prioritet, og legger seg over tidligere verdier. */
+public fun <T> Iterable<T>.somTidslinje(periodeSelector: (T) -> Periode): Tidslinje<T> {
+    return this.somTidslinje(periodeSelector, { it })
+}
+
