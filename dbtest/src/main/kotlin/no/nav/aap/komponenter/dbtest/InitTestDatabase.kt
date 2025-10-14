@@ -7,6 +7,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.containers.output.Slf4jLogConsumer
+import org.testcontainers.containers.wait.strategy.Wait
 import java.io.Closeable
 import java.util.concurrent.atomic.AtomicInteger
 import javax.sql.DataSource
@@ -21,6 +22,7 @@ public object InitTestDatabase  : Closeable {
     private val postgres: PostgreSQLContainer<*> = PostgreSQLContainer<_>("postgres:16")
         .withDatabaseName(clerkDatabase)
         .withLogConsumer(Slf4jLogConsumer(logger))
+        .waitingFor(Wait.forListeningPort())
 
     private val clerkDataSource: DataSource
     private var flyway: FlywayOps
@@ -42,12 +44,14 @@ public object InitTestDatabase  : Closeable {
 
     public fun freshDatabase(): DataSource {
         val databaseName = "test${databaseNumber.getAndIncrement()}"
-        clerkDataSource.connection.use { connection ->
-            connection.createStatement().use { stmt ->
-                stmt.executeUpdate("create database $databaseName template template1")
+        val freshUrl = synchronized(clerkDataSource) {
+            clerkDataSource.connection.use { connection ->
+                connection.createStatement().use { stmt ->
+                    stmt.executeUpdate("create database $databaseName template template1")
+                }
             }
+            (clerkDataSource as HikariConfig).jdbcUrl
         }
-        val freshUrl = (clerkDataSource as HikariConfig).jdbcUrl
         println("Startet fresh Postgres med URL $freshUrl. Brukernavn: ${postgres.username}. Passord: ${postgres.password}. Db-navn: $databaseName")
         return newDataSource(databaseName)
     }
@@ -103,15 +107,21 @@ public object InitTestDatabase  : Closeable {
     }
 
     public fun migrate() {
-        flyway.migrate()
+        synchronized(flyway) {
+            flyway.migrate()
+        }
     }
 
     public fun clean() {
-        flyway.clean()
+        synchronized(flyway) {
+            flyway.clean()
+        }
     }
 
     override fun close() {
-        postgres.stop()
+        synchronized(postgres) {
+            postgres.stop()
+        }
     }
 
     public fun closerFor(dataSource: DataSource) {

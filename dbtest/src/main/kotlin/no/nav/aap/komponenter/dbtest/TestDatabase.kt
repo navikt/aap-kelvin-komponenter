@@ -5,7 +5,7 @@ import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.api.extension.TestInstancePostProcessor
 import org.junit.jupiter.api.extension.TestInstancePreDestroyCallback
 import org.junit.platform.commons.support.AnnotationSupport.findAnnotatedFields
-import java.io.Closeable
+import javax.sql.DataSource
 
 @Target(AnnotationTarget.FIELD)
 @Retention(AnnotationRetention.RUNTIME)
@@ -17,6 +17,7 @@ public class TestDatabaseExtension : TestInstancePreDestroyCallback, TestInstanc
         findAnnotatedFields(context.requiredTestClass, TestDatabase::class.java)
             .forEach { field ->
                 field.setAccessible(true)
+                // Create the DataSource
                 field.set(testInstance, InitTestDatabase.freshDatabase())
             }
     }
@@ -25,7 +26,8 @@ public class TestDatabaseExtension : TestInstancePreDestroyCallback, TestInstanc
         TestInstancePreDestroyCallback.preDestroyTestInstances(context) { testInstance ->
             findAnnotatedFields(context.requiredTestClass, TestDatabase::class.java)
                 .forEach {
-                    (it.get(testInstance) as Closeable).close()
+                    // Close the DataSource
+                    InitTestDatabase.closerFor(it.get(testInstance) as DataSource)
                 }
         }
     }
