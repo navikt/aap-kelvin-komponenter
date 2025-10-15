@@ -1,30 +1,25 @@
 package no.nav.aap.motor
 
 import no.nav.aap.komponenter.dbconnect.transaction
-import no.nav.aap.komponenter.dbtest.InitTestDatabase
+import no.nav.aap.komponenter.dbtest.TestDataSource
 import no.nav.aap.motor.help.TullTestJobbUtfører
 import no.nav.aap.motor.help.TøysOgTullTestJobbUtfører
 import no.nav.aap.motor.help.TøysTestJobbUtfører
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.AutoClose
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
 import java.util.*
-import javax.sql.DataSource
 
 class JobbRepositoryTest {
 
-    private lateinit var dataSource: DataSource
+    @AutoClose
+    private val dataSource = TestDataSource()
 
     init {
         JobbType.leggTil(TøysOgTullTestJobbUtfører)
         JobbType.leggTil(TøysTestJobbUtfører)
         JobbType.leggTil(TullTestJobbUtfører)
-    }
-
-    @BeforeEach
-    fun setup() {
-        dataSource = InitTestDatabase.freshDatabase()
     }
 
     @Test
