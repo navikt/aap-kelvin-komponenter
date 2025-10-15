@@ -391,8 +391,12 @@ public class Tidslinje<T>(initSegmenter: NavigableSet<Segment<T>> = TreeSet()) {
     }
 
     public fun <U, R> outerJoin(other: Tidslinje<U>, body: (T?, U?) -> R): Tidslinje<R> {
+        return outerJoin(other) { _, t, u -> body(t, u) }
+    }
+
+    public fun <U, R> outerJoin(other: Tidslinje<U>, body: (Periode, T?, U?) -> R): Tidslinje<R> {
         return lowLevelOuterJoin(other) { periode, thisSegment, otherSegment ->
-            Segment(periode, body(thisSegment?.verdi, otherSegment?.verdi))
+            Segment(periode, body(periode, thisSegment?.verdi, otherSegment?.verdi))
         }
     }
 
@@ -516,6 +520,20 @@ public class Tidslinje<T>(initSegmenter: NavigableSet<Segment<T>> = TreeSet()) {
             return zip3(aTidslinje, bTidslinje, cTidslinje).outerJoin(dTidslinje) { abc, d ->
                 body(abc?.first, abc?.second, abc?.third, d)
             }
+        }
+
+        public fun <A, B, C, D, E, R> map5(
+            aTidslinje: Tidslinje<A>,
+            bTidslinje: Tidslinje<B>,
+            cTidslinje: Tidslinje<C>,
+            dTidslinje: Tidslinje<D>,
+            eTidslinje: Tidslinje<E>,
+            body: (Periode, A?, B?, C?, D?, E?) -> R,
+        ): Tidslinje<R> {
+            return zip3(aTidslinje, bTidslinje, cTidslinje)
+                .outerJoin(zip2(dTidslinje, eTidslinje)) { periode, abc, de ->
+                    body(periode, abc?.first, abc?.second, abc?.third, de?.first, de?.second)
+                }
         }
 
         public fun <A, B, C, D, E, R> map5(
