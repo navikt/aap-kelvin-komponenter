@@ -1,6 +1,5 @@
 import com.papsign.ktor.openapigen.model.info.InfoModel
 import com.papsign.ktor.openapigen.route.apiRouting
-import io.ktor.client.call.body
 import io.ktor.client.request.*
 import io.ktor.client.statement.bodyAsText
 import io.ktor.server.application.*
@@ -9,7 +8,7 @@ import io.ktor.server.testing.*
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import no.nav.aap.komponenter.dbconnect.DBConnection
 import no.nav.aap.komponenter.dbconnect.transaction
-import no.nav.aap.komponenter.dbtest.InitTestDatabase
+import no.nav.aap.komponenter.dbtest.TestDataSource
 import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.azurecc.AzureConfig
 import no.nav.aap.komponenter.json.DefaultJsonMapper
 import no.nav.aap.komponenter.server.commonKtorModule
@@ -21,19 +20,35 @@ import no.nav.aap.motor.Motor
 import no.nav.aap.motor.api.JobbInfoDto
 import no.nav.aap.motor.api.motorApi
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.AutoClose
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import javax.sql.DataSource
 
 class MotorApiTest {
+
+    @AutoClose
+    private lateinit var dataSource: TestDataSource
+
+    @BeforeEach
+    fun setup() {
+        dataSource = TestDataSource()
+    }
+
+    @AfterEach
+    fun teardown() {
+        dataSource.close()
+    }
+
     @Test
     fun `skal ikke krasje på ingen planlagte jobber`() {
-        val ds = InitTestDatabase.freshDatabase()
-        val motor = Motor(ds, jobber = listOf(TøysTestJobbUtfører))
+        val motor = Motor(dataSource, jobber = listOf(TøysTestJobbUtfører))
 
         motor.start()
 
         testApplication {
-            application { module(ds) }
+            application { module(dataSource) }
 
             val response = client.get("/drift/api/jobb/planlagte-jobber")
 
@@ -45,17 +60,16 @@ class MotorApiTest {
 
     @Test
     fun `kan hente opprettet tidspunkt i listen over kjørte jobber`() {
-        val ds = InitTestDatabase.freshDatabase()
-        val motor = Motor(ds, jobber = listOf(TøysTestJobbUtfører))
+        val motor = Motor(dataSource, jobber = listOf(TøysTestJobbUtfører))
 
-        ds.transaction {
+        dataSource.transaction {
             FlytJobbRepositoryImpl(it).leggTil(JobbInput(TøysTestJobbUtfører))
         }
 
         motor.start()
 
         testApplication {
-            application { module(ds) }
+            application { module(dataSource) }
 
             val response = client.get("/drift/api/jobb/sisteKjørte")
 
