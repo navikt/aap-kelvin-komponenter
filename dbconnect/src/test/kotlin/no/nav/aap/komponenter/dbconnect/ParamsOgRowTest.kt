@@ -1,9 +1,10 @@
 package no.nav.aap.komponenter.dbconnect
 
-import no.nav.aap.komponenter.dbtest.InitTestDatabase
+import no.nav.aap.komponenter.dbtest.TestDataSource
 import no.nav.aap.komponenter.type.Periode
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.data.TemporalUnitWithinOffset
+import org.junit.jupiter.api.AutoClose
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -18,7 +19,8 @@ import java.time.temporal.ChronoUnit
 import java.util.*
 
 internal class ParamsOgRowTest {
-    private val dataSource = InitTestDatabase.freshDatabase()
+    @AutoClose
+    private val dataSource = TestDataSource()
 
     @BeforeEach
     fun setup() {
