@@ -180,15 +180,7 @@ public class JobbRepository(private val connection: DBConnection) {
     }
 
     public fun markerSomFeilet(jobbInput: JobbInput, exception: Throwable) {
-        // Da denne kjører i en ny transaksjon bør Jobbens rad låses slik at Jobben ikke plukkes på nytt mens det logges
-        connection.queryFirst("SELECT id FROM JOBB WHERE id = ? FOR UPDATE") {
-            setParams {
-                setLong(1, jobbInput.id)
-            }
-            setRowMapper {
-                it.getLong("id")
-            }
-        }
+        // Den transaksjonen vi har gående på `connection` har allerede en lås på jobben, så vi trenger ikke ta ny lås her.
 
         if (jobbInput.maksFeilNådd()) {
             connection.execute("UPDATE JOBB SET status = ? WHERE id = ? AND status = ?") {

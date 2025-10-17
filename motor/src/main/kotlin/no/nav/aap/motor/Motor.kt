@@ -230,7 +230,7 @@ public class MotorImpl(
                 }
                 JobbRepository(connection).markerSomFerdig(jobbInput)
             } catch (exception: Throwable) {
-                // Feil under kjøring av jobb, eller under oppdatering av status til 'kjørt'
+                // Feil under kjøring av jobb, eller under oppdatering av status til 'kjørt', eller scheduling av neste
                 log.warn("Feil under prosessering av jobb :: $jobbInput", exception)
 
                 if (jobbInput.maksFeilNådd()) {
