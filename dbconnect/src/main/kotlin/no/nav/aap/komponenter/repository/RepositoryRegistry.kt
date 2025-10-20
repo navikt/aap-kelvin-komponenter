@@ -3,37 +3,38 @@ package no.nav.aap.komponenter.repository
 import no.nav.aap.komponenter.dbconnect.DBConnection
 import org.slf4j.LoggerFactory
 import kotlin.reflect.KClass
-import kotlin.reflect.KType
+import kotlin.reflect.full.allSuperclasses
 import kotlin.reflect.full.companionObject
 import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.full.isSubtypeOf
 import kotlin.reflect.full.starProjectedType
+import kotlin.reflect.full.superclasses
 
-public class RepositoryRegistry {
+public class RepositoryRegistry(
+    internal val registry: ArrayList<Pair<KClass<Repository>, KClass<Repository>>>,
+) {
+    public constructor() : this(ArrayList())
+
     private val logger = LoggerFactory.getLogger(RepositoryRegistry::class.java)!!
-    private val registry = HashSet<KClass<Repository>>()
-    private val lock = Object()
 
     public inline fun <reified T : Repository> register(): RepositoryRegistry {
         return register(T::class)
     }
 
-    public fun <T: Repository> register(repository: KClass<T>): RepositoryRegistry {
+    public fun <T : Repository> register(repository: KClass<T>): RepositoryRegistry {
         validater(repository)
 
-        synchronized(lock) {
-            // Kode for å støtte at tester kan legge inn varianter, burde potensielt vært skilt ut?
-            val removedSomething = registry.removeIf { klass ->
-                repository.supertypes.filter { type ->
-                    type.isSubtypeOf(Repository::class.starProjectedType)
-                }.any { type -> klass.starProjectedType.isSubtypeOf(type) }
-            }
-            if (removedSomething) {
-                logger.warn("Repository '{}' hadde en variant allerede registrert", repository)
-            }
-            @Suppress("UNCHECKED_CAST")
-            registry.add(repository as KClass<Repository>)
+        // Kode for å støtte at tester kan legge inn varianter, burde potensielt vært skilt ut?
+        val removedSomething = registry.removeIf { (markerInterface, _) ->
+            markerInterface in repository.markerInterfaces
         }
+        if (removedSomething) {
+            logger.warn("Repository '{}' hadde en variant allerede registrert", repository)
+        }
+        registry.addAll(repository.markerInterfaces.map {
+            @Suppress("UNCHECKED_CAST")
+            (it to repository) as Pair<KClass<Repository>, KClass<Repository>>
+        })
         return this
     }
 
@@ -53,29 +54,39 @@ public class RepositoryRegistry {
         }
     }
 
-    internal fun fetch(ktype: KType): KClass<Repository> {
-        synchronized(lock) {
-            val singleOrNull = registry.singleOrNull { klass -> klass.starProjectedType.isSubtypeOf(ktype) }
-            if (singleOrNull == null) {
-                logger.warn("Repository av typen '{}' er ikke registrert, har følgende '{}'", ktype, registry)
-                throw IllegalStateException("Repository av typen '$ktype' er ikke registrert")
-            }
-            return singleOrNull
+    internal fun fetch(ktype: KClass<*>): KClass<Repository> {
+        val singleOrNull = registry.singleOrNull { (marker, _) ->
+            marker == ktype
         }
+        if (singleOrNull == null) {
+            logger.warn("Repository av typen '{}' er ikke registrert, har følgende '{}'", ktype, registry)
+            throw IllegalStateException("Repository av typen '$ktype' er ikke registrert")
+        }
+
+        return singleOrNull.second
     }
 
     internal fun alle(): List<KClass<Repository>> {
-        return registry.toList()
+        return registry.map {
+            it.second
+        }
     }
 
     public fun status() {
         logger.info(
             "{} repositories registrert har følgende '{}'",
             registry.size,
-            registry.map { kclass -> kclass.starProjectedType })
+            registry.map { kclass -> kclass.second.starProjectedType })
     }
 
     public fun provider(connection: DBConnection): RepositoryProvider {
         return RepositoryProvider(connection, this)
     }
 }
+
+private val KClass<*>.markerInterfaces: Set<KClass<*>>
+    get() =
+        this.superclasses.filter { Repository::class in it.allSuperclasses }.toSet()
+            .also {
+                check(it.isNotEmpty()) { "${this.simpleName} har ingen Repository-marker interface" }
+            }
