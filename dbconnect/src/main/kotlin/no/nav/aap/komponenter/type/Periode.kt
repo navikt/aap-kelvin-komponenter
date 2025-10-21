@@ -5,6 +5,9 @@ import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 import java.util.*
 
+/**
+ * En periode av hele døgn mellom to datoer, inklusiv begge datoer.
+ */
 public class Periode(
     public val fom: LocalDate,
     public val tom: LocalDate
