@@ -1,14 +1,32 @@
 version: 2
 
-updates:
-    # Gradle updates
-    - package-ecosystem: "gradle"
-      directory: "/"
-      schedule:
-          interval: "daily"
+registries:
+    maven-github:
+        type: maven-repository
+        url: https://github-package-registry-mirror.gc.nav.no/cached/maven-release
+        username: POSTMAN
+        password: PAT
 
-    # Maintain dependencies for GitHub Actions
-    - package-ecosystem: "github-actions"
-      directory: "/"
+updates:
+    - package-ecosystem: github-actions
+      directory: /
       schedule:
-          interval: "daily"
+          interval: daily
+
+    - package-ecosystem: gradle
+      directory: /
+      schedule:
+          interval: daily
+      cooldown:
+        default-days: 3
+      groups:
+        minor:
+          applies-to: version-updates
+          exclude-patterns:
+            - "no.nav.aap*"
+          update-types:
+            - "minor"
+            - "patch"
+
+      registries:
+          - maven-github
