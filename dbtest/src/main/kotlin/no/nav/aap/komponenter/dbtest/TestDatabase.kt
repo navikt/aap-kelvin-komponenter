@@ -27,12 +27,7 @@ public class TestDatabaseExtension : TestInstancePreDestroyCallback, TestInstanc
             findAnnotatedFields(context.requiredTestClass, TestDatabase::class.java)
                 .forEach {
                     // Close the DataSource
-                    try {
-                        InitTestDatabase.closerFor(it.get(testInstance) as DataSource)
-                    } finally {
-                        // ignore
-                    }
-
+                    InitTestDatabase.closerFor(it.get(testInstance) as DataSource)
                 }
         }
     }
