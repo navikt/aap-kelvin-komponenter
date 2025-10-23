@@ -12,7 +12,7 @@ import java.io.Closeable
 import java.util.concurrent.atomic.AtomicInteger
 import javax.sql.DataSource
 
-public object InitTestDatabase  : Closeable {
+public object InitTestDatabase : Closeable {
     private const val clerkDatabase = "clerk"
     private val databaseNumber = AtomicInteger()
     private val logger: Logger = LoggerFactory.getLogger(InitTestDatabase::class.java)
@@ -34,8 +34,7 @@ public object InitTestDatabase  : Closeable {
         clerkDataSource = newDataSource("clerk")
 
         val templateDataSource = newDataSource("template1")
-        flywayFor(templateDataSource)
-            .migrate()
+        flywayFor(templateDataSource).migrate()
         templateDataSource.close()
 
         dataSource = freshDatabase()
@@ -91,10 +90,12 @@ public object InitTestDatabase  : Closeable {
             connectionTimeout = 30000
             maxLifetime = 1800000
             connectionTestQuery = "SELECT 1"
-            dataSourceProperties.putAll(mapOf(
-                "logUnclosedConnections" to true, // vår kode skal lukke alle connections
-                "assumeMinServerVersion" to "16.0" // raskere oppstart av driver
-            ))
+            dataSourceProperties.putAll(
+                mapOf(
+                    "logUnclosedConnections" to true, // vår kode skal lukke alle connections
+                    "assumeMinServerVersion" to "16.0" // raskere oppstart av driver
+                )
+            )
 
             minimumIdle = 1
 
@@ -125,6 +126,11 @@ public object InitTestDatabase  : Closeable {
     }
 
     public fun closerFor(dataSource: DataSource) {
-        (dataSource as HikariDataSource).close()
+        try {
+            // Close kan feile hvis feks. testcontainer ikke klarte å starte opp
+            (dataSource as HikariDataSource).close()
+        } catch (_: Exception) {
+            // ignorert
+        }
     }
 }
