@@ -5,9 +5,11 @@ import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 import java.util.*
 
+/**
+ * En periode av hele døgn mellom to datoer, inklusiv begge datoer.
+ */
 public class Periode(
-    public val fom: LocalDate,
-    public val tom: LocalDate
+    public val fom: LocalDate, public val tom: LocalDate
 ) : Comparable<Periode> {
 
     init {
@@ -33,8 +35,7 @@ public class Periode(
         return fom.until(tom.plusDays(1), ChronoUnit.DAYS).toInt()
     }
 
-    public fun antallDager(vararg dager: DayOfWeek): Int {
-        /* Naiv og åpenbart™ riktig implementasjon :) */
+    public fun antallDager(vararg dager: DayOfWeek): Int {/* Naiv og åpenbart™ riktig implementasjon :) */
         return dager().count { it.dayOfWeek in dager }
     }
 
@@ -124,7 +125,7 @@ public class Periode(
 
     /**
      * Lag en ny periode som er flyttet [antallDager] dager framover/bakover i tid.
-     * 
+     *
      */
     public fun flytt(antallDager: Long): Periode {
         return Periode(fom.plusDays(antallDager), tom.plusDays(antallDager))
