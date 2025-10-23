@@ -10,6 +10,7 @@ import javax.sql.DataSource
 @Target(AnnotationTarget.FIELD)
 @Retention(AnnotationRetention.RUNTIME)
 @ExtendWith(TestDatabaseExtension::class)
+@Deprecated("Bruk heller TestDataSource, enklere sånn")
 public annotation class TestDatabase
 
 public class TestDatabaseExtension : TestInstancePreDestroyCallback, TestInstancePostProcessor {
