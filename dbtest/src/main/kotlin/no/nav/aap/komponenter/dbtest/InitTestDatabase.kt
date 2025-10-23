@@ -12,17 +12,16 @@ import java.io.Closeable
 import java.util.concurrent.atomic.AtomicInteger
 import javax.sql.DataSource
 
-public object InitTestDatabase  : Closeable {
+public object InitTestDatabase : Closeable {
     private const val clerkDatabase = "clerk"
     private val databaseNumber = AtomicInteger()
     private val logger: Logger = LoggerFactory.getLogger(InitTestDatabase::class.java)
 
     // Postgres 16 korresponderer til versjon i nais.yaml
     @JvmStatic
-    private val postgres: PostgreSQLContainer<*> = PostgreSQLContainer<_>("postgres:16")
-        .withDatabaseName(clerkDatabase)
-        .withLogConsumer(Slf4jLogConsumer(logger))
-        .waitingFor(Wait.forListeningPort())
+    private val postgres: PostgreSQLContainer<*> =
+        PostgreSQLContainer<_>("postgres:16").withDatabaseName(clerkDatabase).withLogConsumer(Slf4jLogConsumer(logger))
+            .waitingFor(Wait.forListeningPort())
 
     private val clerkDataSource: DataSource
     private var flyway: FlywayOps
@@ -34,8 +33,7 @@ public object InitTestDatabase  : Closeable {
         clerkDataSource = newDataSource("clerk")
 
         val templateDataSource = newDataSource("template1")
-        flywayFor(templateDataSource)
-            .migrate()
+        flywayFor(templateDataSource).migrate()
         templateDataSource.close()
 
         dataSource = freshDatabase()
@@ -63,13 +61,8 @@ public object InitTestDatabase  : Closeable {
 
     public fun flywayFor(dataSource: DataSource): FlywayOps {
         return object : FlywayOps {
-            private val flyway = Flyway
-                .configure()
-                .cleanDisabled(false)
-                .dataSource(dataSource)
-                .locations("flyway")
-                .validateMigrationNaming(true)
-                .load()
+            private val flyway = Flyway.configure().cleanDisabled(false).dataSource(dataSource).locations("flyway")
+                .validateMigrationNaming(true).load()
 
             override fun migrate() {
                 flyway.migrate()
@@ -91,10 +84,12 @@ public object InitTestDatabase  : Closeable {
             connectionTimeout = 30000
             maxLifetime = 1800000
             connectionTestQuery = "SELECT 1"
-            dataSourceProperties.putAll(mapOf(
-                "logUnclosedConnections" to true, // vår kode skal lukke alle connections
-                "assumeMinServerVersion" to "16.0" // raskere oppstart av driver
-            ))
+            dataSourceProperties.putAll(
+                mapOf(
+                    "logUnclosedConnections" to true, // vår kode skal lukke alle connections
+                    "assumeMinServerVersion" to "16.0" // raskere oppstart av driver
+                )
+            )
 
             minimumIdle = 1
 
@@ -125,6 +120,11 @@ public object InitTestDatabase  : Closeable {
     }
 
     public fun closerFor(dataSource: DataSource) {
-        (dataSource as HikariDataSource).close()
+        try {
+            // Close kan feile hvis feks. testcontainer ikke klarte å starte opp
+            (dataSource as HikariDataSource).close()
+        } finally {
+            // ignorert
+        }
     }
 }
