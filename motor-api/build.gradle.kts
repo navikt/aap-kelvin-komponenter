@@ -9,7 +9,7 @@ dependencies {
     implementation(project(":motor"))
     implementation("org.slf4j:slf4j-api:2.0.17")
     // Skille ut disse til egen modul for motor-api
-    implementation("no.nav:ktor-openapi-generator:1.0.122")
+    implementation("no.nav:ktor-openapi-generator:1.0.131")
     implementation("io.ktor:ktor-http-jvm:$ktorVersion")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.20.0")
 

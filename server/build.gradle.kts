@@ -17,17 +17,17 @@ dependencies {
     api("io.ktor:ktor-server-metrics-micrometer:$ktorVersion")
     api("io.ktor:ktor-server-netty:$ktorVersion")
     constraints {
-        implementation("io.netty:netty-codec-http2:4.2.6.Final")
+        implementation("io.netty:netty-codec-http2:4.2.7.Final")
     }
     api(project(":verdityper"))
     api("io.ktor:ktor-server-cors:$ktorVersion")
     api("io.ktor:ktor-server-status-pages:$ktorVersion")
 
-    api("io.micrometer:micrometer-registry-prometheus:1.15.4")
+    api("io.micrometer:micrometer-registry-prometheus:1.15.5")
 
     api("io.ktor:ktor-serialization-jackson:$ktorVersion")
     api("com.fasterxml.jackson.core:jackson-databind:2.20.0")
-    api("no.nav:ktor-openapi-generator:1.0.122")
+    api("no.nav:ktor-openapi-generator:1.0.131")
 
 
     api(project(":httpklient"))
