@@ -42,7 +42,7 @@ jobs:
           gradle-version: wrapper
 
       - name: Build
-        run: ./gradlew build -x test
+        run: ./gradlew assemble --no-build-cache --no-configuration-cache
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
