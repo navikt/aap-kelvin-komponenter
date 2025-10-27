@@ -5,6 +5,7 @@ import no.nav.aap.komponenter.dbconnect.DBConnection
 import no.nav.aap.komponenter.dbconnect.Row
 import no.nav.aap.komponenter.dbconnect.transaction
 import no.nav.aap.komponenter.dbtest.InitTestDatabase
+import no.nav.aap.komponenter.dbtest.TestDataSource
 import no.nav.aap.motor.help.RekkefølgeTestJobbUtfører
 import no.nav.aap.motor.help.EnAnnenRekkefølgeTestJobbUtfører
 import no.nav.aap.motor.help.TullTestJobbUtfører
@@ -24,7 +25,7 @@ private val logger = LoggerFactory.getLogger(MotorTest::class.java)
 
 class MotorTest {
     @AutoClose
-    private val dataSource = InitTestDatabase.freshDatabase()
+    private val dataSource = TestDataSource()
 
     @BeforeEach
     fun beforeEach() {
