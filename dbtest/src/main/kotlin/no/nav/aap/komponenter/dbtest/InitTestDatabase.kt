@@ -3,7 +3,6 @@ package no.nav.aap.komponenter.dbtest
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import org.flywaydb.core.Flyway
-import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.containers.output.Slf4jLogConsumer
@@ -13,84 +12,59 @@ import java.util.concurrent.atomic.AtomicInteger
 import javax.sql.DataSource
 
 public object InitTestDatabase : Closeable {
-    private const val clerkDatabase = "clerk"
+    private const val templateDb = "template1"
     private val databaseNumber = AtomicInteger()
-    private val logger: Logger = LoggerFactory.getLogger(InitTestDatabase::class.java)
+    private val logger = LoggerFactory.getLogger(InitTestDatabase::class.java)
 
-    // Postgres 16 korresponderer til versjon i nais.yaml
-    @JvmStatic
     private val postgres: PostgreSQLContainer<*> = PostgreSQLContainer<_>("postgres:16")
-        .withDatabaseName(clerkDatabase)
+        .withDatabaseName(templateDb)
         .withLogConsumer(Slf4jLogConsumer(logger))
         .waitingFor(Wait.forListeningPort())
-        .withStartupTimeout(java.time.Duration.ofSeconds(60))
+        .withStartupTimeout(java.time.Duration.ofSeconds(30))
 
-    private val clerkDataSource: DataSource
-    private var flyway: FlywayOps
-
-    private val dataSource: DataSource
+    // Brukes bare til CREATE DATABASE
+    private val clerkDatasource: DataSource
 
     init {
         postgres.start()
-        clerkDataSource = newDataSource("clerk")
 
-        val templateDataSource = newDataSource("template1")
-        flywayFor(templateDataSource).migrate()
-        templateDataSource.close()
+        // Migrer template-databasen som brukes som mal for alle testdatabaser
+        newDatasource(templateDb).use { ds ->
+            applyFlywayMigrate(ds)
+        }
 
-        dataSource = freshDatabase()
-        flyway = flywayFor(dataSource)
+        clerkDatasource = newDatasource("postgres")
     }
 
     public fun freshDatabase(): DataSource {
         val databaseName = "test${databaseNumber.getAndIncrement()}"
-        val freshUrl = synchronized(clerkDataSource) {
-            clerkDataSource.connection.use { connection ->
-                connection.createStatement().use { stmt ->
-                    stmt.executeUpdate("create database $databaseName template template1")
-                }
-            }
-            (clerkDataSource as HikariDataSource).jdbcUrl
-        }
-        logger.debug("Skapte tom Postgres-db med URL $freshUrl. Brukernavn: ${postgres.username}. Passord: ${postgres.password}. Db-navn: $databaseName")
-        return newDataSource(databaseName)
-    }
-
-    public interface FlywayOps {
-        public fun migrate()
-        public fun clean()
-    }
-
-    public fun flywayFor(dataSource: DataSource): FlywayOps {
-        return object : FlywayOps {
-            private val flyway = Flyway
-                .configure()
-                .cleanDisabled(false)
-                .dataSource(dataSource)
-                .locations("flyway")
-                .validateMigrationNaming(true)
-                .load()
-
-            override fun migrate() {
-                flyway.migrate()
-            }
-
-            override fun clean() {
-                flyway.clean()
+        clerkDatasource.connection.use { connection ->
+            connection.createStatement().use { stmt ->
+                stmt.executeUpdate("CREATE DATABASE $databaseName TEMPLATE $templateDb")
             }
         }
+        return newDatasource(databaseName)
     }
 
-    private fun newDataSource(dbname: String): HikariDataSource {
-        require(postgres.isRunning, { "Postgres databasen er ikke startet opp" })
-        return HikariDataSource(HikariConfig().apply {
-            this.jdbcUrl = postgres.jdbcUrl.replace(clerkDatabase, dbname)
-            this.username = postgres.username
-            this.password = postgres.password
-            initializationFailTimeout = 10000
-            idleTimeout = 600000
-            connectionTimeout = 30000
-            maxLifetime = 1800000
+    private fun applyFlywayMigrate(dataSource: DataSource) {
+        Flyway.configure()
+            .dataSource(dataSource)
+            .locations("flyway")
+            .cleanDisabled(false)
+            .validateMigrationNaming(true)
+            .load()
+            .migrate()
+    }
+
+    private fun newDatasource(dbName: String): HikariDataSource {
+        val ds = HikariDataSource(HikariConfig().apply {
+            jdbcUrl = postgres.jdbcUrl.replace(templateDb, dbName)
+            username = postgres.username
+            password = postgres.password
+            initializationFailTimeout = 10_000
+            idleTimeout = 600_000
+            connectionTimeout = 30_000
+            maxLifetime = 1_800_000
             connectionTestQuery = "SELECT 1"
             dataSourceProperties.putAll(
                 mapOf(
@@ -101,7 +75,7 @@ public object InitTestDatabase : Closeable {
 
             minimumIdle = 1
 
-            maximumPoolSize = 32 // Høy for å støtte parallelle tester
+            maximumPoolSize = 128 // Høy for å støtte parallelle tester
 
             /* Postgres i GCP kjører med UTC som timezone. Testcontainers-postgres
             * vil bruke samme timezone som maskinen den kjører fra (Europe/Oslo). Så
@@ -109,18 +83,10 @@ public object InitTestDatabase : Closeable {
             * så settes postgres opp som i gcp. */
             connectionInitSql = "SET TIMEZONE TO 'UTC'"
         })
-    }
-
-    public fun migrate() {
-        synchronized(flyway) {
-            flyway.migrate()
-        }
-    }
-
-    public fun clean() {
-        synchronized(flyway) {
-            flyway.clean()
-        }
+        logger.debug(
+            "Skapte tom Postgres-db med URL ${ds.jdbcUrl}. " + "Brukernavn: ${postgres.username}. " + "Passord: ${postgres.password}. Db-navn: $dbName"
+        )
+        return ds
     }
 
     override fun close() {
