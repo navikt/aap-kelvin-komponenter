@@ -29,7 +29,7 @@ dependencies {
         implementation("org.apache.commons:commons-lang3:3.19.0")
     }
     testImplementation("ch.qos.logback:logback-classic:1.5.20")
-    testImplementation("net.logstash.logback:logstash-logback-encoder:8.1")
+    testImplementation("net.logstash.logback:logstash-logback-encoder:9.0")
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
 }
 
