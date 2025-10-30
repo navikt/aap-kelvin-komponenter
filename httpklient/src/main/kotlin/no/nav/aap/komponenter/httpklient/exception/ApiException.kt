@@ -8,6 +8,7 @@ public enum class ApiErrorCode {
     IKKE_FUNNET,
     ENDEPUNKT_IKKE_FUNNET,
     UGYLDIG_FORESPØRSEL,
+    VERDI_MANGLER,
 }
 
 /**
