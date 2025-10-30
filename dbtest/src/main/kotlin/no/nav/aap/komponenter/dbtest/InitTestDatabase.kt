@@ -23,6 +23,7 @@ public object InitTestDatabase : Closeable {
         .withDatabaseName(clerkDatabase)
         .withLogConsumer(Slf4jLogConsumer(logger))
         .waitingFor(Wait.forListeningPort())
+        .withStartupTimeout(java.time.Duration.ofSeconds(60))
 
     private val clerkDataSource: DataSource
     private var flyway: FlywayOps
@@ -49,9 +50,9 @@ public object InitTestDatabase : Closeable {
                     stmt.executeUpdate("create database $databaseName template template1")
                 }
             }
-            (clerkDataSource as HikariConfig).jdbcUrl
+            (clerkDataSource as HikariDataSource).jdbcUrl
         }
-        println("Startet fresh Postgres med URL $freshUrl. Brukernavn: ${postgres.username}. Passord: ${postgres.password}. Db-navn: $databaseName")
+        logger.debug("Skapte tom Postgres-db med URL $freshUrl. Brukernavn: ${postgres.username}. Passord: ${postgres.password}. Db-navn: $databaseName")
         return newDataSource(databaseName)
     }
 
@@ -81,6 +82,7 @@ public object InitTestDatabase : Closeable {
     }
 
     private fun newDataSource(dbname: String): HikariDataSource {
+        require(postgres.isRunning, { "Postgres databasen er ikke startet opp" })
         return HikariDataSource(HikariConfig().apply {
             this.jdbcUrl = postgres.jdbcUrl.replace(clerkDatabase, dbname)
             this.username = postgres.username
