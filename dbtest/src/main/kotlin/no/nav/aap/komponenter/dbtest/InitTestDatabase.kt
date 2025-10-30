@@ -101,6 +101,8 @@ public object InitTestDatabase : Closeable {
 
             minimumIdle = 1
 
+            maximumPoolSize = 32 // Høy for å støtte parallelle tester
+
             /* Postgres i GCP kjører med UTC som timezone. Testcontainers-postgres
             * vil bruke samme timezone som maskinen den kjører fra (Europe/Oslo). Så
             * for å kunne teste at implisitte konverteringer mellom database og jvm blir riktig
