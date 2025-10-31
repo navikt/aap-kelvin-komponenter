@@ -1,5 +1,4 @@
 import org.jetbrains.kotlin.gradle.dsl.ExplicitApiMode
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     id("org.jetbrains.kotlin.jvm")
@@ -44,10 +43,18 @@ kotlin {
     jvmToolchain(21)
     explicitApi = ExplicitApiMode.Warning
     compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_21)
-        apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_0)
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
+        apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_2)
+        languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_2)
     }
 }
+
+// Pass på at når vi kaller JavaExec eller Test tasks så bruker vi samme språk-versjon som vi kompilerer til
+val toolchainLauncher = javaToolchains.launcherFor {
+    languageVersion.set(JavaLanguageVersion.of(21))
+}
+tasks.withType<Test>().configureEach { javaLauncher.set(toolchainLauncher) }
+tasks.withType<JavaExec>().configureEach { javaLauncher.set(toolchainLauncher) }
 
 java {
     withSourcesJar()
