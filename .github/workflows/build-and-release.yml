@@ -25,14 +25,14 @@ jobs:
                 uses: actions/setup-java@v5.0.0
                 with:
                     distribution: 'temurin'
-                    java-version: 21
+                    java-version: 25
             -   name: Setup Gradle for a wrapper project
                 uses: gradle/actions/setup-gradle@v5
                 with:
                     gradle-version: wrapper
 
             -   name: Build and run tests
-                run: gradle test --info
+                run: ./gradlew test --info
             -   uses: dorny/test-reporter@v2.1.1
                 if: success() || failure()
                 with:
@@ -55,7 +55,7 @@ jobs:
                     echo -e "$text" >> $GITHUB_OUTPUT
                     echo '$randomDelimiter' >> $GITHUB_OUTPUT
             -   name: Publish
-                run: gradle -Pversion=${{ steps.tag.outputs.version }} publish
+                run: ./gradlew -Pversion=${{ steps.tag.outputs.version }} publish
                 env:
                     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -72,7 +72,7 @@ jobs:
 
             -   name: Genererer docs
                 run: |
-                    gradle dokkaGenerate
+                    ./gradlew dokkaGenerate
 
             -   name: upload-artifact for docs
                 uses: actions/upload-pages-artifact@v4
