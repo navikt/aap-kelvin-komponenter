@@ -22,13 +22,19 @@ import javax.sql.DataSource
  *
  * Bruk slik:
  * <pre><code>
- * @AutoClose
- * private val dataSource = TestDataSource()
+ * @BeforeAll
+ * @JvmStatic
+ * fun setup() {
+ * dataSource = TestDataSource()
+ * }
+ *
+ * @AfterAll
+ * @JvmStatic
+ * fun tearDown() = dataSource.close()
  * </code></pre>
  *
  * Eller dersom du trenger å nullstille databasens innhold mellom hver test:
  * <pre><code>
- * @AutoClose
  * private lateinit var dataSource: TestDataSource
  *
  * @BeforeEach
