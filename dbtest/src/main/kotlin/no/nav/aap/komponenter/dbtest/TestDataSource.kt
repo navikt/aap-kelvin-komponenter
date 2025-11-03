@@ -60,7 +60,7 @@ public class TestDataSource : AutoCloseable, DataSource {
             .withStartupTimeout(Duration.ofSeconds(60))
 
         // clerkDatasource brukes bare til CREATE DATABASE
-        // Den opprettes lazy slik at vi unngår å starte postgres-containeren under initializing av InitTestDatabase
+        // Den opprettes lazy slik at vi unngår å starte postgres-containeren under initializing av TestDataSource
         private val clerkDatasource by lazy {
             postgres.start()
 
