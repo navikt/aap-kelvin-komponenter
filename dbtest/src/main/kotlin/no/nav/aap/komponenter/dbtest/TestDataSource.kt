@@ -50,7 +50,7 @@ public class TestDataSource : AutoCloseable, DataSource {
     public companion object {
         private const val templateDb = "template1"
         private val databaseNumber = AtomicInteger()
-        private val logger = LoggerFactory.getLogger(InitTestDatabase::class.java)
+        private val logger = LoggerFactory.getLogger(TestDataSource::class.java)
 
         // Postgres 16 korresponderer til versjon i nais.yaml
         private val postgres: PostgreSQLContainer<*> = PostgreSQLContainer<_>("postgres:16")
