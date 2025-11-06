@@ -4,7 +4,6 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import no.nav.aap.komponenter.dbconnect.DBConnection
 import no.nav.aap.komponenter.dbconnect.Row
 import no.nav.aap.komponenter.dbconnect.transaction
-import no.nav.aap.komponenter.dbtest.InitTestDatabase
 import no.nav.aap.komponenter.dbtest.TestDataSource
 import no.nav.aap.motor.help.RekkefølgeTestJobbUtfører
 import no.nav.aap.motor.help.EnAnnenRekkefølgeTestJobbUtfører
@@ -65,8 +64,6 @@ class MotorTest {
         assertThat(svare).isEqualTo(randomString)
 
         motor.stop()
-
-        InitTestDatabase.closerFor(dataSource)
     }
 
     @Test
