@@ -32,7 +32,7 @@ jobs:
                     gradle-version: wrapper
 
             -   name: Build and run tests
-                run: ./gradlew clean build --continue --info
+                run: ./gradlew clean build --continue --info -x publish
             -   uses: dorny/test-reporter@v2.1.1
                 if: success() || failure()
                 with:
