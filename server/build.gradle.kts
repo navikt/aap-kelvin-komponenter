@@ -4,7 +4,7 @@ plugins {
     id("komponenter.conventions")
 }
 
-val ktorVersion = "3.3.1"
+val ktorVersion = "3.3.2"
 
 kotlin.explicitApi = ExplicitApiMode.Warning
 
@@ -37,7 +37,7 @@ dependencies {
     testImplementation("io.ktor:ktor-serialization-jackson:$ktorVersion")
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
     constraints {
-        implementation("commons-codec:commons-codec:1.19.0")
+        implementation("commons-codec:commons-codec:1.20.0")
     }
     testImplementation("org.junit.jupiter:junit-jupiter-api:6.0.0")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:6.0.0")
