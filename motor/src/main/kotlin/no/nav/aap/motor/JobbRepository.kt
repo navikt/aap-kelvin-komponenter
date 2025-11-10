@@ -194,9 +194,7 @@ public class JobbRepository(private val connection: DBConnection) {
                     require(it == 1) { "Kun én jobb skal bli markert feilet. Jobb-id: $jobbId" }
                 }
             }
-        }
-
-        if (jobbInput.jobb.retryBackoffTid != null && jobbId != null) {
+        } else if (jobbInput.jobb.retryBackoffTid != null && jobbId != null) {
            val nesteKjøreTidspunkt = jobbInput.nesteKjøringTidspunkt().plus(jobbInput.jobb.retryBackoffTid)
             settNesteKjøring(jobbId, nesteKjøreTidspunkt)
         }
