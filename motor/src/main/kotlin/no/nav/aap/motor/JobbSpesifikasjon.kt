@@ -22,7 +22,7 @@ public sealed interface JobbSpesifikasjon {
     /**
      * Backoff-tid ved en feilet jobb - kan kun settes på selvstendige jobber som ikke må kjøres i sekvens med andre
      * F.eks. skal ikke prosesserBehandlingJobb og lignende som er en del av innebygd orkestrering bruke denne.
-     * Iverksetting til utbetaling har behov da det er nyttig å kunne rekjøre senere
+     * Iverksetting til utbetaling har behov da det er nyttig å kunne rekjøre senere.
      */
     public val retryBackoffTid: Duration?
         get() = null
