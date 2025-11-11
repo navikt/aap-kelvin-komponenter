@@ -10,6 +10,7 @@ import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.NoTokenTokenPr
 import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.OidcToken
 import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.OidcTokenResponse
 import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.TokenProvider
+import no.nav.aap.komponenter.json.DefaultJsonMapper
 import no.nav.aap.komponenter.miljo.Miljø
 import java.net.URLEncoder
 import java.time.Duration
@@ -46,11 +47,11 @@ private object GammelOnBehalfOfTokenProvider : TokenProvider {
         val postRequest = PostRequest(
             body = formPost(scope, currentToken),
             contentType = ContentType.APPLICATION_FORM_URLENCODED,
-            timeout = Duration.ofSeconds(10),
+            timeout = Duration.ofSeconds(2),
             additionalHeaders = listOf(Header("Cache-Control", "no-cache"))
         )
 
-        val response: OidcTokenResponse? = client.post(uri = config.tokenEndpoint, request = postRequest)
+        val response: OidcTokenResponse? = client.retryablePost(uri = config.tokenEndpoint, request = postRequest, maxRetries = 2, mapper =  { body, _ -> DefaultJsonMapper.fromJson(body) })
 
         if (response == null) {
             return null
