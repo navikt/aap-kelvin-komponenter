@@ -3,10 +3,12 @@ package no.nav.aap.komponenter.gateway
 import org.slf4j.LoggerFactory
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
+import kotlin.reflect.full.allSuperclasses
 import kotlin.reflect.full.companionObject
 import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.full.isSubtypeOf
 import kotlin.reflect.full.starProjectedType
+import kotlin.reflect.full.superclasses
 
 public open class GatewayRegistry {
 
@@ -24,10 +26,9 @@ public open class GatewayRegistry {
         synchronized(lock) {
             // Kode for å støtte at tester kan legge inn varianter, burde potensielt vært skilt ut?
             val removedSomething = registry.removeIf { klass ->
-                repository.supertypes.filter { type ->
-                    type.isSubtypeOf(Gateway::class.starProjectedType)
-                }.any { type -> klass.starProjectedType.isSubtypeOf(type) }
+                klass in repository.markerInterfaces
             }
+
             if (removedSomething) {
                 log.warn("Gateway '{}' var allerede registrert", repository)
             }
@@ -74,3 +75,10 @@ public open class GatewayRegistry {
     @Deprecated("Ikke bruk global GatewayRegistry, men inject egen instans.")
     public companion object: GatewayRegistry()
 }
+
+private val KClass<*>.markerInterfaces: Set<KClass<*>>
+    get() =
+        this.superclasses.filter { Gateway::class in it.allSuperclasses }.toSet()
+            .also {
+                check(it.isNotEmpty()) { "${this.simpleName} har ingen Gateway-marker interface" }
+            }
