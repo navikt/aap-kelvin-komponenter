@@ -182,17 +182,21 @@ public class JobbRepository(private val connection: DBConnection) {
     public fun markerSomFeilet(jobbInput: JobbInput, exception: Throwable) {
         // Den transaksjonen vi har gående på `connection` har allerede en lås på jobben, så vi trenger ikke ta ny lås her.
 
+        val jobbId = jobbInput.id
         if (jobbInput.maksFeilNådd()) {
             connection.execute("UPDATE JOBB SET status = ? WHERE id = ? AND status = ?") {
                 setParams {
                     setEnumName(1, JobbStatus.FEILET)
-                    setLong(2, jobbInput.id)
+                    setLong(2, jobbId)
                     setEnumName(3, JobbStatus.KLAR)
                 }
                 setResultValidator {
-                    require(it == 1) { "Kun én jobb skal bli markert feilet. Jobb-id: ${jobbInput.id}" }
+                    require(it == 1) { "Kun én jobb skal bli markert feilet. Jobb-id: $jobbId" }
                 }
             }
+        } else if (jobbInput.jobb.retryBackoffTid != null && jobbId != null) {
+           val nesteKjøreTidspunkt = jobbInput.nesteKjøringTidspunkt().plus(jobbInput.jobb.retryBackoffTid)
+            settNesteKjøring(jobbId, nesteKjøreTidspunkt)
         }
 
         connection.execute(
@@ -202,7 +206,7 @@ public class JobbRepository(private val connection: DBConnection) {
             """.trimIndent()
         ) {
             setParams {
-                setLong(1, jobbInput.id)
+                setLong(1, jobbId)
                 setEnumName(2, JobbStatus.FEILET)
                 setString(3, exception.stackTraceToString())
                 setLocalDateTime(4, LocalDateTime.now())

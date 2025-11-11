@@ -2,9 +2,11 @@ package no.nav.aap.motor
 
 import no.nav.aap.komponenter.dbconnect.transaction
 import no.nav.aap.komponenter.dbtest.TestDataSource
+import no.nav.aap.motor.help.AsynkronTullJobbUtfører
 import no.nav.aap.motor.help.TullTestJobbUtfører
 import no.nav.aap.motor.help.TøysOgTullTestJobbUtfører
 import no.nav.aap.motor.help.TøysTestJobbUtfører
+import no.nav.aap.motor.testutil.TestJobbRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AutoClose
 import org.junit.jupiter.api.Test
@@ -20,6 +22,7 @@ class JobbRepositoryTest {
         JobbType.leggTil(TøysOgTullTestJobbUtfører)
         JobbType.leggTil(TøysTestJobbUtfører)
         JobbType.leggTil(TullTestJobbUtfører)
+        JobbType.leggTil(AsynkronTullJobbUtfører)
     }
 
     @Test
@@ -112,6 +115,51 @@ class JobbRepositoryTest {
         assertThat(plukketIRekkefølge[2].type()).isEqualTo(TullTestJobbUtfører.type())
         assertThat(plukketIRekkefølge[3].type()).isEqualTo(TullTestJobbUtfører.type())
         assertThat(plukketIRekkefølge[4].type()).isEqualTo(TøysOgTullTestJobbUtfører.type())
+    }
+
+
+    @Test
+    fun `skal oppdatere neste kjøring for en jobb som feiler med retryBackoffTid`() {
+        val nå = LocalDateTime.now().minusMinutes(1)
+        dataSource.transaction { connection ->
+            val jobbRepository = JobbRepository(connection)
+            jobbRepository.leggTil(JobbInput(AsynkronTullJobbUtfører).medNesteKjøring(nå))
+            jobbRepository.leggTil(JobbInput(TullTestJobbUtfører).medNesteKjøring(nå))
+        }
+
+        dataSource.transaction { connection ->
+            val jobbRepository = JobbRepository(connection)
+            jobbRepository.plukkJobb()?.let {
+                jobbRepository.markerSomFeilet(it, IllegalStateException())
+            }
+            jobbRepository.plukkJobb()?.let {
+                jobbRepository.markerSomFeilet(it, IllegalStateException())
+            }
+        }
+
+        dataSource.transaction { connection ->
+            val testJobbRepository = TestJobbRepository(connection)
+            val asynkronTullJobber =
+                testJobbRepository.hentJobberAvTypeMedAttributter(AsynkronTullJobbUtfører.type, null, null)
+            val tullTestJobber =
+                testJobbRepository.hentJobberAvTypeMedAttributter(TullTestJobbUtfører.type, null, null)
+
+            /**
+             * Verifiser at neste kjøring er etter "nå"
+             */
+            assertThat(asynkronTullJobber).hasSize(1)
+            assertThat(asynkronTullJobber.first().nesteKjøring()).isAfter(LocalDateTime.now())
+            assertThat(asynkronTullJobber.first().nesteKjøringTidspunkt()).isAfter(LocalDateTime.now())
+            assertThat(asynkronTullJobber.first().antallRetriesForsøkt()).isEqualTo(1)
+
+            /**
+             * Verifiser at neste kjøring ikke er endret og derfor før "nå"
+             */
+            assertThat(tullTestJobber).hasSize(1)
+            assertThat(tullTestJobber.first().nesteKjøring()).isBefore(LocalDateTime.now())
+            assertThat(tullTestJobber.first().nesteKjøringTidspunkt()).isBefore(LocalDateTime.now())
+            assertThat(tullTestJobber.first().antallRetriesForsøkt()).isEqualTo(1)
+        }
     }
 
     @Test
