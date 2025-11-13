@@ -1,5 +1,6 @@
 package no.nav.aap.komponenter.httpklient.httpclient
 
+import io.ktor.http.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -34,6 +35,9 @@ class RestClientTest {
         routing {
             get("/test") {
                 call.respondText("you got me")
+            }
+            get("/returnerer-null") {
+                call.respond(HttpStatusCode.NoContent)
             }
             get("/test-connection-exception") {
                 failGetCounter++
@@ -96,6 +100,12 @@ class RestClientTest {
         )
 
         assertThat(resp).isEqualTo("post me")
+    }
+
+    @Test
+    fun `skal returnere null ved no-content`() {
+        val resp = client.get<Any?>(URI("http://localhost:${server.port()}/returnerer-null"), GetRequest())
+        assertThat(resp).isNull()
     }
 
     @Test
