@@ -315,7 +315,7 @@ public class MotorImpl(
         }
     }
 
-    companion object {
+    public companion object {
         private val forbrenningskammerId = AtomicInteger()
     }
 }

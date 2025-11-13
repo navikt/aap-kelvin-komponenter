@@ -95,7 +95,12 @@ public class RestClient<K>(
         return retry(maxRetries) { executeRequestAndHandleResponse(httpRequest, mapper) }
     }
 
-    public fun <T : Any, R> retryablePost(uri: URI, request: PostRequest<T>, mapper: (K, HttpHeaders) -> R, maxRetries: Int = 2): R? {
+    public fun <T : Any, R> retryablePost(
+        uri: URI,
+        request: PostRequest<T>,
+        mapper: (K, HttpHeaders) -> R,
+        maxRetries: Int = 2
+    ): R? {
         val httpRequest = buildRequest(uri, request)
 
         return retry(maxRetries) { executeRequestAndHandleResponse(httpRequest, mapper) }
@@ -196,11 +201,17 @@ public class RestClient<K>(
     private fun <R> executeRequestAndHandleResponse(request: HttpRequest, mapper: (K, HttpHeaders) -> R): R? {
         val response = client.send(request, responseHandler.bodyHandler())
 
-        return Timer.builder("kelvin_restclient_timer")
+        val timer = Timer.builder("kelvin_restclient_timer")
             .tags("uri", request.uri().host, "method", request.method())
             .publishPercentileHistogram()
             .register(prometheus)
-            .recordCallable { responseHandler.håndter(request, response, mapper) }
+
+        val sample = Timer.start(prometheus)
+        return try {
+            responseHandler.håndter(request, response, mapper)
+        } finally {
+            sample.stop(timer)
+        }
     }
 }
 
