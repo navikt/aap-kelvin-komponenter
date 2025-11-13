@@ -21,13 +21,7 @@ dependencies {
     testImplementation("org.assertj:assertj-core:3.27.6")
 
     testImplementation(project(":motor-test-utils"))
-    testImplementation("org.testcontainers:postgresql:1.21.3")
-    constraints {
-        implementation("org.apache.commons:commons-compress:1.28.0") {
-            because("https://github.com/advisories/GHSA-4g9r-vxhx-9pgx")
-        }
-        implementation("org.apache.commons:commons-lang3:3.19.0")
-    }
+    testImplementation("org.testcontainers:testcontainers:2.0.1")
     testImplementation("ch.qos.logback:logback-classic:1.5.20")
     testImplementation("net.logstash.logback:logstash-logback-encoder:8.1")
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
