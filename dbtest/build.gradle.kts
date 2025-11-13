@@ -8,11 +8,5 @@ dependencies {
     runtimeOnly("org.postgresql:postgresql:42.7.8")
     api("org.junit.jupiter:junit-jupiter-api:6.0.0")
 
-    implementation("org.testcontainers:postgresql:1.21.3")
-    constraints {
-        implementation("org.apache.commons:commons-compress:1.28.0") {
-            because("https://github.com/advisories/GHSA-4g9r-vxhx-9pgx")
-        }
-        implementation("org.apache.commons:commons-lang3:3.19.0")
-    }
+    implementation("org.testcontainers:testcontainers-postgresql:2.0.1")
 }
