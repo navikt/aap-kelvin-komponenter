@@ -193,14 +193,14 @@ public class RestClient<K>(
         return httpRequest.build()
     }
 
-    private fun <R> executeRequestAndHandleResponse(request: HttpRequest, mapper: (K, HttpHeaders) -> R): R {
+    private fun <R> executeRequestAndHandleResponse(request: HttpRequest, mapper: (K, HttpHeaders) -> R): R? {
         val response = client.send(request, responseHandler.bodyHandler())
 
         return Timer.builder("kelvin_restclient_timer")
             .tags("uri", request.uri().host, "method", request.method())
             .publishPercentileHistogram()
             .register(prometheus)
-            .recordCallable { responseHandler.håndter(request, response, mapper) }!!
+            .recordCallable<R> { responseHandler.håndter(request, response, mapper) }
     }
 }
 
