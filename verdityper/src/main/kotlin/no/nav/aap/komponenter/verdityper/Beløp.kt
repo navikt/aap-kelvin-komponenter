@@ -3,12 +3,24 @@ package no.nav.aap.komponenter.verdityper
 import java.math.BigDecimal
 import java.math.RoundingMode
 
+/**
+ * Beløp har ulikt antall desimaler i konstrukør og under utregninger med divisjon.
+ *
+ * Vær obs hvis man i fremtidig kode velger å returnere divisjonsresultater som Beløp i steden for
+ * BigDecimal da det potensielt kan medføre avrundingsfeil i delresultater, se eksempel i enhetstest
+ */
 public class Beløp(verdi: BigDecimal) {
-    public val verdi: BigDecimal = verdi.setScale(2, RoundingMode.HALF_UP)
+    public val verdi: BigDecimal = verdi.setScale(ANTALL_DESIMALER, RoundingMode.HALF_UP)
 
     public constructor(intVerdi: Int) : this(BigDecimal(intVerdi))
     public constructor(stringVerdi: String) : this(BigDecimal(stringVerdi))
     public constructor(longVerdi: Long) : this(BigDecimal(longVerdi))
+
+    public companion object {
+        public const val ANTALL_DESIMALER: Int = 2
+        public const val ANTALL_DESIMALER_I_UTREGNING: Int = 10
+        public val AVRUNDINGSMETODE: RoundingMode = RoundingMode.HALF_UP
+    }
 
     public fun verdi(): BigDecimal {
         return verdi
@@ -38,12 +50,18 @@ public class Beløp(verdi: BigDecimal) {
         return faktor.multiplisert(this)
     }
 
-    public fun dividert(nevner: Beløp, scale: Int = 10): BigDecimal {
-        return this.verdi.divide(nevner.verdi, scale, RoundingMode.HALF_UP)
+    public fun dividert(nevner: Beløp, scale: Int = ANTALL_DESIMALER_I_UTREGNING): BigDecimal {
+        return this.verdi.divide(nevner.verdi, scale, AVRUNDINGSMETODE)
     }
 
     public fun dividert(nevner: Prosent): Beløp {
         return Beløp(Prosent.dividert(this.verdi, nevner))
+    }
+
+    public fun toTredjedeler(): BigDecimal {
+        return this.verdi
+            .multiply(BigDecimal(2))
+            .divide(BigDecimal(3), ANTALL_DESIMALER_I_UTREGNING, AVRUNDINGSMETODE)
     }
 
     override fun equals(other: Any?): Boolean {

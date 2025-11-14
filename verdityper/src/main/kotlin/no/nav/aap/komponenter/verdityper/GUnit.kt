@@ -8,20 +8,23 @@ import java.math.RoundingMode
  * av beløp som skal G-justeres.
  */
 public class GUnit(verdi: BigDecimal) : Comparable<GUnit> {
-    private val verdi = verdi.setScale(SCALE, RoundingMode.HALF_UP)
+    private val verdi = verdi.setScale(ANTALL_DESIMALER, AVRUNDINGSMETODE)
 
     public constructor(intVerdi: Int) : this(BigDecimal(intVerdi))
     public constructor(stringVerdi: String) : this(BigDecimal(stringVerdi))
 
     public companion object {
+        @Deprecated("Benytt ANTALL_DESIMALER for enklere forståelse")
         public const val SCALE: Int = 10
+        public const val ANTALL_DESIMALER: Int = 10
+        public val AVRUNDINGSMETODE: RoundingMode = RoundingMode.HALF_UP
 
         /**
          * Gitt liste med [GUnit], returner gjennomsnittsverdien.
          */
         public fun gjennomsnittlig(gUnits: List<GUnit>): GUnit {
             val gjennomsnitt = gUnits.summer()
-            return GUnit(gjennomsnitt.verdi.divide(BigDecimal(gUnits.size), RoundingMode.HALF_UP))
+            return GUnit(gjennomsnitt.verdi.divide(BigDecimal(gUnits.size), AVRUNDINGSMETODE))
         }
 
         private fun Iterable<GUnit>.summer(): GUnit {
@@ -54,13 +57,13 @@ public class GUnit(verdi: BigDecimal) : Comparable<GUnit> {
             Prosent.dividert(
                 teller = this.verdi,
                 nevner = nevner,
-                scale = SCALE
+                scale = ANTALL_DESIMALER
             )
         )
     }
 
     public fun dividert(nevner: Int): GUnit {
-        return GUnit(this.verdi.divide(BigDecimal(nevner), SCALE, RoundingMode.HALF_UP))
+        return GUnit(this.verdi.divide(BigDecimal(nevner), ANTALL_DESIMALER, AVRUNDINGSMETODE))
     }
 
     public fun toTredjedeler(): GUnit {
