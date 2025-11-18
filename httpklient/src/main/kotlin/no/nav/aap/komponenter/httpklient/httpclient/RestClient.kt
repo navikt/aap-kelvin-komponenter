@@ -95,10 +95,6 @@ public class RestClient<K>(
         return retry(maxRetries) { executeRequestAndHandleResponse(httpRequest, mapper) }
     }
 
-    public inline fun <reified R> RestClient<InputStream>.retryableGet(uri: URI, request: GetRequest): R? {
-        return retryableGet(uri, request, { body, _ -> DefaultJsonMapper.fromJson<R>(body) })
-    }
-
     public fun <T : Any, R> retryablePost(
         uri: URI,
         request: PostRequest<T>,
@@ -108,13 +104,6 @@ public class RestClient<K>(
         val httpRequest = buildRequest(uri, request)
 
         return retry(maxRetries) { executeRequestAndHandleResponse(httpRequest, mapper) }
-    }
-
-    public inline fun <T : Any, reified R> RestClient<InputStream>.retryablePost(
-        uri: URI,
-        request: PostRequest<T>,
-    ): R? {
-        return retryablePost(uri, request, { body, _ -> DefaultJsonMapper.fromJson<R>(body) })
     }
 
     private fun <R> retry(retries: Int, function: () -> R?): R? {
@@ -230,8 +219,16 @@ public inline fun <reified R> RestClient<InputStream>.get(uri: URI, request: Get
     return get(uri, request) { body, _ -> DefaultJsonMapper.fromJson(body) }
 }
 
+public inline fun <reified R> RestClient<InputStream>.retryableGet(uri: URI, request: GetRequest): R? {
+    return retryableGet(uri, request, { body, _ -> DefaultJsonMapper.fromJson(body) })
+}
+
 public inline fun <T : Any, reified R> RestClient<InputStream>.post(uri: URI, request: PostRequest<T>): R? {
     return post(uri, request) { body, _ -> DefaultJsonMapper.fromJson(body) }
+}
+
+public inline fun <T : Any, reified R> RestClient<InputStream>.retryablePost(uri: URI, request: PostRequest<T>): R? {
+    return retryablePost(uri, request, { body, _ -> DefaultJsonMapper.fromJson(body) })
 }
 
 public inline fun <T : Any, reified R> RestClient<InputStream>.put(uri: URI, request: PutRequest<T>): R? {
