@@ -1,0 +1,4 @@
+CREATE TABLE TEST_NULLABLE_PERIODE_ARRAY
+(
+    TEST daterange[]
+);

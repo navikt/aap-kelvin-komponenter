@@ -106,8 +106,8 @@ public class Params internal constructor(
         preparedStatement.setArray(index, array)
     }
 
-    public fun setPeriodeArray(index: Int, perioder: List<Periode>) {
-        val array = connection.createArrayOf("daterange", perioder.map(DaterangeParser::toSQL).toTypedArray())
+    public fun setPeriodeArray(index: Int, perioder: List<Periode>?) {
+        val array = perioder?.let{connection.createArrayOf("daterange", it.map(DaterangeParser::toSQL).toTypedArray())}
         preparedStatement.setArray(index, array)
     }
 

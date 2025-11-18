@@ -436,9 +436,43 @@ internal class ParamsOgRowTest {
     }
 
     @Test
+    fun `Skriver og leser med nullable periode-array`() {
+        dataSource.transaction { connection ->
+            val perioderInn1 = null
+            val perioderInn2 = listOf(
+                Periode(LocalDate.of(1990, 6, 1), LocalDate.of(2200, 1, 1)),
+                Periode(LocalDate.of(2020, 1, 5), LocalDate.of(2020, 5, 3)),
+            )
+
+            connection.execute(
+                """
+                    INSERT INTO TEST_NULLABLE_PERIODE_ARRAY(TEST)
+                    VALUES (?::daterange[]), (?::daterange[])
+                """,
+            ) {
+                setParams {
+                    setPeriodeArray(1, perioderInn1)
+                    setPeriodeArray(2, perioderInn2)
+                }
+            }
+
+            data class Wrapper(val perioder: List<Periode>?)
+
+            val perioderUt = connection.queryList("SELECT TEST FROM TEST_NULLABLE_PERIODE_ARRAY") {
+                setRowMapper { row ->
+                    Wrapper(row.getPeriodeArrayOrNull("TEST"))
+                }
+            }
+            assertThat(perioderUt.map { it.perioder })
+                .containsExactly(perioderInn1, perioderInn2)
+        }
+    }
+
+    @Test
     fun `CURRENT_TIMESTAMP i postgres (UTC) matcher LocalDateTime now() i pod (Europe Oslo)`() {
         dataSource.transaction { connection ->
-            val currentTimestamp = connection.queryFirst("""
+            val currentTimestamp = connection.queryFirst(
+                """
                 SELECT CURRENT_TIMESTAMP as LOCALDATETIME;
             """.trimIndent()
             ) {
@@ -457,7 +491,8 @@ internal class ParamsOgRowTest {
     @Test
     fun `CURRENT_TIMESTAMP i postgres (UTC) matcher Instant now() i pod (Europe Oslo)`() {
         dataSource.transaction { connection ->
-            val currentTimestamp = connection.queryFirst("""
+            val currentTimestamp = connection.queryFirst(
+                """
                 SELECT CURRENT_TIMESTAMP as INSTANT;
             """.trimIndent()
             ) {
@@ -476,7 +511,8 @@ internal class ParamsOgRowTest {
     @Test
     fun `get array of integers`() {
         dataSource.transaction { connection ->
-            val array = connection.queryFirst("""
+            val array = connection.queryFirst(
+                """
                 SELECT ARRAY[1, 2, 3] AS my_array;
             """.trimIndent()
             ) {
@@ -488,10 +524,12 @@ internal class ParamsOgRowTest {
             assertThat(array).containsExactly(1, 2, 3)
         }
     }
+
     @Test
     fun `get array of strings`() {
         dataSource.transaction { connection ->
-            val array = connection.queryFirst("""
+            val array = connection.queryFirst(
+                """
                 SELECT ARRAY['ff', 'hei', 'df'] AS my_array;
             """.trimIndent()
             ) {
@@ -510,7 +548,8 @@ internal class ParamsOgRowTest {
         val uuid2 = UUID.fromString("b76d3b82-d6bc-47d6-bf20-ff3d4cbe5b77")
 
         dataSource.transaction { connection ->
-            connection.execute("""
+            connection.execute(
+                """
                 insert into test_uuid_array values (?::UUID[])
             """.trimIndent()
             ) {
@@ -520,7 +559,7 @@ internal class ParamsOgRowTest {
             }
         }
 
-        val array = dataSource.transaction {  connection ->
+        val array = dataSource.transaction { connection ->
             connection.queryFirst("select test from test_uuid_array") {
                 setRowMapper { it.getArray("test", UUID::class) }
             }
@@ -533,7 +572,7 @@ internal class ParamsOgRowTest {
         @BeforeAll
         fun beforeAll() {
             /** [java.sql.Timestamp] bruker default timezone for å konvertere til og fra
-             * [java.time.LocalDateTime]. I pod-ene og på laptopene våre kjører vi med
+             * [LocalDateTime]. I pod-ene og på laptopene våre kjører vi med
              * Europe/Oslo mens github action kjører med UTC.
              *
              * Er litt stygt å endre timezone mens programmet kjører. I stede for å sette
