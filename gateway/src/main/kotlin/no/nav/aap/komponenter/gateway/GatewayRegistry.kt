@@ -24,9 +24,8 @@ public open class GatewayRegistry {
         validater(repository)
 
         synchronized(lock) {
-            // Kode for å støtte at tester kan legge inn varianter, burde potensielt vært skilt ut?
             val removedSomething = registry.removeIf { klass ->
-                klass in repository.markerInterfaces
+                klass.markerInterfaces.any { it in repository.markerInterfaces }
             }
 
             if (removedSomething) {
