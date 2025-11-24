@@ -46,6 +46,12 @@ public class Beløp(verdi: BigDecimal) {
         return Beløp(Prosent.dividert(this.verdi, nevner))
     }
 
+    public fun toTredjedeler(): BigDecimal {
+        return this.verdi
+            .multiply(BigDecimal(2))
+            .divide(BigDecimal(3), 10, RoundingMode.HALF_UP)
+    }
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
