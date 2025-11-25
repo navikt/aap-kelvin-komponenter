@@ -35,6 +35,7 @@ class TegnTidslinje {
             printBinaryFunction(venstre, høyre, "kunHøyre", StandardSammenslåere.kunHøyre())
             printBinaryFunction(venstre, høyre, "kunHøyreRightJoin", StandardSammenslåere.kunHøyreRightJoin())
             printBinaryFunction(venstre, høyre, "minus", StandardSammenslåere.minus())
+            printBinaryFunction(venstre, høyre, "xor", StandardSammenslåere.xor())
         }
     }
 }

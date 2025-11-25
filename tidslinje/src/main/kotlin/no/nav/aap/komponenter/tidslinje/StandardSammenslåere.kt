@@ -237,12 +237,28 @@ public object StandardSammenslåere {
         }
     }
 
+    /**
+     * ```
+     *             venstre høyre  xor
+     * 2020-01-01  +---+          +------------+
+     *             | x |          | x          |
+     * 2020-01-02  |   |   +---+  +------------+
+     *             |   |   | 1 |
+     * 2020-01-03  +---+   |   |  +------------+
+     *                     |   |  | 1          |
+     * 2020-01-04          +---+  +------------+
+     *
+     * 2020-01-05  +---+          +------------+
+     *             | y |          | y          |
+     * 2020-01-06  +---+          +------------+
+     * ```
+     */
     public fun <T> xor(): JoinStyle<T, T, T> {
-        return JoinStyle.OUTER_JOIN { p, venstreSegment, høyreSegment ->
+        return JoinStyle.OUTER_JOIN { _, venstreSegment, høyreSegment ->
             when {
                 venstreSegment == null && høyreSegment != null -> høyreSegment
                 venstreSegment != null && høyreSegment == null -> venstreSegment
-                else -> error("tidslinjene overlapper")
+                else -> null
             }
         }
     }
