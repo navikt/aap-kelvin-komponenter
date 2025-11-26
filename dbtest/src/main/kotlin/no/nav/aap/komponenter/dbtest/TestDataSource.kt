@@ -15,6 +15,7 @@ import java.time.Duration
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.logging.Logger
 import javax.sql.DataSource
+import kotlin.use
 
 /**
  * Oppretter en ny database som kan brukes i tester.
@@ -170,4 +171,23 @@ public class TestDataSource : AutoCloseable, DataSource {
 
     override fun isWrapperFor(iface: Class<*>): Boolean = delegate.isWrapperFor(iface)
 
+}
+
+public fun TestDataSource.clear() {
+    this.connection.use { conn ->
+        // Tøm alle tabeller unntatt flyway sine
+        conn.prepareStatement(
+            """
+                DO $$
+                DECLARE
+                    r RECORD;
+                BEGIN
+                    FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename NOT LIKE 'flyway_%') LOOP
+                        EXECUTE 'TRUNCATE TABLE public.' || quote_ident(r.tablename) || ' RESTART IDENTITY CASCADE';
+                    END LOOP;
+                END;
+                $$;
+            """.trimIndent()
+        ).use { it.execute() }
+    }
 }
