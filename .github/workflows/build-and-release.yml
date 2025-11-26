@@ -46,7 +46,8 @@ jobs:
                 with:
                     bump_each_commit: true
                     tag_prefix: ""
-
+                    bump_each_commit_patch_pattern: ''
+                    major_pattern: "(MAJOR)" # If major bump, include this in commit message
             -   id: notes
                 run: |
                     randomDelimiter=${RANDOM}
