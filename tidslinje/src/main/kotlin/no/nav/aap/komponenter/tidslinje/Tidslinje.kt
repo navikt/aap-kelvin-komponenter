@@ -130,6 +130,7 @@ public class Tidslinje<T>(initSegmenter: NavigableSet<Segment<T>> = TreeSet()) {
     }
 
 
+    /** En inner join, men hvor vi bare beholder venstre-verdien uendret. */
     public fun kryss(other: Tidslinje<Any?>): Tidslinje<T> {
         return kombiner(other, StandardSammenslåere.kunVenstre())
     }
@@ -197,6 +198,16 @@ public class Tidslinje<T>(initSegmenter: NavigableSet<Segment<T>> = TreeSet()) {
             return this
         }
         return splittOppEtter(startDato, maxDato(), period)
+    }
+
+    /** Splitter tidslinja opp i flere tidslinjer basert på [splittOppEtter]. */
+    public fun <R> splittOppIPerioderBasertPå(splittOppEtter: (T) -> R): Tidslinje<Tidslinje<T>> {
+        return splittOppIPerioder(
+            this.map(splittOppEtter)
+                .komprimer()
+                .perioder()
+                .toList()
+        )
     }
 
     /**
@@ -472,8 +483,17 @@ public class Tidslinje<T>(initSegmenter: NavigableSet<Segment<T>> = TreeSet()) {
         return this.outerJoin(other) { venstreVerdi, høyreVerdi -> høyreVerdi ?: venstreVerdi ?: error("ikke mulig") }
     }
 
+    public fun mergePrioriterVenstre(other: Tidslinje<T>): Tidslinje<T> {
+        return this.outerJoin(other) { venstreVerdi, høyreVerdi -> venstreVerdi ?: høyreVerdi ?: error("ikke mulig") }
+    }
+
     public companion object {
         public fun <T> empty(): Tidslinje<T> = Tidslinje<T>(TreeSet())
+
+        /** Flater ut en tidslinje av tidslinjer. Kaster exception hvis tidslinjenen overlapper. */
+        public fun <T> Tidslinje<Tidslinje<T>>.flatten(): Tidslinje<T> {
+            return this.flatMap { it.verdi }
+        }
 
         public fun <A, B> zip2(
             aTidslinje: Tidslinje<A>,
@@ -609,6 +629,16 @@ public class Tidslinje<T>(initSegmenter: NavigableSet<Segment<T>> = TreeSet()) {
 
 public fun <T> tidslinjeOf(vararg segments: Pair<Periode, T>): Tidslinje<T> {
     return Tidslinje(segments.map { Segment(it.first, it.second) })
+}
+
+/** Lag tidslinje med de verdiene som er ikke-`null`. Tilsvarende [listOfNotNull].*/
+public fun <T> tidslinjeOfNotNull(vararg segments: Pair<Periode, T?>): Tidslinje<T> {
+    return Tidslinje(segments.mapNotNull { (periode, verdi) ->
+        if (verdi == null)
+            null
+        else
+            Segment(periode, verdi)
+    })
 }
 
 public fun <T> Tidslinje<T?>.filterNotNull(): Tidslinje<T> {
