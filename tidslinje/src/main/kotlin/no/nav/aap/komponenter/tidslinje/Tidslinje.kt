@@ -9,7 +9,7 @@ import java.util.*
 public class Tidslinje<T>(initSegmenter: NavigableSet<Segment<T>> = TreeSet()) {
 
 
-    public constructor(initSegmenter: List<Segment<T>>) : this(TreeSet(initSegmenter))
+    public constructor(initSegmenter: Collection<Segment<T>>) : this(TreeSet(initSegmenter))
     public constructor(periode: Periode, verdi: T) : this(TreeSet(listOf(Segment(periode, verdi))))
 
     private val segmenter: NavigableSet<Segment<T>> = TreeSet(initSegmenter)
@@ -535,7 +535,7 @@ public class Tidslinje<T>(initSegmenter: NavigableSet<Segment<T>> = TreeSet()) {
             cTidslinje: Tidslinje<C>,
             body: (A?, B?, C?) -> R,
         ): Tidslinje<R> {
-            return map3(aTidslinje, bTidslinje, cTidslinje) { periode, a, b, c -> body(a, b, c) }
+            return map3(aTidslinje, bTidslinje, cTidslinje) { _, a, b, c -> body(a, b, c) }
         }
 
         public fun <A, B, C, R> map3(
@@ -554,7 +554,7 @@ public class Tidslinje<T>(initSegmenter: NavigableSet<Segment<T>> = TreeSet()) {
             dTidslinje: Tidslinje<D>,
             body: (A?, B?, C?, D?) -> R,
         ): Tidslinje<R> {
-            return map4(aTidslinje, bTidslinje, cTidslinje, dTidslinje) { periode, a, b, c, d -> body(a, b, c, d) }
+            return map4(aTidslinje, bTidslinje, cTidslinje, dTidslinje) { _, a, b, c, d -> body(a, b, c, d) }
         }
 
         public fun <A, B, C, D, R> map4(
