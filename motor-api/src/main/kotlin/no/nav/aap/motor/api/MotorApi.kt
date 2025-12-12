@@ -64,8 +64,9 @@ public fun NormalOpenAPIRoute.motorApi(dataSource: DataSource) {
                 }
                 if (oppdatert == 0) {
                     respond("Kunne ikke oppdatere tidspunkt for neste kjøring for jobb med ID $jobbId")
+                } else {
+                    respond("Setter neste kjøring for jobb med ID $jobbId til $nå.")
                 }
-                respond("Setter neste kjøring for jobb med ID $jobbId til $nå.")
             }
         }
         route("/rekjor/{jobbId}") {
