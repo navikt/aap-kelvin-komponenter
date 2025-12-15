@@ -199,7 +199,6 @@ public class RestClient<K>(
     }
 
     private fun <R> executeRequestAndHandleResponse(request: HttpRequest, mapper: (K, HttpHeaders) -> R): R? {
-        val response = client.send(request, responseHandler.bodyHandler())
 
         val timer = Timer.builder("kelvin_restclient_timer")
             .tags("uri", request.uri().host, "method", request.method())
@@ -208,6 +207,7 @@ public class RestClient<K>(
 
         val sample = Timer.start(prometheus)
         return try {
+            val response = client.send(request, responseHandler.bodyHandler())
             responseHandler.håndter(request, response, mapper)
         } finally {
             sample.stop(timer)
