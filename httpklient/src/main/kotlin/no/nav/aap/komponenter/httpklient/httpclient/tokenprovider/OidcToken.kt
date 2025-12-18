@@ -30,6 +30,9 @@ public class OidcToken(accessToken: String) {
         return now.isBefore(expires())
     }
 
+    /**
+     * Sjekker om token er et systembruker-token (client credentials)
+     **/
     public fun isClientCredentials(): Boolean {
         val subject = accessToken.subject
 
@@ -38,8 +41,24 @@ public class OidcToken(accessToken: String) {
                 APP == accessToken.getClaim(IDTYP).asString()
     }
 
-    public fun ident(): String {
+    /**
+     * Returnerer azp_name for systembruker-token
+     * Er i formatet env:namespace:app (eksempelvis dev-gcp:team:aap-komponenter)
+     *
+     * @throws IllegalStateException hvis token tilhører personbruker
+     **/
+    public fun azpName(): String {
         return if (isClientCredentials()) accessToken.getClaim(AZP_NAME).asString()
-        else accessToken.getClaim(NAVident).asString()
+        else error("Kan kun hente azp_name for systembruker")
+    }
+
+    /**
+     * Returnerer NAVident (Z-ident) for personbruker-token
+     *
+     * @throws IllegalStateException hvis token tilhører systembruker
+     **/
+    public fun navIdent(): String {
+        return if (!isClientCredentials()) accessToken.getClaim(NAVident).asString()
+        else error("Kan kun hente NAVident for personbruker")
     }
 }
