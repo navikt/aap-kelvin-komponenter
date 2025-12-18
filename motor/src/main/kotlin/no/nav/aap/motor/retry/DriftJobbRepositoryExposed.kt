@@ -4,16 +4,19 @@ import no.nav.aap.komponenter.dbconnect.DBConnection
 import no.nav.aap.motor.JobbInput
 import no.nav.aap.motor.JobbRepository
 import no.nav.aap.motor.JobbType
+import org.slf4j.LoggerFactory
 import java.time.LocalDateTime
 
 public class DriftJobbRepositoryExposed(connection: DBConnection) {
+    private val log = LoggerFactory.getLogger(javaClass)
+
     private val retryFeiledeOppgaverRepository = RetryFeiledeJobberRepository(connection)
     private val jobbRepository = JobbRepository(connection)
 
     public fun settNesteKjøring(jobbId: Long, nesteKjøring: LocalDateTime): Int {
         return jobbRepository.settNesteKjøring(jobbId, nesteKjøring)
     }
-    
+
     public fun markerAlleFeiledeForKlare(): Int {
         return retryFeiledeOppgaverRepository.markerAlleFeiledeForKlare()
     }
@@ -31,9 +34,12 @@ public class DriftJobbRepositoryExposed(connection: DBConnection) {
     }
 
     public fun hentInfoOmGjentagendeJobber(): List<JobbInput> {
-        return kotlin.runCatching {
-            JobbType.cronTypes().map { retryFeiledeOppgaverRepository.hentInfoOmSisteAvType(it) }
-        }.getOrDefault(emptyList())
+        try {
+            return JobbType.cronTypes().map { retryFeiledeOppgaverRepository.hentInfoOmSisteAvType(it) }
+        } catch (e: Throwable) {
+            log.error("Feil under henting av info om gjentagende jobber", e)
+            return emptyList()
+        }
     }
 
     public fun hentSisteJobber(antall: Int): List<Pair<JobbInput, String?>> {
