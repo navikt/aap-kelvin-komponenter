@@ -11,7 +11,6 @@ import java.time.ZoneId
 private const val OID = "oid"
 private const val IDTYP = "idtyp"
 private const val APP = "app"
-private const val AZP_NAME = "azp_name"
 private const val NAVident = "NAVident"
 
 public class OidcToken(accessToken: String) {
@@ -39,17 +38,6 @@ public class OidcToken(accessToken: String) {
         // Sjekker både gammel konvensjon (oid=sub) og nyere (idtyp="app")
         return subject == accessToken.getClaim(OID).asString() ||
                 APP == accessToken.getClaim(IDTYP).asString()
-    }
-
-    /**
-     * Returnerer azp_name for systembruker-token
-     * Er i formatet env:namespace:app (eksempelvis dev-gcp:team:aap-komponenter)
-     *
-     * @throws IllegalStateException hvis token tilhører personbruker
-     **/
-    public fun azpName(): String {
-        return if (isClientCredentials()) accessToken.getClaim(AZP_NAME).asString()
-        else error("Kan kun hente azp_name for systembruker")
     }
 
     /**
