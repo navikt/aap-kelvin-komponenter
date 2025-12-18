@@ -8,6 +8,25 @@ Dokumentasjon: https://navikt.github.io/aap-kelvin-komponenter/
 
 For oppdatert oppskrift for å kjøre koden, se stegene i Github Actions.
 
+## Unleash ApiToken
+
+Hvis du må rullere token for Unleash, er du nødt til å slette det gamle først. 
+
+**OBS:** Husk å sette riktig miljø _før_ du kjører kommandoene under. `dev-gcp` for `apply *-dev.yaml` filen, osv.
+
+Slette gammelt token: 
+```shell
+kubectl delete apitoken kelvin-unleash-api-token -n aap
+```
+
+Opprette nytt token:
+```shell
+kubectl apply -f unleash-apitoken-dev.yaml
+```
+
+Se dokumentasjon her: \
+https://doc.nais.io/services/feature-toggling/?h=unleash#creating-a-new-api-token
+
 ## Bygge dokumentasjon
 
 ```
