@@ -46,7 +46,8 @@ public class OidcToken(accessToken: String) {
      * @throws IllegalStateException hvis token tilhører systembruker
      **/
     public fun navIdent(): String {
-        return if (!isClientCredentials()) accessToken.getClaim(NAVident).asString()
-        else error("Kan kun hente NAVident for personbruker")
+        check(!isClientCredentials()) { "Kan kun hente NAVident for personbruker" }
+
+        return accessToken.getClaim(NAVident).asString()
     }
 }
