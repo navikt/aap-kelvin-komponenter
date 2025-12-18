@@ -26,6 +26,10 @@ public class Beløp(verdi: BigDecimal) {
         return verdi
     }
 
+    public fun heltallverdi(): BigDecimal {
+        return verdi.setScale(0, AVRUNDINGSMETODE)
+    }
+
     public fun pluss(beløp: Beløp): Beløp {
         return Beløp(this.verdi.add(beløp.verdi))
     }
