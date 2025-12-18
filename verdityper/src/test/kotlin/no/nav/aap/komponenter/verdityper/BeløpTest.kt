@@ -44,5 +44,14 @@ class BeløpTest {
         assertEquals(BigDecimal("0.0066666667"), resultat)
     }
 
+    @Test
+    fun `heltallverdi avrunder og fjerne desimaler`() {
+        val rundOpp = Beløp("250.50")
+        assertEquals("251", rundOpp.heltallverdi().toString())
+
+        val rundNed = Beløp("250.49")
+        assertEquals("250", rundNed.heltallverdi().toString())
+    }
+
 
 }
