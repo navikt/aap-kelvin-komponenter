@@ -9,7 +9,7 @@ dependencies {
     implementation(project(":motor"))
     implementation("org.slf4j:slf4j-api:2.0.17")
     // Skille ut disse til egen modul for motor-api
-    implementation("no.nav:ktor-openapi-generator:1.0.132")
+    implementation("no.nav:ktor-openapi-generator:1.0.133")
     implementation("io.ktor:ktor-http-jvm:$ktorVersion")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.20.1")
 
@@ -21,7 +21,7 @@ dependencies {
     testImplementation("org.assertj:assertj-core:3.27.6")
 
     testImplementation(project(":motor-test-utils"))
-    testImplementation("org.testcontainers:testcontainers:2.0.2")
+    testImplementation("org.testcontainers:testcontainers:2.0.3")
     testImplementation("ch.qos.logback:logback-classic:1.5.22")
     testImplementation("net.logstash.logback:logstash-logback-encoder:9.0")
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")

@@ -21,7 +21,7 @@ dependencies {
     testImplementation("org.assertj:assertj-core:3.27.6")
 
     testImplementation(project(":motor-test-utils"))
-    testImplementation("org.testcontainers:testcontainers:2.0.2")
+    testImplementation("org.testcontainers:testcontainers:2.0.3")
 
     testImplementation(kotlin("test"))
 }
