@@ -4,9 +4,9 @@ import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import org.flywaydb.core.Flyway
 import org.slf4j.LoggerFactory
-import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.containers.output.Slf4jLogConsumer
 import org.testcontainers.containers.wait.strategy.Wait
+import org.testcontainers.postgresql.PostgreSQLContainer
 import java.io.PrintWriter
 import java.sql.Connection
 import java.sql.ConnectionBuilder
@@ -15,6 +15,7 @@ import java.time.Duration
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.logging.Logger
 import javax.sql.DataSource
+import kotlin.time.Duration.Companion.seconds
 import kotlin.use
 
 /**
@@ -56,15 +57,20 @@ public class TestDataSource : AutoCloseable, DataSource {
     // Den migrerte databasen lagres som en template, som brukes til å opprette en ny db for hver instans av TestDataSource.
     public companion object {
         private const val templateDb = "template1"
-        private val databaseNumber = AtomicInteger()
+        private val currentDatabaseNumber = AtomicInteger(1)
         private val logger = LoggerFactory.getLogger(TestDataSource::class.java)
+        private const val MAX_CONNECTIONS_COUNT = 100 // Postgres default
 
         // Postgres 16 korresponderer til versjon i nais.yaml
-        private val postgres: PostgreSQLContainer<*> = PostgreSQLContainer<_>("postgres:16")
+        private val postgres: PostgreSQLContainer = PostgreSQLContainer("postgres:16")
             .withDatabaseName(templateDb)
             .withLogConsumer(Slf4jLogConsumer(logger))
             .waitingFor(Wait.forListeningPort())
             .withStartupTimeout(Duration.ofSeconds(60))
+            .withCommand("postgres",
+                "-c", "work_mem=8MB", // default 4MB, økt pga mange parallelle tester
+                "-c", "shared_buffers=256MB", // default 128MB, 1.2GB i Dev-GCP
+        )
 
         // clerkDatasource brukes bare til CREATE DATABASE
         // Den opprettes lazy slik at vi unngår å starte postgres-containeren under initializing av TestDataSource
@@ -80,7 +86,7 @@ public class TestDataSource : AutoCloseable, DataSource {
         }
 
         public fun freshDatabase(): HikariDataSource {
-            val databaseName = "test${databaseNumber.getAndIncrement()}"
+            val databaseName = "test${currentDatabaseNumber.getAndIncrement()}"
             clerkDatasource.connection.use { connection ->
                 connection.createStatement().use { stmt ->
                     stmt.executeUpdate("CREATE DATABASE $databaseName TEMPLATE $templateDb")
@@ -104,10 +110,8 @@ public class TestDataSource : AutoCloseable, DataSource {
                 jdbcUrl = postgres.jdbcUrl.replace(templateDb, dbName)
                 username = postgres.username
                 password = postgres.password
-                initializationFailTimeout = 10_000
-                idleTimeout = 600_000
-                connectionTimeout = 30_000
-                maxLifetime = 1_800_000
+                initializationFailTimeout = 5.seconds.inWholeSeconds
+                connectionTimeout = 5.seconds.inWholeMilliseconds
                 connectionTestQuery = "SELECT 1"
                 dataSourceProperties.putAll(
                     mapOf(
@@ -116,9 +120,7 @@ public class TestDataSource : AutoCloseable, DataSource {
                     )
                 )
 
-                minimumIdle = 1
-
-                maximumPoolSize = 128 // Høy for å støtte parallelle tester
+                maximumPoolSize = MAX_CONNECTIONS_COUNT
 
                 /* Postgres i GCP kjører med UTC som timezone. Testcontainers-postgres
                 * vil bruke samme timezone som maskinen den kjører fra (Europe/Oslo). Så
