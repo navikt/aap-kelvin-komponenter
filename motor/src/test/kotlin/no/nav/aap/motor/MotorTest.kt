@@ -37,7 +37,6 @@ class MotorTest {
         dataSource.close()
     }
 
-
     @Test
     fun `test å kjøre en enkel jobb`() {
         val motor = Motor(
