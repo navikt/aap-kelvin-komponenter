@@ -110,8 +110,8 @@ public class TestDataSource : AutoCloseable, DataSource {
                 jdbcUrl = postgres.jdbcUrl.replace(templateDb, dbName)
                 username = postgres.username
                 password = postgres.password
-                initializationFailTimeout = 5.seconds.inWholeSeconds
-                connectionTimeout = 5.seconds.inWholeMilliseconds
+                initializationFailTimeout = 10.seconds.inWholeSeconds
+                connectionTimeout = 20.seconds.inWholeMilliseconds
                 connectionTestQuery = "SELECT 1"
                 dataSourceProperties.putAll(
                     mapOf(
