@@ -59,7 +59,7 @@ public class TestDataSource : AutoCloseable, DataSource {
         private const val templateDb = "template1"
         private val currentDatabaseNumber = AtomicInteger(1)
         private val logger = LoggerFactory.getLogger(TestDataSource::class.java)
-        private const val MAX_CONNECTIONS_COUNT = 100 // Postgres default
+        private const val MAX_CONNECTIONS_COUNT = 128 // for å støtte mange parallelle tester
 
         // Postgres 16 korresponderer til versjon i nais.yaml
         private val postgres: PostgreSQLContainer = PostgreSQLContainer("postgres:16")
@@ -70,12 +70,14 @@ public class TestDataSource : AutoCloseable, DataSource {
             .withCommand("postgres",
                 "-c", "work_mem=8MB", // default 4MB, økt pga mange parallelle tester
                 "-c", "shared_buffers=256MB", // default 128MB, 1.2GB i Dev-GCP
+                "-c", "max_connections=$MAX_CONNECTIONS_COUNT" // default 100
         )
 
         // clerkDatasource brukes bare til CREATE DATABASE
         // Den opprettes lazy slik at vi unngår å starte postgres-containeren under initializing av TestDataSource
         private val clerkDatasource by lazy {
             postgres.start()
+            logger.info("Bruker Postgres-testcontainer med dockerId=${postgres.containerId}")
 
             // Migrer template-databasen som brukes som mal for alle testdatabaser
             newDatasource(templateDb).use { ds ->
@@ -120,6 +122,7 @@ public class TestDataSource : AutoCloseable, DataSource {
                     )
                 )
 
+                minimumIdle = 1
                 maximumPoolSize = MAX_CONNECTIONS_COUNT
 
                 /* Postgres i GCP kjører med UTC som timezone. Testcontainers-postgres
