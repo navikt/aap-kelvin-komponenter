@@ -1,5 +1,7 @@
 package no.nav.aap.komponenter.verdityper
 
+import no.nav.aap.komponenter.json.DefaultJsonMapper
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
@@ -28,11 +30,11 @@ class BeløpTest {
                 Beløp("1.00").dividert(Beløp("300.00"))
             )
         val forventetMed10Desimaler = BigDecimal("0.0066666666")
-        assertEquals(forventetMed10Desimaler, resultatMed10Desimaler)
+        assertThat(resultatMed10Desimaler).isEqualTo(forventetMed10Desimaler)
 
         val resultatMed2Desimaler = Beløp(resultatMed10Desimaler)
         val forventetMed2Desimaler = Beløp("0.01")
-        assertEquals(forventetMed2Desimaler, resultatMed2Desimaler)
+        assertThat(resultatMed2Desimaler).isEqualTo(forventetMed2Desimaler)
     }
 
     /**
@@ -41,17 +43,36 @@ class BeløpTest {
     @Test
     fun `toTredjedeler beregnes uten avrundingsfeil da ekstra presisjon benyttes i utregning`() {
         val resultat = Beløp("0.01").toTredjedeler()
-        assertEquals(BigDecimal("0.0066666667"), resultat)
+        assertThat(resultat).isEqualTo(BigDecimal("0.0066666667"))
     }
 
     @Test
     fun `heltallverdi avrunder og fjerne desimaler`() {
         val rundOpp = Beløp("250.50")
-        assertEquals("251", rundOpp.heltallverdi().toString())
+        assertThat(rundOpp.heltallverdi().toString()).isEqualTo("251")
 
         val rundNed = Beløp("250.49")
-        assertEquals("250", rundNed.heltallverdi().toString())
+        assertThat(rundNed.heltallverdi().toString()).isEqualTo("250")
     }
 
+    @Test
+    fun `serialisere og deserialisere`() {
+        val beløp = Beløp("100.00")
+        val json = DefaultJsonMapper.toJson(beløp)
+
+        val deserialisertBeløp = DefaultJsonMapper.fromJson<Beløp>(json)
+        assertThat(deserialisertBeløp).isEqualTo(beløp)
+        assertThat(json).isEqualTo("100.00")
+    }
+
+    @Test
+    fun `deserialisere liste av beløp`() {
+        val liste = """
+            [123.0, 54.0]
+        """.trimIndent()
+
+        val deserialisertListe = DefaultJsonMapper.fromJson<List<Beløp>>(liste)
+        assertThat(deserialisertListe).containsExactly(Beløp("123.0"), Beløp("54.0"))
+    }
 
 }
