@@ -166,4 +166,35 @@ class PeriodeTest {
             )
         )
     }
+    
+    @Test
+    fun `overlappende samling av perioder`() {
+        val periode1 = Periode(
+            LocalDate.of(2024, NOVEMBER, 1),
+            LocalDate.of(2024, NOVEMBER, 10),
+        )
+        val periode2 = Periode(
+            LocalDate.of(2024, NOVEMBER, 10),
+            LocalDate.of(2024, NOVEMBER, 15),
+        )
+        val periode3 = Periode(
+            LocalDate.of(2024, NOVEMBER, 20),
+            LocalDate.of(2024, NOVEMBER, 25),
+        )
+        val periode4 = Periode(
+            LocalDate.of(2024, NOVEMBER, 15),
+            LocalDate.of(2024, NOVEMBER, 30),
+        )
+
+        assertThat(Periode.overlapper(setOf(periode1, periode1))).isFalse()
+        assertThat(Periode.overlapper(listOf(periode1, periode1))).isTrue()
+        
+        assertThat(Periode.overlapper(listOf(periode1, periode2, periode3, periode4))).isTrue()
+        assertThat(Periode.overlapper(listOf(periode4, periode2, periode3, periode1))).isTrue()
+        assertThat(Periode.overlapper(listOf(periode1, periode2))).isTrue()
+        assertThat(Periode.overlapper(listOf(periode1, periode4))).isFalse()
+        assertThat(Periode.overlapper(listOf(periode2, periode3))).isFalse()
+        assertThat(Periode.overlapper(listOf(periode2, periode4))).isTrue()
+        assertThat(Periode.overlapper(listOf(periode2, periode3, periode4))).isTrue()
+    }
 }

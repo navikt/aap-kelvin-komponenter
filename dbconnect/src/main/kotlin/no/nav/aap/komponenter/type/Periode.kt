@@ -12,6 +12,18 @@ public class Periode(
     public val fom: LocalDate, public val tom: LocalDate
 ) : Comparable<Periode> {
 
+    public companion object {
+        public fun overlapper(perioder: Collection<Periode>): Boolean {
+            val sortertePerioder = perioder.sortedBy { it.fom }
+            sortertePerioder.windowed(2, 1).forEach { (denne, neste) ->
+                if (denne.tom >= neste.fom) {
+                    return true
+                }
+            }
+            return false
+        }
+    }
+
     init {
         require(fom <= tom) { "tom($tom) er før fom($fom)" }
     }
