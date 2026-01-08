@@ -1,5 +1,6 @@
 package no.nav.aap.komponenter.verdityper
 
+import com.fasterxml.jackson.annotation.JsonValue
 import java.math.BigDecimal
 import java.math.RoundingMode
 
@@ -32,6 +33,7 @@ public class GUnit(verdi: BigDecimal) : Comparable<GUnit> {
         }
     }
 
+    @JsonValue
     public fun verdi(): BigDecimal {
         return verdi
     }

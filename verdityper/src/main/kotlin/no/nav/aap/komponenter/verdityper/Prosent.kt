@@ -1,8 +1,12 @@
 package no.nav.aap.komponenter.verdityper
 
+import com.fasterxml.jackson.annotation.JsonValue
 import java.math.BigDecimal
 import java.math.RoundingMode
 
+/**
+ * Representerer en prosent-verdi. Kan kun representere heltalls-prosenter og prosenter mellom 0 og 100.
+ */
 public class Prosent private constructor(verdi: BigDecimal) : Comparable<Prosent> {
     //TODO: Hva skal scale være her? Hvor mange desimaler skal det være i prosenten?
     private val verdi = verdi.setScale(2, RoundingMode.HALF_UP)
@@ -14,6 +18,7 @@ public class Prosent private constructor(verdi: BigDecimal) : Comparable<Prosent
         require(this.verdi <= BigDecimal(1)) { "Prosent kan ikke være større enn 100" }
     }
 
+    @Suppress("ObjectPropertyName")
     public companion object {
         public val `0_PROSENT`: Prosent = Prosent(0)
         public val `30_PROSENT`: Prosent = Prosent(30)
@@ -37,6 +42,7 @@ public class Prosent private constructor(verdi: BigDecimal) : Comparable<Prosent
 
     }
 
+    @JsonValue
     public fun prosentverdi(): Int {
         return verdi.multiply(BigDecimal(100)).intValueExact()
     }
