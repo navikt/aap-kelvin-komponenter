@@ -1,5 +1,6 @@
 package no.nav.aap.komponenter.verdityper
 
+import com.fasterxml.jackson.annotation.JsonGetter
 import com.fasterxml.jackson.annotation.JsonValue
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -23,7 +24,7 @@ public class Beløp(verdi: BigDecimal) {
         public val AVRUNDINGSMETODE: RoundingMode = RoundingMode.HALF_UP
     }
 
-    @JsonValue
+    @JsonGetter
     public fun verdi(): BigDecimal {
         return verdi
     }

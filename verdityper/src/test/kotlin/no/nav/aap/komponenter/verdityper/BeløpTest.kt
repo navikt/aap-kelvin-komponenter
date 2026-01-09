@@ -2,7 +2,6 @@ package no.nav.aap.komponenter.verdityper
 
 import no.nav.aap.komponenter.json.DefaultJsonMapper
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 
@@ -62,13 +61,15 @@ class BeløpTest {
 
         val deserialisertBeløp = DefaultJsonMapper.fromJson<Beløp>(json)
         assertThat(deserialisertBeløp).isEqualTo(beløp)
-        assertThat(json).isEqualTo("100.00")
+        assertThat(json.trimIndent()).isEqualTo("""{
+  "verdi" : 100.00
+}""".trimIndent())
     }
 
     @Test
     fun `deserialisere liste av beløp`() {
         val liste = """
-            [123.0, 54.0]
+            [{"verdi": 123.0}, {"verdi": 54.0}]
         """.trimIndent()
 
         val deserialisertListe = DefaultJsonMapper.fromJson<List<Beløp>>(liste)
