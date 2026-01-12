@@ -1,6 +1,5 @@
 package no.nav.aap.motor
 
-import io.micrometer.core.instrument.Gauge
 import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.MultiGauge
 import io.micrometer.core.instrument.Tags
@@ -24,11 +23,9 @@ import java.util.concurrent.Executors
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicLong
 import javax.sql.DataSource
 import kotlin.system.measureTimeMillis
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 public interface Motor : Closeable {
@@ -67,8 +64,8 @@ public class MotorImpl(
     private val gatewayProvider: GatewayProvider? = null,
 ) : Motor {
 
-    private val antallJobberKlar = AtomicLong()
-    private val antallJobberFeilet = AtomicLong()
+    private val antallJobberKlar = AtomicInteger()
+    private val antallJobberFeilet = AtomicInteger()
 
     init {
         prometheus.gauge("motor_antall_jobber_klar", antallJobberKlar)

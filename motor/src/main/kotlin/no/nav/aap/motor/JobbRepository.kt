@@ -225,7 +225,7 @@ public class JobbRepository(private val connection: DBConnection) {
         }
     }
 
-    public fun antallJobber(statusVerdi: JobbStatus): Long {
+    public fun antallJobber(statusVerdi: JobbStatus): Int {
         val query = """
                 SELECT count(*) as antall
                 FROM JOBB
@@ -238,7 +238,7 @@ public class JobbRepository(private val connection: DBConnection) {
                 setLocalDateTime(2, LocalDateTime.now())
             }
             setRowMapper { row ->
-                row.getLong("antall")
+                row.getInt("antall")
             }
         }
 
