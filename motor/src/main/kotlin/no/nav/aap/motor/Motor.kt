@@ -26,7 +26,6 @@ import java.util.concurrent.atomic.AtomicInteger
 import javax.sql.DataSource
 import kotlin.system.measureTimeMillis
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 public interface Motor : Closeable {
@@ -65,7 +64,12 @@ public class MotorImpl(
     private val gatewayProvider: GatewayProvider? = null,
 ) : Motor {
 
+    private val antallJobberKlar = AtomicInteger()
+    private val antallJobberFeilet = AtomicInteger()
+
     init {
+        prometheus.gauge("motor_antall_jobber_klar", antallJobberKlar)
+        prometheus.gauge("motor_antall_jobber_feilet", antallJobberFeilet)
         JobbLogInfoProviderHolder.set(logInfoProvider)
         for (oppgave in jobber) {
             JobbType.leggTil(oppgave)
@@ -103,6 +107,7 @@ public class MotorImpl(
     private var started = false
     private val workers = HashMap<Int, Future<*>>()
     private var lastWatchdogLog = LocalDateTime.now()
+
 
     public override fun start() {
         log.info("Starter prosessering av jobber")
@@ -153,10 +158,8 @@ public class MotorImpl(
                         dataSource.transaction { connection ->
                             val repository = JobbRepository(connection)
 
-                            prometheus.gauge("motor_antall_jobber_klar",
-                                repository.antallJobber(JobbStatus.KLAR))
-                            prometheus.gauge("motor_antall_jobber_feilet",
-                                repository.antallJobber(JobbStatus.FEILET))
+                            antallJobberKlar.set(repository.antallJobber(JobbStatus.KLAR))
+                            antallJobberFeilet.set(repository.antallJobber(JobbStatus.FEILET))
 
                             val plukketJobb = repository.plukkJobb()
 
@@ -174,7 +177,10 @@ public class MotorImpl(
                             aktivJobbGauge.register(
                                 listOfNotNull(plukketJobb)
                                     .map { jobbInput ->
-                                        MultiGauge.Row.of(Tags.of("jobb_type", jobbInput.type()), Instant.now().epochSecond)
+                                        MultiGauge.Row.of(
+                                            Tags.of("jobb_type", jobbInput.type()),
+                                            Instant.now().epochSecond
+                                        )
                                     },
                                 true,
                             )
