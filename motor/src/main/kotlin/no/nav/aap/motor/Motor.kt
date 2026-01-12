@@ -1,5 +1,6 @@
 package no.nav.aap.motor
 
+import io.micrometer.core.instrument.Gauge
 import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.MultiGauge
 import io.micrometer.core.instrument.Tags
@@ -23,6 +24,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicLong
 import javax.sql.DataSource
 import kotlin.system.measureTimeMillis
 import kotlin.time.Duration
@@ -65,7 +67,12 @@ public class MotorImpl(
     private val gatewayProvider: GatewayProvider? = null,
 ) : Motor {
 
+    private val antallJobberKlar = AtomicLong()
+    private val antallJobberFeilet = AtomicLong()
+
     init {
+        prometheus.gauge("motor_antall_jobber_klar", antallJobberKlar)
+        prometheus.gauge("motor_antall_jobber_feilet", antallJobberFeilet)
         JobbLogInfoProviderHolder.set(logInfoProvider)
         for (oppgave in jobber) {
             JobbType.leggTil(oppgave)
@@ -103,6 +110,7 @@ public class MotorImpl(
     private var started = false
     private val workers = HashMap<Int, Future<*>>()
     private var lastWatchdogLog = LocalDateTime.now()
+
 
     public override fun start() {
         log.info("Starter prosessering av jobber")
@@ -153,10 +161,8 @@ public class MotorImpl(
                         dataSource.transaction { connection ->
                             val repository = JobbRepository(connection)
 
-                            prometheus.gauge("motor_antall_jobber_klar",
-                                repository.antallJobber(JobbStatus.KLAR))
-                            prometheus.gauge("motor_antall_jobber_feilet",
-                                repository.antallJobber(JobbStatus.FEILET))
+                            antallJobberKlar.set(repository.antallJobber(JobbStatus.KLAR))
+                            antallJobberFeilet.set(repository.antallJobber(JobbStatus.FEILET))
 
                             val plukketJobb = repository.plukkJobb()
 
@@ -174,7 +180,10 @@ public class MotorImpl(
                             aktivJobbGauge.register(
                                 listOfNotNull(plukketJobb)
                                     .map { jobbInput ->
-                                        MultiGauge.Row.of(Tags.of("jobb_type", jobbInput.type()), Instant.now().epochSecond)
+                                        MultiGauge.Row.of(
+                                            Tags.of("jobb_type", jobbInput.type()),
+                                            Instant.now().epochSecond
+                                        )
                                     },
                                 true,
                             )
