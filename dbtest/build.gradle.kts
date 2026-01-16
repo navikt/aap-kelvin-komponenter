@@ -1,5 +1,5 @@
 plugins {
-    id("komponenter.conventions")
+    id("aap.conventions")
 }
 
 dependencies {

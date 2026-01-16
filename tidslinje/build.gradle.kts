@@ -1,7 +1,7 @@
 import org.jetbrains.kotlin.gradle.dsl.ExplicitApiMode
 
 plugins {
-    id("komponenter.conventions")
+    id("aap.conventions")
 }
 
 kotlin.explicitApi = ExplicitApiMode.Warning
