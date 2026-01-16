@@ -1,6 +1,6 @@
 plugins {
     base
-    id("komponenter.conventions")
+    id("aap.conventions")
 }
 
 dependencies {
