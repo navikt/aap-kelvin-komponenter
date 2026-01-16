@@ -43,6 +43,8 @@ jobs:
 
       - name: Build
         run: ./gradlew assemble --no-build-cache --no-configuration-cache
+        # temporary while waiting for kotlin 2.3 support in CodeQL FIXME
+        continue-on-error: true
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
