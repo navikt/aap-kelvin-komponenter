@@ -10,6 +10,7 @@ public class Tidslinje<T>(initSegmenter: NavigableSet<Segment<T>> = TreeSet()) {
 
 
     public constructor(initSegmenter: Collection<Segment<T>>) : this(TreeSet(initSegmenter))
+    public constructor(initSegmenter: Iterable<Segment<T>>) : this(initSegmenter.toList())
     public constructor(periode: Periode, verdi: T) : this(TreeSet(listOf(Segment(periode, verdi))))
 
     private val segmenter: NavigableSet<Segment<T>> = TreeSet(initSegmenter)
@@ -39,6 +40,10 @@ public class Tidslinje<T>(initSegmenter: NavigableSet<Segment<T>> = TreeSet()) {
 
     public fun segmenter(): Iterable<Segment<T>> {
         return segmenter
+    }
+
+    public fun verdier(): Iterable<T> {
+        return segmenter.map { it.verdi }
     }
 
     public fun perioder(): Iterable<Periode> {
