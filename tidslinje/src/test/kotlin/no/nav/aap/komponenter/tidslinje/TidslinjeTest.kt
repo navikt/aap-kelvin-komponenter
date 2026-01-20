@@ -299,7 +299,7 @@ class TidslinjeTest {
         val tidslinje1 = Tidslinje(listOf(firstSegmentA, andreSegmentA))
         val tidslinje2 = Tidslinje(listOf(firstSegmentB, andreSegmentB))
 
-        val res = tidslinje1.kombiner(tidslinje2, StandardSammenslåere.slåSammenTilListe())
+        val res = tidslinje1.kombiner(tidslinje2, slåSammenTilListe())
 
         printBinaryFunction(tidslinje1, tidslinje2, slåSammenTilListe())
 
@@ -310,6 +310,18 @@ class TidslinjeTest {
             Segment(Periode(LocalDate.of(2020, 1, 4), LocalDate.of(2020, 1, 7)), listOf(2, 4)),
             Segment(Periode(LocalDate.of(2020, 1, 8), LocalDate.of(2020, 1, 10)), listOf(2))
         )
+    }
+
+    @Test
+    fun `skal hente ut verdier fra tidslinje`() {
+        val tidslinje = Tidslinje(
+            listOf(
+                Segment(Periode(LocalDate.now(), LocalDate.now().plusDays(5)), Beløp(100)),
+                Segment(Periode(LocalDate.now().plusDays(6), LocalDate.now().plusDays(10)), Beløp(200))
+            )
+        )
+
+        assertThat(tidslinje.verdier()).containsExactly(Beløp(100), Beløp(200))
     }
 }
 
