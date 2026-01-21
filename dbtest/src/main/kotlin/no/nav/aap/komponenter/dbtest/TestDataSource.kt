@@ -70,7 +70,8 @@ public class TestDataSource : AutoCloseable, DataSource {
         private val postgres: PostgreSQLContainer = PostgreSQLContainer("postgres:16")
                 .withDatabaseName(templateDb)
                 .withLogConsumer(Slf4jLogConsumer(logger))
-                // Use readiness logline; listening port can be up before init is complete.
+                // Vi lytter på logglinje fremfor når porten er åpen, fordi testcontaineren kan være litt treg
+                // med å bli klar
                 .waitingFor(
                     Wait.forLogMessage(".*database system is ready to accept connections.*\\n", 1)
                 ).withStartupTimeout(Duration.ofSeconds(60)).withCommand(
@@ -120,7 +121,7 @@ public class TestDataSource : AutoCloseable, DataSource {
                 username = postgres.username
                 password = postgres.password
 
-                // Fail fast, but tillatt Postgres å være litt treg under tung test last
+                // Fail fast, men tillatt Postgres å være litt treg under tung test last
                 initializationFailTimeout = 10.seconds.inWholeMilliseconds
                 connectionTimeout = 30.seconds.inWholeMilliseconds
 
