@@ -72,9 +72,10 @@ public class TestDataSource : AutoCloseable, DataSource {
                 .withLogConsumer(Slf4jLogConsumer(logger))
                 // Vi lytter på logglinje fremfor når porten er åpen, fordi testcontaineren kan være litt treg
                 // med å bli klar
-                .waitingFor(
-                    Wait.forLogMessage(".*database system is ready to accept connections.*\\n", 1)
-                ).withStartupTimeout(Duration.ofSeconds(60)).withCommand(
+                .waitingFor(Wait.forLogMessage(
+                        ".*database system is ready to accept connections.*\\n", 1))
+                .withStartupTimeout(Duration.ofSeconds(60))
+                .withCommand(
                     "postgres",
                     "-c", "work_mem=8MB", // default 4MB, økt pga mange parallelle tester
                     "-c", "shared_buffers=256MB", // default 128MB, 1.2GB i Dev-GCP
@@ -132,7 +133,8 @@ public class TestDataSource : AutoCloseable, DataSource {
 
                 dataSourceProperties.putAll(
                     mapOf(
-                        "logUnclosedConnections" to true, "assumeMinServerVersion" to "16.0",
+                        "logUnclosedConnections" to true,
+                        "assumeMinServerVersion" to "16.0",
                         // Unngå å lage mange nye connections ved å gjenbruke dem
                         "tcpKeepAlive" to true
                     )
