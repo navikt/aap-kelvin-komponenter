@@ -15,8 +15,8 @@ import java.time.Duration
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.logging.Logger
 import javax.sql.DataSource
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
-import kotlin.use
 
 /**
  * Oppretter en ny database som kan brukes i tester.
@@ -61,29 +61,35 @@ public class TestDataSource : AutoCloseable, DataSource {
         private val logger = LoggerFactory.getLogger(TestDataSource::class.java)
         private const val MAX_CONNECTIONS_COUNT = 128 // for å støtte mange parallelle tester
 
+
+        // Hver TestDataSource får sin egen Hikari-pool. Hvis vi setter den poolen til MAX_CONNECTIONS_COUNT,
+        // kan vi få for mange åpne connections for postgres-serveren totalt når mange tester kjører parallelt.
+        private const val PER_DB_POOL_SIZE = 8
+
         // Postgres 16 korresponderer til versjon i nais.yaml
-        private val postgres: PostgreSQLContainer = PostgreSQLContainer("postgres:16")
-            .withDatabaseName(templateDb)
-            .withLogConsumer(Slf4jLogConsumer(logger))
-            .waitingFor(Wait.forListeningPort())
-            .withStartupTimeout(Duration.ofSeconds(60))
-            .withCommand("postgres",
-                "-c", "work_mem=8MB", // default 4MB, økt pga mange parallelle tester
-                "-c", "shared_buffers=256MB", // default 128MB, 1.2GB i Dev-GCP
-                "-c", "max_connections=$MAX_CONNECTIONS_COUNT" // default 100
-        )
+        private val postgres: PostgreSQLContainer =
+            PostgreSQLContainer("postgres:16").withDatabaseName(templateDb).withLogConsumer(Slf4jLogConsumer(logger))
+                // Use readiness logline; listening port can be up before init is complete.
+                .waitingFor(
+                    Wait.forLogMessage(".*database system is ready to accept connections.*\\n", 1)
+                ).withStartupTimeout(Duration.ofSeconds(60)).withCommand(
+                    "postgres", "-c", "work_mem=8MB", // default 4MB, økt pga mange parallelle tester
+                    "-c", "shared_buffers=256MB", // default 128MB, 1.2GB i Dev-GCP
+                    "-c", "max_connections=$MAX_CONNECTIONS_COUNT" // default 100
+                )
 
         // clerkDatasource brukes bare til CREATE DATABASE
         // Den opprettes lazy slik at vi unngår å starte postgres-containeren under initializing av TestDataSource
-        private val clerkDatasource by lazy {
+        private val clerkDatasource: HikariDataSource by lazy {
             postgres.start()
             logger.info("Bruker Postgres-testcontainer med dockerId=${postgres.containerId}")
 
-            // Migrer template-databasen som brukes som mal for alle testdatabaser
+            // Migrer template-databasen som brukes som mal for alle testdatabaser èn gang
             newDatasource(templateDb).use { ds ->
                 applyFlywayMigrate(ds)
             }
 
+            // Admin connections skal til 'postgres' db
             newDatasource("postgres")
         }
 
@@ -94,49 +100,50 @@ public class TestDataSource : AutoCloseable, DataSource {
                     stmt.executeUpdate("CREATE DATABASE $databaseName TEMPLATE $templateDb")
                 }
             }
-            return newDatasource(databaseName)
+            return newDatasource(databaseName, poolSize = PER_DB_POOL_SIZE)
         }
 
         private fun applyFlywayMigrate(dataSource: DataSource) {
-            Flyway.configure()
-                .dataSource(dataSource)
-                .locations("flyway")
-                .cleanDisabled(false)
-                .validateMigrationNaming(true)
-                .load()
-                .migrate()
+            Flyway.configure().dataSource(dataSource).locations("flyway").cleanDisabled(false)
+                .validateMigrationNaming(true).load().migrate()
         }
 
-        private fun newDatasource(dbName: String): HikariDataSource {
+        private fun newDatasource(dbName: String, poolSize: Int = PER_DB_POOL_SIZE): HikariDataSource {
             val ds = HikariDataSource(HikariConfig().apply {
                 jdbcUrl = postgres.jdbcUrl.replace(templateDb, dbName)
                 username = postgres.username
                 password = postgres.password
-                initializationFailTimeout = 10.seconds.inWholeMilliseconds
-                connectionTimeout = 20.seconds.inWholeMilliseconds
 
-                // Detect leaks if a connection is held longer than this
+                // Fail fast, but tillatt Postgres å være litt treg under tung test last
+                initializationFailTimeout = 10.seconds.inWholeMilliseconds
+                connectionTimeout = 30.seconds.inWholeMilliseconds
+
+                // Detekter om vi glemmer å lukke connections
                 leakDetectionThreshold = 15.seconds.inWholeMilliseconds
 
-                connectionTestQuery = "SELECT 1"
+                // Foretrekk driver validation av "connection ready to use" fremfor en custom query
+                connectionTestQuery = null
+                validationTimeout = 5.seconds.inWholeMilliseconds
+
                 dataSourceProperties.putAll(
                     mapOf(
-                        "logUnclosedConnections" to true, // vår kode skal lukke alle connections
-                        "assumeMinServerVersion" to "16.0" // raskere oppstart av driver
+                        "logUnclosedConnections" to true, "assumeMinServerVersion" to "16.0",
+                        // Unngå å lage mange nye connections ved å gjenbruke dem
+                        "tcpKeepAlive" to true
                     )
                 )
 
-                minimumIdle = 1
-                maximumPoolSize = MAX_CONNECTIONS_COUNT
+                minimumIdle = 0
+                maximumPoolSize = poolSize
 
-                /* Postgres i GCP kjører med UTC som timezone. Testcontainers-postgres
-                * vil bruke samme timezone som maskinen den kjører fra (Europe/Oslo). Så
-                * for å kunne teste at implisitte konverteringer mellom database og jvm blir riktig
-                * så settes postgres opp som i gcp. */
+                // Unngå å ha idle connections liggende særlig lenge, postgres containere kan bli restartet/stoppet
+                maxLifetime = 1.minutes.inWholeMilliseconds
+                keepaliveTime = 10.seconds.inWholeMilliseconds
+
                 connectionInitSql = "SET TIMEZONE TO 'UTC'"
             })
             logger.debug(
-                "Skapte tom Postgres-db med URL ${ds.jdbcUrl}. " + "Brukernavn: ${postgres.username}. " + "Passord: ${postgres.password}. Db-navn: $dbName"
+                "Skapte tom Postgres-db med URL ${ds.jdbcUrl}. Brukernavn: ${postgres.username}. Db-navn: $dbName"
             )
             return ds
         }
