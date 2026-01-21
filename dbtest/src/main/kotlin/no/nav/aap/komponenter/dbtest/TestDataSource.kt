@@ -15,7 +15,6 @@ import java.time.Duration
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.logging.Logger
 import javax.sql.DataSource
-import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -99,9 +98,13 @@ public class TestDataSource : AutoCloseable, DataSource {
 
         public fun freshDatabase(): HikariDataSource {
             val databaseName = "test${currentDatabaseNumber.getAndIncrement()}"
-            clerkDatasource.connection.use { connection ->
-                connection.createStatement().use { stmt ->
-                    stmt.executeUpdate("CREATE DATABASE $databaseName TEMPLATE $templateDb")
+            clerkDatasource.connection.use { conn ->
+                // Many concurrent CREATE DATABASE calls overload Postgres. Do one at a time.
+                conn.prepareStatement("SELECT pg_advisory_lock(12345)").execute()
+                try {
+                    conn.createStatement().execute("CREATE DATABASE $databaseName TEMPLATE $templateDb")
+                } finally {
+                    conn.prepareStatement("SELECT pg_advisory_unlock(12345)").execute()
                 }
             }
             return newDatasource(databaseName, poolSize = PER_DB_POOL_SIZE)
