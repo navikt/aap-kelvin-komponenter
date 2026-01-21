@@ -105,8 +105,13 @@ public class TestDataSource : AutoCloseable, DataSource {
         }
 
         private fun applyFlywayMigrate(dataSource: DataSource) {
-            Flyway.configure().dataSource(dataSource).locations("flyway").cleanDisabled(false)
-                .validateMigrationNaming(true).load().migrate()
+            Flyway.configure()
+                .dataSource(dataSource)
+                .locations("flyway")
+                .cleanDisabled(false)
+                .validateMigrationNaming(true)
+                .load()
+                .migrate()
         }
 
         private fun newDatasource(dbName: String, poolSize: Int = PER_DB_POOL_SIZE): HikariDataSource {
