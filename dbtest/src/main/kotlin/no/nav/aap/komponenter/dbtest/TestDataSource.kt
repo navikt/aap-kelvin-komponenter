@@ -60,11 +60,11 @@ public class TestDataSource : AutoCloseable, DataSource {
         private const val templateDb = "template1"
         private val currentDatabaseNumber = AtomicInteger(1)
         private val logger = LoggerFactory.getLogger(TestDataSource::class.java)
-        private const val MAX_CONNECTIONS_COUNT = 128 // for å støtte mange parallelle tester
+        private const val MAX_CONNECTIONS_COUNT = 256 // for å støtte mange connections i parallelle tester
 
         // Hver TestDataSource får sin egen Hikari-pool. Hvis vi setter den poolen til MAX_CONNECTIONS_COUNT,
         // kan vi få for mange åpne connections for postgres-serveren totalt når mange tester kjører parallelt.
-        private const val PER_DB_POOL_SIZE = 16
+        private const val PER_DB_POOL_SIZE = 32
 
         // Postgres 16 korresponderer til versjon i nais.yaml
         private val postgres: PostgreSQLContainer = PostgreSQLContainer("postgres:16")
@@ -75,7 +75,8 @@ public class TestDataSource : AutoCloseable, DataSource {
                 .waitingFor(
                     Wait.forLogMessage(".*database system is ready to accept connections.*\\n", 1)
                 ).withStartupTimeout(Duration.ofSeconds(60)).withCommand(
-                    "postgres", "-c", "work_mem=8MB", // default 4MB, økt pga mange parallelle tester
+                    "postgres",
+                    "-c", "work_mem=8MB", // default 4MB, økt pga mange parallelle tester
                     "-c", "shared_buffers=256MB", // default 128MB, 1.2GB i Dev-GCP
                     "-c", "max_connections=$MAX_CONNECTIONS_COUNT" // default 100
                 )
@@ -142,10 +143,6 @@ public class TestDataSource : AutoCloseable, DataSource {
 
                 minimumIdle = 0
                 maximumPoolSize = poolSize
-
-                // Unngå å ha idle connections liggende særlig lenge, postgres containere kan bli restartet/stoppet
-                maxLifetime = 1.minutes.inWholeMilliseconds
-                keepaliveTime = 10.seconds.inWholeMilliseconds
 
                 connectionInitSql = "SET TIMEZONE TO 'UTC'"
             })
