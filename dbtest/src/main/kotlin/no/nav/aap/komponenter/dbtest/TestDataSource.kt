@@ -64,7 +64,7 @@ public class TestDataSource : AutoCloseable, DataSource {
 
         // Hver TestDataSource får sin egen Hikari-pool. Hvis vi setter den poolen til MAX_CONNECTIONS_COUNT,
         // kan vi få for mange åpne connections for postgres-serveren totalt når mange tester kjører parallelt.
-        private const val PER_DB_POOL_SIZE = 8
+        private const val PER_DB_POOL_SIZE = 16
 
         // Postgres 16 korresponderer til versjon i nais.yaml
         private val postgres: PostgreSQLContainer = PostgreSQLContainer("postgres:16")
