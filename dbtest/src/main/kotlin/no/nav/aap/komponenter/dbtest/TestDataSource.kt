@@ -126,9 +126,6 @@ public class TestDataSource : AutoCloseable, DataSource {
                 initializationFailTimeout = 10.seconds.inWholeMilliseconds
                 connectionTimeout = 30.seconds.inWholeMilliseconds
 
-                // Detekter om vi glemmer å lukke connections
-                leakDetectionThreshold = 15.seconds.inWholeMilliseconds
-
                 // Foretrekk driver validation av "connection ready to use" fremfor en custom query
                 connectionTestQuery = null
                 validationTimeout = 5.seconds.inWholeMilliseconds
