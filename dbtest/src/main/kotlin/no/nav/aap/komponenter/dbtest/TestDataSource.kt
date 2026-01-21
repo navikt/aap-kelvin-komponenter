@@ -54,21 +54,22 @@ import kotlin.time.Duration.Companion.seconds
 public class TestDataSource : AutoCloseable, DataSource {
 
     // Postgres serveren startes en gang, og migrasjonen av databasen kjøres en gang.
-    // Den migrerte databasen lagres som en template, som brukes til å opprette en ny db for hver instans av TestDataSource.
+    // Den migrerte databasen lagres som en template, som brukes til å opprette
+    // en ny db for hver instans av TestDataSource.
     public companion object {
         private const val templateDb = "template1"
         private val currentDatabaseNumber = AtomicInteger(1)
         private val logger = LoggerFactory.getLogger(TestDataSource::class.java)
         private const val MAX_CONNECTIONS_COUNT = 128 // for å støtte mange parallelle tester
 
-
         // Hver TestDataSource får sin egen Hikari-pool. Hvis vi setter den poolen til MAX_CONNECTIONS_COUNT,
         // kan vi få for mange åpne connections for postgres-serveren totalt når mange tester kjører parallelt.
         private const val PER_DB_POOL_SIZE = 8
 
         // Postgres 16 korresponderer til versjon i nais.yaml
-        private val postgres: PostgreSQLContainer =
-            PostgreSQLContainer("postgres:16").withDatabaseName(templateDb).withLogConsumer(Slf4jLogConsumer(logger))
+        private val postgres: PostgreSQLContainer = PostgreSQLContainer("postgres:16")
+                .withDatabaseName(templateDb)
+                .withLogConsumer(Slf4jLogConsumer(logger))
                 // Use readiness logline; listening port can be up before init is complete.
                 .waitingFor(
                     Wait.forLogMessage(".*database system is ready to accept connections.*\\n", 1)
@@ -80,7 +81,7 @@ public class TestDataSource : AutoCloseable, DataSource {
 
         // clerkDatasource brukes bare til CREATE DATABASE
         // Den opprettes lazy slik at vi unngår å starte postgres-containeren under initializing av TestDataSource
-        private val clerkDatasource: HikariDataSource by lazy {
+        private val clerkDatasource by lazy {
             postgres.start()
             logger.info("Bruker Postgres-testcontainer med dockerId=${postgres.containerId}")
 
