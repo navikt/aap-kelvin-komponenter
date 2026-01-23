@@ -158,13 +158,13 @@ internal class RetryFeiledeJobberRepository(private val connection: DBConnection
         }
     }
 
-    fun hentInfoOmSisteAvType(type: String): JobbInput {
+    fun hentInfoOmSisteAvType(type: String): JobbInput? {
         val query = """
             SELECT *, 
             (SELECT count(1) FROM JOBB_HISTORIKK h WHERE h.jobb_id = j.id AND h.status = '${JobbStatus.FEILET.name}') as antall_feil
             FROM JOBB j WHERE status = 'KLAR' and type = ?
         """.trimIndent()
-        return connection.queryFirst(query) {
+        return connection.queryFirstOrNull(query) {
             setParams {
                 setString(1, type)
             }
