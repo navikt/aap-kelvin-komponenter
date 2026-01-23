@@ -35,7 +35,7 @@ public class DriftJobbRepositoryExposed(connection: DBConnection) {
 
     public fun hentInfoOmGjentagendeJobber(): List<JobbInput> {
         try {
-            return JobbType.cronTypes().map { retryFeiledeOppgaverRepository.hentInfoOmSisteAvType(it) }
+            return JobbType.cronTypes().mapNotNull { retryFeiledeOppgaverRepository.hentInfoOmSisteAvType(it) }
         } catch (e: Throwable) {
             log.error("Feil under henting av info om gjentagende jobber", e)
             return emptyList()
