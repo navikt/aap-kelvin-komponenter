@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.ExplicitApiMode
+
 plugins {
     id("aap.conventions")
 }
@@ -5,6 +7,10 @@ plugins {
 val ktorVersion = "3.4.0"
 val swaggerUiVersion = "5.31.0"
 val junitVersjon = "6.0.0"
+
+kotlin {
+    explicitApi = ExplicitApiMode.Disabled
+}
 
 dependencies {
     // Ktor server dependencies
