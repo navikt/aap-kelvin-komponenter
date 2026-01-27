@@ -4,7 +4,7 @@ plugins {
     id("aap.conventions")
 }
 
-val ktorVersion = "3.3.3"
+val ktorVersion = "3.4.0"
 
 kotlin.explicitApi = ExplicitApiMode.Warning
 
@@ -23,8 +23,8 @@ dependencies {
     api("io.micrometer:micrometer-registry-prometheus:1.16.2")
 
     api("io.ktor:ktor-serialization-jackson:$ktorVersion")
-    api("com.fasterxml.jackson.core:jackson-databind:2.20.1")
-    api("no.nav:ktor-openapi-generator:1.0.136")
+    api("com.fasterxml.jackson.core:jackson-databind:2.21.0")
+    api("no.nav:ktor-openapi-generator:1.0.137")
 
 
     api(project(":httpklient"))
