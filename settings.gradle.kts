@@ -25,6 +25,5 @@ include(
     "httpklient",
     "server",
     "verdityper",
-    "tidslinje",
-    "ktor-openapi-generator"
+    "tidslinje"
 )
