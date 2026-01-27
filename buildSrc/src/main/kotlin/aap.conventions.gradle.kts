@@ -67,6 +67,21 @@ publishing {
             artifactId = project.name
             version = project.findProperty("version")?.toString() ?: "0.0.0"
             from(components["java"])
+
+            if (project.name == "ktor-openapi-generator") {
+                pom {
+                    name.set("Ktor OpenAPI/Swagger 3 Generator")
+                    description.set("The Ktor OpenAPI Generator is a library to automatically generate the descriptor as you route your ktor application.")
+                    url.set("https://github.com/navikt/aap-kelvin-komponenter/ktor-openapi-generator")
+                    packaging = "jar"
+                    licenses {
+                        license {
+                            name.set("Apache-2.0 License")
+                            url.set("https://github.com/navikt/aap-kelvin-komponenter/blob/master/ktor-openapi-generator/LICENSE")
+                        }
+                    }
+                }
+            }
         }
     }
 
