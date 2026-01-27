@@ -492,6 +492,21 @@ public class Tidslinje<T>(initSegmenter: NavigableSet<Segment<T>> = TreeSet()) {
         return this.outerJoin(other) { venstreVerdi, høyreVerdi -> venstreVerdi ?: høyreVerdi ?: error("ikke mulig") }
     }
 
+    /** Returner en tidslinje hvor perioden  [periode] er slettet. */
+    public fun slett(periode: Periode): Tidslinje<T> {
+        // Hvis T er nullable, må vi passe på å ikke blande null fra sletting og null-verdi
+        class Box(val value: T)
+        return this.leftJoin(Tidslinje(periode, true)) { verdi, fjern ->
+            if (fjern == true) {
+                null
+            } else {
+                Box(verdi)
+            }
+        }
+            .filterNotNull()
+            .map { it.value }
+    }
+
     public companion object {
         public fun <T> empty(): Tidslinje<T> = Tidslinje<T>(TreeSet())
 
@@ -634,6 +649,13 @@ public class Tidslinje<T>(initSegmenter: NavigableSet<Segment<T>> = TreeSet()) {
 
 public fun <T> tidslinjeOf(vararg segments: Pair<Periode, T>): Tidslinje<T> {
     return Tidslinje(segments.map { Segment(it.first, it.second) })
+}
+
+public fun <T> tidslinjeOfNotNullPeriode(vararg segments: Pair<Periode?, T>): Tidslinje<T> {
+    return Tidslinje(segments.mapNotNull { (periode, element) ->
+        if (periode == null) null
+        else Segment(periode, element)
+    })
 }
 
 /** Lag tidslinje med de verdiene som er ikke-`null`. Tilsvarende [listOfNotNull].*/

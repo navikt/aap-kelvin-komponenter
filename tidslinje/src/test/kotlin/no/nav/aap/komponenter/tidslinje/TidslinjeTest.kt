@@ -323,6 +323,19 @@ class TidslinjeTest {
 
         assertThat(tidslinje.verdier()).containsExactly(Beløp(100), Beløp(200))
     }
+
+    @Test
+    fun `slett blir ikke forvirret av null-verdier`() {
+        assertThat(
+            tidslinjeOf(
+                Periode(LocalDate.parse("2020-01-01"), LocalDate.parse("2020-01-30")) to null
+            ).slett(Periode(LocalDate.parse("2020-01-04"), LocalDate.parse("2020-02-01")))
+        ).isEqualTo(
+            tidslinjeOf(
+                    Periode(LocalDate.parse("2020-01-01"), LocalDate.parse("2020-01-03")) to null,
+            )
+        )
+    }
 }
 
 data class Utbetaling(val beløp: Beløp, val prosent: Prosent) {
