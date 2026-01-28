@@ -4,7 +4,7 @@ plugins {
     id("aap.conventions")
 }
 
-val ktorVersion = "3.4.0"
+val ktorVersion = "3.3.3"
 val swaggerUiVersion = "5.31.0"
 val junitVersjon = "6.0.0"
 

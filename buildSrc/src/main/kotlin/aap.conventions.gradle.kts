@@ -35,7 +35,8 @@ dokka {
 
 tasks.test {
     useJUnitPlatform()
-    reports.html.required.set(false)
+    reports.html.required.set(true)
+    reports.junitXml.required.set(true)
     maxParallelForks = Runtime.getRuntime().availableProcessors() / 2
 }
 
