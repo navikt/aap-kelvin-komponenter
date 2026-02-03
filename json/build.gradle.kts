@@ -11,4 +11,6 @@ dependencies {
     api("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.20.1")
 
     testImplementation("org.assertj:assertj-core:3.27.7")
+    testImplementation(project(":tidslinje"))
+    testImplementation(project(":dbconnect")) // her bor Periode :)
 }

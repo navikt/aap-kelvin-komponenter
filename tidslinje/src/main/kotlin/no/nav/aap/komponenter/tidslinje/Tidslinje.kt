@@ -1,5 +1,7 @@
 package no.nav.aap.komponenter.tidslinje
 
+import com.fasterxml.jackson.annotation.JsonCreator
+import com.fasterxml.jackson.annotation.JsonValue
 import no.nav.aap.komponenter.type.Periode
 import java.time.LocalDate
 import java.time.Period
@@ -10,6 +12,8 @@ public class Tidslinje<T>(initSegmenter: NavigableSet<Segment<T>> = TreeSet()) {
 
 
     public constructor(initSegmenter: Collection<Segment<T>>) : this(TreeSet(initSegmenter))
+
+    @JsonCreator
     public constructor(initSegmenter: Iterable<Segment<T>>) : this(initSegmenter.toList())
     public constructor(periode: Periode, verdi: T) : this(TreeSet(listOf(Segment(periode, verdi))))
 
@@ -38,6 +42,7 @@ public class Tidslinje<T>(initSegmenter: NavigableSet<Segment<T>> = TreeSet()) {
         return segmenter.isNotEmpty()
     }
 
+    @JsonValue
     public fun segmenter(): Iterable<Segment<T>> {
         return segmenter
     }
