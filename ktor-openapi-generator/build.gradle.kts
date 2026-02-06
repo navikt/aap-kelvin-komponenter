@@ -4,7 +4,7 @@ plugins {
     id("aap.conventions")
 }
 
-val ktorVersion = "3.3.3"
+val ktorVersion = "3.4.0"
 val swaggerUiVersion = "5.31.0"
 val junitVersjon = "6.0.0"
 
@@ -42,7 +42,7 @@ dependencies {
     testImplementation(kotlin("test"))
     testImplementation(kotlin("stdlib-jdk8"))
 
-    testImplementation("ch.qos.logback:logback-classic:1.5.26") // logging framework for the tests
+    testImplementation("ch.qos.logback:logback-classic:1.5.27") // logging framework for the tests
 
     testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersjon") // junit testing framework
     testImplementation("org.junit.jupiter:junit-jupiter-params:$junitVersjon") // generated parameters for tests
