@@ -4,7 +4,7 @@ plugins {
     id("aap.conventions")
 }
 
-val ktorVersion = "3.3.3"
+val ktorVersion = "3.4.0"
 
 kotlin.explicitApi = ExplicitApiMode.Warning
 
@@ -23,7 +23,7 @@ dependencies {
     api("io.micrometer:micrometer-registry-prometheus:1.16.2")
 
     api("io.ktor:ktor-serialization-jackson:$ktorVersion")
-    api("com.fasterxml.jackson.core:jackson-databind:2.20.1")
+    api("com.fasterxml.jackson.core:jackson-databind:2.21.0")
     api(project(":ktor-openapi-generator"))
 
 
@@ -34,7 +34,7 @@ dependencies {
     testImplementation("io.ktor:ktor-serialization-jackson:$ktorVersion")
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
     constraints {
-        implementation("commons-codec:commons-codec:1.20.0")
+        implementation("commons-codec:commons-codec:1.21.0")
     }
     testImplementation("org.junit.jupiter:junit-jupiter-api:6.0.0")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:6.0.0")
