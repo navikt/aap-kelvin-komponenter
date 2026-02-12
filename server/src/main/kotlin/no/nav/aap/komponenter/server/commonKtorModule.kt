@@ -44,7 +44,11 @@ public fun Application.commonKtorModule(
         // For å unngå rare tegn i loggene
         disableDefaultColors()
         filter { call -> call.request.path().startsWith("/actuator").not() }
+
         mdc(MdcKeys.User) { call -> runCatching { call.bruker().ident }.getOrNull() }
+
+        mdc(MdcKeys.Method) { call -> call.request.httpMethod.value }
+        mdc(MdcKeys.InboundUri) { call -> call.request.path() }
     }
     install(CallId) {
         retrieveFromHeader(HttpHeaders.XCorrelationId)
