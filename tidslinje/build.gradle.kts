@@ -8,7 +8,7 @@ kotlin.explicitApi = ExplicitApiMode.Warning
 
 dependencies {
     implementation(project(":dbconnect")) // Periode
-    implementation("com.fasterxml.jackson.core:jackson-annotations:2.20")
+    implementation("com.fasterxml.jackson.core:jackson-annotations:2.21")
     implementation(project(":verdityper"))
     testImplementation("org.junit.jupiter:junit-jupiter-api:6.0.0")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:6.0.0")
