@@ -27,14 +27,14 @@ object DefaultEnumSchemaProvider : SchemaBuilderProviderModule, OpenAPIGenModule
             if (jsonFormat != null && jsonFormat.shape == JsonFormat.Shape.OBJECT) {
                 return finalize(
                     SchemaModel.SchemaModelEnum<Any?>(
-                        type.jvmErasure.java.enumConstants.map { (it as Enum<*>).name },
+                        type.jvmErasure.java.enumConstants.map { (it as Enum<*>).name }.sorted(),
                         type.isMarkedNullable
                     )
                 )
             }
             return finalize(
                 SchemaModel.SchemaModelEnum<Any?>(
-                    type.jvmErasure.java.enumConstants.map { (it as Enum<*>).name },
+                    type.jvmErasure.java.enumConstants.map { (it as Enum<*>).name }.sorted(),
                     type.isMarkedNullable
                 )
             )
