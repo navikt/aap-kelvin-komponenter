@@ -11,6 +11,137 @@ import java.time.LocalDate
 class TidslinjeTest {
 
     @Test
+    fun `all på tom tidslinje`() {
+        val tomTidslinje = Tidslinje.empty<Unit>()
+        val periode = Periode(LocalDate.now(), LocalDate.now())
+
+        assertThat(tomTidslinje.all { false })
+            .isTrue
+
+        assertThat(tomTidslinje.all(sammenhengende = true) { false })
+            .isTrue
+
+        assertThat(tomTidslinje.all(iPeriode = periode) { false })
+            .isTrue
+
+        assertThat(tomTidslinje.all(iPeriode = periode, sammenhengende = true) { false })
+            .isFalse
+    }
+
+    @Test
+    fun `all på singelton-tidslinje`() {
+        val now = LocalDate.now()
+        val periode = Periode(now, now)
+        val utenforPerioden = Periode(now + 1, now + 1)
+        val tidslinje = tidslinjeOf(periode to 0)
+
+        assertThat(tidslinje.all { it == 0 })
+            .isTrue
+
+        assertThat(tidslinje.all { it == 1 })
+            .isFalse
+
+        assertThat(tidslinje.all(sammenhengende = true) { it == 0 })
+            .isTrue
+
+        assertThat(tidslinje.all(sammenhengende = true) { it == 1 })
+            .isFalse
+
+        assertThat(tidslinje.all(iPeriode = periode) { it == 0 })
+            .isTrue
+
+        assertThat(tidslinje.all(iPeriode = utenforPerioden) { it == 0 })
+            .isTrue
+
+        assertThat(tidslinje.all(iPeriode = periode) { it == 1 })
+            .isFalse
+
+        assertThat(tidslinje.all(iPeriode = periode, sammenhengende = true) { it == 0 })
+            .isTrue
+
+        assertThat(tidslinje.all(iPeriode = utenforPerioden, sammenhengende = true) { it == 0 })
+            .isFalse
+
+        assertThat(tidslinje.all(iPeriode = periode, sammenhengende = true) { it == 1 })
+            .isFalse
+
+        assertThat(tidslinje.all(iPeriode = utenforPerioden, sammenhengende = true) { it == 1 })
+            .isFalse
+    }
+
+
+    @Test
+    fun `all med overlappende perioder`() {
+        val now = LocalDate.now()
+        val periodeA = Periode(now, now + 7)
+        val periodeB = Periode(now + 8, now + 8)
+        val periodeC = Periode(now + 10, now + 10)
+        val periodeABC = Periode(now, now + 10)
+        val periodeBC = Periode(now + 8, now + 10)
+        val utenforPerioden = Periode(now + 11, now + 15)
+
+        val tidslinje = tidslinjeOf(periodeA to 0, periodeB to 1, periodeC to 1)
+
+        assertThat(tidslinje.all { it == 0 }).isFalse
+        assertThat(tidslinje.all { it == 1 }).isFalse
+        assertThat(tidslinje.all(sammenhengende = true) { it == 0 }).isFalse
+        assertThat(tidslinje.all(sammenhengende = true) { it == 1 }).isFalse
+
+        assertThat(tidslinje.all(iPeriode = periodeA) { it == 0 }).isTrue
+        assertThat(tidslinje.all(iPeriode = periodeB) { it == 1 }).isTrue
+        assertThat(tidslinje.all(iPeriode = periodeC) { it == 1 }).isTrue
+        assertThat(tidslinje.all(iPeriode = periodeBC) { it == 1 }).isTrue
+        assertThat(tidslinje.all(iPeriode = periodeBC, sammenhengende = true) { it == 1 }).isFalse
+
+        assertThat(tidslinje.all(iPeriode = periodeABC) { it == 0 }).isFalse
+        assertThat(tidslinje.all(iPeriode = periodeABC) { it == 1 }).isFalse
+        assertThat(tidslinje.all(iPeriode = utenforPerioden) { it == 0 }).isTrue
+        assertThat(tidslinje.all(iPeriode = utenforPerioden) { it == 1 }).isTrue
+
+        assertThat(tidslinje.all(iPeriode = Periode(now + 1, now + 2), sammenhengende = true) { it == 0 })
+            .isTrue
+        assertThat(tidslinje.all(iPeriode = Periode(now + 1, now + 2), sammenhengende = true) { it == 0 })
+            .isTrue
+    }
+
+    @Test
+    fun `any med tomTidslinje`() {
+        val tomTidslinje = Tidslinje.empty<Unit>()
+        val now = LocalDate.now()
+        val periode = Periode(now + 1, now + 1)
+
+        assertThat(tomTidslinje.any { true }).isFalse
+        assertThat(tomTidslinje.any { false }).isFalse
+        assertThat(tomTidslinje.any(iPeriode = periode) { true }).isFalse
+        assertThat(tomTidslinje.any(iPeriode = periode) { false }).isFalse
+    }
+
+    @Test
+    fun `any med ikke-tom tidslinje`() {
+        val now = LocalDate.now()
+        val periodeA = Periode(now, now + 4)
+        val periodeB = Periode(now + 5, now + 10)
+        val periodeAB = Periode(now, now + 10)
+        val overlappende = Periode(now + 5, now + 15)
+        val utenfor = Periode(now + 11, now + 15)
+
+        val tidslinje = tidslinjeOf(periodeA to 0, periodeB to 1)
+
+        assertThat(tidslinje.any { it == 0 }).isTrue
+        assertThat(tidslinje.any { it == 1 }).isTrue
+
+        assertThat(tidslinje.any(iPeriode = periodeA) { it == 0 }).isTrue
+        assertThat(tidslinje.any(iPeriode = periodeB) { it == 1 }).isTrue
+        assertThat(tidslinje.any(iPeriode = periodeB) { it == 0 }).isFalse
+        assertThat(tidslinje.any(iPeriode = periodeA) { it == 1 }).isFalse
+        assertThat(tidslinje.any(iPeriode = utenfor) { false }).isFalse
+        assertThat(tidslinje.any(iPeriode = periodeAB) { it == 0 }).isTrue
+        assertThat(tidslinje.any(iPeriode = periodeAB) { it == 1 }).isTrue
+        assertThat(tidslinje.any(iPeriode = overlappende) { it == 1 }).isTrue
+
+    }
+
+    @Test
     fun `Enkle tidslinjetester`() {
         val now = LocalDate.now()
         val periode1 = Periode(now, now.plusDays(4))
@@ -332,7 +463,7 @@ class TidslinjeTest {
             ).slett(Periode(LocalDate.parse("2020-01-04"), LocalDate.parse("2020-02-01")))
         ).isEqualTo(
             tidslinjeOf(
-                    Periode(LocalDate.parse("2020-01-01"), LocalDate.parse("2020-01-03")) to null,
+                Periode(LocalDate.parse("2020-01-01"), LocalDate.parse("2020-01-03")) to null,
             )
         )
     }
@@ -503,3 +634,5 @@ class UtregningSammenslåer :
             Segment(periode, Utbetaling(beløp, prosent))
         }
     )
+
+private operator fun LocalDate.plus(days: Int): LocalDate = this.plusDays(days.toLong())
