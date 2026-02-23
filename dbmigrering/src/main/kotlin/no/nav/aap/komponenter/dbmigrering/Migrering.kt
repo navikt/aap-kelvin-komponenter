@@ -6,11 +6,10 @@ import org.flywaydb.core.Flyway
 import javax.sql.DataSource
 
 public object Migrering {
-    public fun migrate(dataSource: DataSource, cleanOnValidationError: Boolean = false) {
+    public fun migrate(dataSource: DataSource) {
         val flyway = Flyway
             .configure()
             .cleanDisabled(Miljø.er() == MiljøKode.PROD)
-            .cleanOnValidationError(cleanOnValidationError)
             .dataSource(dataSource)
             .locations("flyway")
             .validateMigrationNaming(true)
