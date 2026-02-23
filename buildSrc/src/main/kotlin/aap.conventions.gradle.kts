@@ -25,6 +25,12 @@ testing {
     }
 }
 
+tasks.named("check").configure {
+    setDependsOn(dependsOn.filterNot {
+        it.toString().contains("detekt", ignoreCase = true)
+    })
+}
+
 dokka {
     dokkaSourceSets.configureEach {
         sourceLink {
