@@ -2,7 +2,6 @@ package com.papsign.ktor.openapigen
 
 import com.papsign.ktor.openapigen.model.base.OpenAPIModel
 import com.papsign.ktor.openapigen.model.info.ContactModel
-import com.papsign.ktor.openapigen.model.info.ExternalDocumentationModel
 import com.papsign.ktor.openapigen.model.info.InfoModel
 import com.papsign.ktor.openapigen.model.server.ServerModel
 import com.papsign.ktor.openapigen.modules.CachingModuleProvider
@@ -19,7 +18,7 @@ import kotlin.reflect.full.starProjectedType
 
 class OpenAPIGen(
     config: Configuration,
-    @Deprecated("Will be replaced with less dangerous alternative when the use case has been fleshed out.") val pipeline: ApplicationCallPipeline
+    val pipeline: ApplicationCallPipeline
 ) {
     private val log = classLogger()
 
@@ -33,7 +32,8 @@ class OpenAPIGen(
         (config.scanPackagesForModules + javaClass.`package`.name).forEach { packageName ->
             val reflections = Reflections(packageName)
             log.debug("Registering modules in package $packageName")
-            val objects = reflections.getSubTypesOf(OpenAPIGenExtension::class.java).mapNotNull { it.kotlin.objectInstance }
+            val objects =
+                reflections.getSubTypesOf(OpenAPIGenExtension::class.java).mapNotNull { it.kotlin.objectInstance }
             objects.forEach {
                 log.trace("Registering global module: ${it::class.simpleName}")
                 it.onInit(this)
@@ -56,10 +56,6 @@ class OpenAPIGen(
             api.servers.add(ServerModel(url).apply(configure))
         }
 
-        inline fun externalDocs(url: String, crossinline configure: ExternalDocumentationModel.() -> Unit = {}) {
-            api.externalDocs = ExternalDocumentationModel(url).apply(configure)
-        }
-
         var openApiJsonPath = "/openapi.json"
         var serveOpenApiJson = true
 
@@ -74,18 +70,6 @@ class OpenAPIGen(
 
         fun addModules(vararg modules: OpenAPIModule) {
             addModules.addAll(modules)
-        }
-
-        fun addModules(modules: Iterable<OpenAPIModule>) {
-            addModules.addAll(modules)
-        }
-
-        fun removeModules(vararg modules: OpenAPIModule) {
-            removeModules.addAll(modules)
-        }
-
-        fun removeModules(modules: Iterable<OpenAPIModule>) {
-            removeModules.addAll(modules)
         }
 
         fun replaceModule(delete: OpenAPIModule, add: OpenAPIModule) {
@@ -120,7 +104,11 @@ class OpenAPIGen(
             }
 
             if (cfg.serveSwaggerUi) {
-                val ui = SwaggerUi(cfg.swaggerUiPath, cfg.swaggerUiVersion, if (cfg.serveOpenApiJson) cfg.openApiJsonPath else null)
+                val ui = SwaggerUi(
+                    cfg.swaggerUiPath,
+                    cfg.swaggerUiVersion,
+                    if (cfg.serveOpenApiJson) cfg.openApiJsonPath else null
+                )
                 val swaggerRoot = "/${cfg.swaggerUiPath.removePrefix("/")}"
                 val swaggerUiResources = "/${cfg.swaggerUiPath.trim('/')}/"
                 pipeline.intercept(ApplicationCallPipeline.Call) {
