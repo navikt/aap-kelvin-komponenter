@@ -66,17 +66,6 @@ public class TestJobbRepository(
         sakId: Long?,
         behandlingId: Long?,
     ): List<JobbInput> {
-        @Suppress("DEPRECATION")
-        return hentJobberAvTypeMedAttributter(type, sakId, behandlingId, null)
-    }
-
-    @Deprecated("Bruk hentJobberAvTypeMedAttributter(type, sakId, behandlingId) i stedet.")
-    public fun hentJobberAvTypeMedAttributter(
-        type: String,
-        sakId: Long?,
-        behandlingId: Long?,
-        property: String?
-    ): List<JobbInput> {
         var query = """
             SELECT id, type, status, sak_id, behandling_id, neste_kjoring, parameters, payload, opprettet_tid,
                 (SELECT count(1) FROM JOBB_HISTORIKK h WHERE h.jobb_id = o.id AND h.status = '${JobbStatus.FEILET.name}') as antall_feil

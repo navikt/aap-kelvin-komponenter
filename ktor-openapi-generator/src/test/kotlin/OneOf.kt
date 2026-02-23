@@ -6,7 +6,7 @@ import com.papsign.ktor.openapigen.annotations.type.number.integer.max.Max
 import com.papsign.ktor.openapigen.annotations.type.number.integer.min.Min
 import com.papsign.ktor.openapigen.annotations.type.`object`.example.ExampleProvider
 import com.papsign.ktor.openapigen.annotations.type.`object`.example.WithExample
-import com.papsign.ktor.openapigen.annotations.type.string.example.DiscriminatorAnnotation
+import com.papsign.ktor.openapigen.annotations.type.string.discriminator.DiscriminatorAnnotation
 import com.papsign.ktor.openapigen.route.apiRouting
 import com.papsign.ktor.openapigen.route.info
 import com.papsign.ktor.openapigen.route.path.normal.NormalOpenAPIRoute

@@ -28,27 +28,18 @@ import com.papsign.ktor.openapigen.route.path.normal.NormalOpenAPIRoute
 import com.papsign.ktor.openapigen.route.response.respond
 import com.papsign.ktor.openapigen.schema.namer.DefaultSchemaNamer
 import com.papsign.ktor.openapigen.schema.namer.SchemaNamer
-import io.ktor.serialization.jackson.jackson
-import io.ktor.server.application.Application
-import io.ktor.server.application.install
-import io.ktor.server.auth.Authentication
-import io.ktor.server.auth.AuthenticationConfig
-import io.ktor.server.auth.Principal
-import io.ktor.server.auth.authenticate
-import io.ktor.server.auth.authentication
-import io.ktor.server.auth.jwt.jwt
-import io.ktor.server.engine.embeddedServer
-import io.ktor.server.netty.Netty
-import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.server.plugins.origin
-import io.ktor.server.request.host
-import io.ktor.server.request.port
-import io.ktor.server.response.respond
-import io.ktor.server.response.respondRedirect
-import io.ktor.server.routing.RoutingContext
-import io.ktor.server.routing.get
-import io.ktor.server.routing.routing
-import java.net.URL
+import io.ktor.serialization.jackson.*
+import io.ktor.server.application.*
+import io.ktor.server.auth.*
+import io.ktor.server.auth.jwt.*
+import io.ktor.server.engine.*
+import io.ktor.server.netty.*
+import io.ktor.server.plugins.*
+import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.request.*
+import io.ktor.server.response.*
+import io.ktor.server.routing.*
+import java.net.URI
 import java.util.concurrent.TimeUnit
 import kotlin.reflect.KType
 
@@ -61,10 +52,10 @@ object TestServerWithJwtAuth {
         }.start(true)
     }
 
-    public fun Application.testServerWithJwtAuth() {
+    fun Application.testServerWithJwtAuth() {
         //define basic OpenAPI info
-        val authProvider = JwtProvider();
-        val api = install(OpenAPIGen) {
+        val authProvider = JwtProvider()
+        install(OpenAPIGen) {
             info {
                 version = "0.1"
                 title = "Test API"
@@ -96,7 +87,7 @@ object TestServerWithJwtAuth {
 
                 enable(SerializationFeature.WRAP_EXCEPTIONS, SerializationFeature.INDENT_OUTPUT)
 
-                setSerializationInclusion(JsonInclude.Include.NON_NULL)
+                setDefaultPropertyInclusion(JsonInclude.Include.NON_NULL)
 
                 setDefaultPrettyPrinter(DefaultPrettyPrinter().apply {
                     indentArraysWith(DefaultPrettyPrinter.FixedSpaceIndenter.instance)
@@ -137,7 +128,7 @@ object TestServerWithJwtAuth {
                     info("String Param Endpoint", "This is a String Param Endpoint"),
                     example = StringResponse("Hi")
                 ) { params ->
-                    val (userId, name) = principal()
+                    val (_, name) = principal()
                     respond(StringResponse("Hello $name, you submitted ${params.a}"))
                 }
             }
@@ -150,18 +141,18 @@ object TestServerWithJwtAuth {
     @Response("A String Response")
     data class StringResponse(@param:Description("The string value") val str: String)
 
-    val authProvider = JwtProvider();
+    val authProvider = JwtProvider()
 
     inline fun NormalOpenAPIRoute.auth(route: OpenAPIAuthenticatedRoute<UserPrincipal>.() -> Unit): OpenAPIAuthenticatedRoute<UserPrincipal> {
         val authenticatedKtorRoute = this.ktorRoute.authenticate { }
         val openAPIAuthenticatedRoute =
-            OpenAPIAuthenticatedRoute(authenticatedKtorRoute, this.provider.child(), authProvider = authProvider);
+            OpenAPIAuthenticatedRoute(authenticatedKtorRoute, this.provider.child(), authProvider = authProvider)
         return openAPIAuthenticatedRoute.apply {
             route()
         }
     }
 
-    data class UserPrincipal(val userId: String, val name: String?) : Principal
+    data class UserPrincipal(val userId: String, val name: String?)
 
     class JwtProvider : AuthProvider<UserPrincipal> {
         override val security: Iterable<Iterable<AuthProvider.Security<*>>> =
@@ -200,9 +191,9 @@ object TestServerWithJwtAuth {
         Profile("Some scope")
     }
 
-    val jwtRealm: String = "example-jwt-realm"
-    val jwtIssuer: String = "http://localhost:9091/auth/realms/$jwtRealm"
-    val jwtEndpoint: String = "$jwtIssuer/protocol/openid-connect/certs"
+    const val jwtRealm: String = "example-jwt-realm"
+    const val jwtIssuer: String = "http://localhost:9091/auth/realms/$jwtRealm"
+    const val jwtEndpoint: String = "$jwtIssuer/protocol/openid-connect/certs"
 
     fun installJwt(provider: AuthenticationConfig) {
         provider.apply {
@@ -220,7 +211,7 @@ object TestServerWithJwtAuth {
     }
 
     private fun getJwkProvider(jwkEndpoint: String): JwkProvider {
-        return JwkProviderBuilder(URL(jwkEndpoint))
+        return JwkProviderBuilder(URI.create(jwkEndpoint).toURL())
             .cached(10, 24, TimeUnit.HOURS)
             .rateLimited(10, 1, TimeUnit.MINUTES)
             .build()

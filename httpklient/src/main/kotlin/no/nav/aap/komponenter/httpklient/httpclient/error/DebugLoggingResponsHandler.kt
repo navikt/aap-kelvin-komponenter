@@ -8,9 +8,9 @@ import java.net.http.HttpHeaders
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 
+private val SECURE_LOGGER = LoggerFactory.getLogger("secureLog")
 
-public class DebugLoggingResponsHandler() : RestResponseHandler<String> {
-    private val SECURE_LOGGER = LoggerFactory.getLogger("secureLog")
+public class DebugLoggingResponsHandler : RestResponseHandler<String> {
     private val log = LoggerFactory.getLogger(DebugLoggingResponsHandler::class.java)
 
     override fun <R> håndter(
@@ -18,7 +18,8 @@ public class DebugLoggingResponsHandler() : RestResponseHandler<String> {
         response: HttpResponse<String>,
         mapper: (String, HttpHeaders) -> R
     ): R? {
-        return håndterStatus(response,
+        return håndterStatus(
+            response,
             errorBlock = {
                 response.body()
             }, block = {
@@ -33,7 +34,6 @@ public class DebugLoggingResponsHandler() : RestResponseHandler<String> {
     }
 
     private fun loggRespons(value: String?) {
-        // TODO: Temp
         val miljø = Miljø.er()
         if (miljø in listOf(MiljøKode.LOKALT, MiljøKode.DEV)) {
             log.info(value)

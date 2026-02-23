@@ -3,6 +3,7 @@ package no.nav.aap.komponenter.httpklient.httpclient.tokenprovider
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 
+@Suppress("PropertyName")
 @JsonIgnoreProperties(ignoreUnknown = true)
 internal class OidcTokenResponse(
     @param:JsonProperty("access_token") val access_token: String,

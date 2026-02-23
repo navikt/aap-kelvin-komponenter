@@ -3,7 +3,7 @@ package no.nav.aap.komponenter.tidslinje
 import no.nav.aap.komponenter.type.Periode
 import java.util.*
 
-public class PeriodeIterator(
+internal class PeriodeIterator(
     leftPerioder: Iterable<Periode>,
     rightPerioder: Iterable<Periode>
 ) : Iterator<Periode> {
