@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.dsl.ExplicitApiMode
 plugins {
     id("org.jetbrains.kotlin.jvm")
     id("org.jetbrains.dokka")
+    id("dev.detekt")
     `maven-publish`
     `java-library`
 }
@@ -30,6 +31,20 @@ dokka {
             remoteUrl("https://github.com/navikt/aap-kelvin-komponenter/")
             localDirectory.set(rootDir)
         }
+    }
+}
+
+detekt {
+    config.setFrom(files("$rootDir/config/detekt/detekt.yml"))
+    buildUponDefaultConfig = false
+}
+
+tasks.withType(dev.detekt.gradle.Detekt::class.java).configureEach {
+    reports {
+        html.required.set(true)
+        checkstyle.required.set(false)
+        sarif.required.set(true)
+        markdown.required.set(false)
     }
 }
 
