@@ -12,7 +12,7 @@ import com.papsign.ktor.openapigen.route.path.normal.NormalOpenAPIRoute
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
-import io.ktor.server.routing.RoutingContext
+import io.ktor.server.routing.*
 
 internal enum class Scopes(override val description: String) : Described {
     BEHANDLINGSFLYT("behandlingsflyt")
@@ -38,7 +38,7 @@ internal class JwtProvider : AuthProvider<JWTPrincipal> {
     }
 
     override suspend fun getAuth(pipeline: RoutingContext): JWTPrincipal {
-        return pipeline.call.authentication.principal() ?: throw RuntimeException("No JWT Principal")
+        return requireNotNull(pipeline.call.authentication.principal()) { "No JWTPrincipal." }
     }
 }
 

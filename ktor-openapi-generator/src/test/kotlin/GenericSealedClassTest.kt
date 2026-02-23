@@ -1,7 +1,7 @@
 import TestServer.setupBaseTestServer
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
-import com.papsign.ktor.openapigen.annotations.type.string.example.DiscriminatorAnnotation
+import com.papsign.ktor.openapigen.annotations.type.string.discriminator.DiscriminatorAnnotation
 import com.papsign.ktor.openapigen.route.apiRouting
 import com.papsign.ktor.openapigen.route.info
 import com.papsign.ktor.openapigen.route.path.normal.NormalOpenAPIRoute

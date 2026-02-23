@@ -1,9 +1,7 @@
 package com.papsign.ktor.openapigen.model.security
 
-import com.papsign.ktor.openapigen.annotations.mapping.openAPIName
 import com.papsign.ktor.openapigen.model.DataModel
 import com.papsign.ktor.openapigen.model.Described
-import java.util.*
 import kotlin.reflect.KProperty
 
 class FlowsModel<TScope> : MutableMap<String, FlowsModel.FlowModel<TScope>> by HashMap<String, FlowModel<TScope>>()
@@ -82,13 +80,14 @@ class FlowsModel<TScope> : MutableMap<String, FlowsModel.FlowModel<TScope>> by H
     }
 
     companion object {
-        private val IMPLICIT = "implicit"
-        private val PASSWORD = "password"
-        private val AUTHORIZATION_CODE = "authorization_code"
-        private val CLIENT_CREDENTIALS = "client_credentials"
-        private val REFRESH_TOKEN = "refresh_token"
+        private const val IMPLICIT = "implicit"
+        private const val PASSWORD = "password"
+        private const val AUTHORIZATION_CODE = "authorization_code"
+        private const val CLIENT_CREDENTIALS = "client_credentials"
+        private const val REFRESH_TOKEN = "refresh_token"
     }
 
+    @Suppress("EnumEntryName")
     enum class FlowModelType(val value: String) {
         implicit(IMPLICIT),
         password(PASSWORD),

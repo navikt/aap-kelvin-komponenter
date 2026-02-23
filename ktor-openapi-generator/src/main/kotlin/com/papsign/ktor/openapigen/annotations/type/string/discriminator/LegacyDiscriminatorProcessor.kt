@@ -1,4 +1,4 @@
-package com.papsign.ktor.openapigen.annotations.type.string.example
+package com.papsign.ktor.openapigen.annotations.type.string.discriminator
 
 import com.papsign.ktor.openapigen.model.schema.DataFormat
 import com.papsign.ktor.openapigen.model.schema.DataType

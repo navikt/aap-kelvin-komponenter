@@ -1,11 +1,11 @@
 package no.nav.aap.komponenter.tidslinje
 
-import no.nav.aap.komponenter.type.Periode
 import no.nav.aap.komponenter.tidslinje.JoinStyle.DISJOINT
 import no.nav.aap.komponenter.tidslinje.JoinStyle.INNER_JOIN
 import no.nav.aap.komponenter.tidslinje.JoinStyle.LEFT_JOIN
 import no.nav.aap.komponenter.tidslinje.JoinStyle.OUTER_JOIN
 import no.nav.aap.komponenter.tidslinje.JoinStyle.RIGHT_JOIN
+import no.nav.aap.komponenter.type.Periode
 import java.time.LocalDate
 
 infix fun <T> T.fom(fom: String) = this to LocalDate.parse(fom)
@@ -56,7 +56,7 @@ fun <T, S>printAscii2(
     printBinaryFunction(venstre, høyre, cons { p, l, r -> Segment(p, Binary(l?.verdi, r?.verdi)) })
 }
 
-fun <A : Any?, B : Any?, C : Any?> printBinaryFunction(
+fun <A, B, C> printBinaryFunction(
     venstre: Tidslinje<A>,
     høyre: Tidslinje<B>,
     joinStyle: JoinStyle<A, B, C>,
@@ -65,7 +65,7 @@ fun <A : Any?, B : Any?, C : Any?> printBinaryFunction(
     printBinaryFunction(venstre, høyre, joinStyle::class.simpleName ?: "resultat", resultat)
 }
 
-fun <A : Any?, B : Any?, C : Any?> printBinaryFunction(
+fun <A, B, C> printBinaryFunction(
     venstre: Tidslinje<A>,
     høyre: Tidslinje<B>,
     navn: String,
@@ -83,7 +83,7 @@ class Binary(val l: Any?, val r: Any?) {
 }
 
 
-fun <A : Any?, B : Any?, C : Any?> printBinaryFunction(
+fun <A, B, C> printBinaryFunction(
     venstreTidslinje: Tidslinje<A>,
     høyreTidslinje: Tidslinje<B>,
     joinerNavn: String,
@@ -143,7 +143,7 @@ class Info(
     val verdi: String,
 )
 
-fun <T : Any?> eval(date: LocalDate, segment: Segment<T>?): Info? {
+fun <T> eval(date: LocalDate, segment: Segment<T>?): Info? {
     if (segment == null) return null
     return Info(
         start = date == segment.fom(),
