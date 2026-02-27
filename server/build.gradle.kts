@@ -23,7 +23,7 @@ dependencies {
     api("io.micrometer:micrometer-registry-prometheus:1.16.3")
 
     api("io.ktor:ktor-serialization-jackson:$ktorVersion")
-    api("com.fasterxml.jackson.core:jackson-databind:2.21.0")
+    api("com.fasterxml.jackson.core:jackson-databind:2.21.1")
     api(project(":ktor-openapi-generator"))
 
 

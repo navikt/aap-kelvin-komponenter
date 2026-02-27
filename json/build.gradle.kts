@@ -7,8 +7,8 @@ plugins {
 kotlin.explicitApi = ExplicitApiMode.Warning
 
 dependencies {
-    api("com.fasterxml.jackson.module:jackson-module-kotlin:2.21.0")
-    api("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.21.0")
+    api("com.fasterxml.jackson.module:jackson-module-kotlin:2.21.1")
+    api("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.21.1")
 
     testImplementation("org.assertj:assertj-core:3.27.7")
     testImplementation(project(":tidslinje"))
