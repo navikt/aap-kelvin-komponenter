@@ -33,6 +33,10 @@ public class DriftJobbRepositoryExposed(connection: DBConnection) {
         return retryFeiledeOppgaverRepository.hentAlleFeilede()
     }
 
+    public fun hentAntallFeilende(): Int {
+        return retryFeiledeOppgaverRepository.hentAntallFeilende()
+    }
+
     public fun hentInfoOmGjentagendeJobber(): List<JobbInput> {
         try {
             return JobbType.cronTypes().mapNotNull { retryFeiledeOppgaverRepository.hentInfoOmSisteAvType(it) }

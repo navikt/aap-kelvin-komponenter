@@ -158,6 +158,16 @@ internal class RetryFeiledeJobberRepository(private val connection: DBConnection
         }
     }
 
+    fun hentAntallFeilende(): Int {
+        val query = "SELECT count(*) AS antall FROM jobb WHERE status = 'FEILET'"
+
+        return connection.queryFirst(query) {
+            setRowMapper { row ->
+                row.getInt("antall")
+            }
+        }
+    }
+
     fun hentInfoOmSisteAvType(type: String): JobbInput? {
         val query = """
             SELECT *, 

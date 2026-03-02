@@ -36,6 +36,14 @@ public fun NormalOpenAPIRoute.motorApi(dataSource: DataSource) {
                 respond(saker)
             }
         }
+        route("/feilende/antall") {
+            get<Unit, Int>(modules) { _ ->
+                val antallFeilendeJobber: Int = dataSource.transaction(readOnly = true) { connection ->
+                    DriftJobbRepositoryExposed(connection).hentAntallFeilende()
+                }
+                respond(antallFeilendeJobber)
+            }
+        }
         route("/planlagte-jobber") {
             get<Unit, List<JobbInfoDto>>(modules) { _ ->
                 val saker: List<JobbInfoDto> = dataSource.transaction(readOnly = true) { connection ->
