@@ -114,7 +114,7 @@ public class RestClient<K>(
                 log.info("Feilet kall, retryer : {}", ex.message)
                 return retry(retries - 1, function)
             } else {
-                log.info("Rekjører ikke flere ganger", ex)
+                log.error("Rekjører ikke flere ganger", ex)
                 throw ex
             }
         }
