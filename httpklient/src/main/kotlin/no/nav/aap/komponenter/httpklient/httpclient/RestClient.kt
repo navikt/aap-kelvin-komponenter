@@ -92,7 +92,7 @@ public class RestClient<K>(
     public fun <R> retryableGet(uri: URI, request: GetRequest, mapper: (K, HttpHeaders) -> R, maxRetries: Int = 2): R? {
         val httpRequest = buildRequest(uri, request)
 
-        return retry(maxRetries) { executeRequestAndHandleResponse(httpRequest, mapper) }
+        return retry(maxRetries, uri) { executeRequestAndHandleResponse(httpRequest, mapper) }
     }
 
     public fun <T : Any, R> retryablePost(
@@ -103,18 +103,18 @@ public class RestClient<K>(
     ): R? {
         val httpRequest = buildRequest(uri, request)
 
-        return retry(maxRetries) { executeRequestAndHandleResponse(httpRequest, mapper) }
+        return retry(maxRetries, uri) { executeRequestAndHandleResponse(httpRequest, mapper) }
     }
 
-    private fun <R> retry(retries: Int, function: () -> R?): R? {
+    private fun <R> retry(retries: Int, uri: URI, function: () -> R?): R? {
         try {
             return function()
         } catch (ex: Exception) {
             if (retryExceptions.contains(ex::class) && retries - 1 > 0) {
-                log.info("Feilet kall, retryer : {}", ex.message)
-                return retry(retries - 1, function)
+                log.info("Feilet kall mot $uri, retryer : {}", ex.message)
+                return retry(retries - 1, uri, function)
             } else {
-                log.info("Rekjører ikke flere ganger", ex)
+                log.error("Rekjører ikke flere ganger mot $uri", ex)
                 throw ex
             }
         }
