@@ -1,5 +1,6 @@
 package no.nav.aap.komponenter.dbconnect
 
+import no.nav.aap.komponenter.type.ÅrMånedPeriode
 import no.nav.aap.komponenter.type.Periode
 import java.math.BigDecimal
 import java.sql.Connection
@@ -76,6 +77,10 @@ public class Params internal constructor(
         preparedStatement.setString(index, periode?.let(DaterangeParser::toSQL))
     }
 
+    public fun setMånedPeriode(index: Int, årMånedPeriode: ÅrMånedPeriode?) {
+        preparedStatement.setString(index, årMånedPeriode?.let(ÅrMånedRangeParser::toSQL))
+    }
+
     public fun setLocalDate(index: Int, localDate: LocalDate?) {
         preparedStatement.setDate(index, localDate?.let(Date::valueOf))
     }
@@ -108,6 +113,11 @@ public class Params internal constructor(
 
     public fun setPeriodeArray(index: Int, perioder: List<Periode>?) {
         val array = perioder?.let{connection.createArrayOf("daterange", it.map(DaterangeParser::toSQL).toTypedArray())}
+        preparedStatement.setArray(index, array)
+    }
+
+    public fun setMånedPeriodeArray(index: Int, årMånedPerioder: List<ÅrMånedPeriode>?) {
+        val array = årMånedPerioder?.let{connection.createArrayOf("VARCHAR", it.map(ÅrMånedRangeParser::toSQL).toTypedArray())}
         preparedStatement.setArray(index, array)
     }
 

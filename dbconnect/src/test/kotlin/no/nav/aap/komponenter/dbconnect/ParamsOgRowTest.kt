@@ -1,6 +1,7 @@
 package no.nav.aap.komponenter.dbconnect
 
 import no.nav.aap.komponenter.dbtest.TestDataSource
+import no.nav.aap.komponenter.type.ÅrMånedPeriode
 import no.nav.aap.komponenter.type.Periode
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.data.TemporalUnitWithinOffset
@@ -14,6 +15,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.Month
+import java.time.YearMonth
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 import java.util.*
@@ -25,7 +27,7 @@ internal class ParamsOgRowTest {
     @BeforeEach
     fun setup() {
         dataSource.transaction { connection ->
-            connection.execute("TRUNCATE TEST_BYTES, TEST_STRING, TEST_ENUM, TEST_INT, TEST_LONG, TEST_BIG_DECIMAL, TEST_UUID, TEST_BOOLEAN, TEST_DATERANGE, TEST_LOCALDATE, TEST_LOCALDATETIME, TEST_INSTANT")
+            connection.execute("TRUNCATE TEST_BYTES, TEST_STRING, TEST_ENUM, TEST_INT, TEST_LONG, TEST_BIG_DECIMAL, TEST_UUID, TEST_BOOLEAN, TEST_DATERANGE, TEST_LOCALDATE, TEST_LOCALDATETIME, TEST_INSTANT, TEST_MÅNEDRANGE")
         }
     }
 
@@ -565,6 +567,94 @@ internal class ParamsOgRowTest {
             }
         }
         assertThat(array).containsExactlyElementsOf(listOf(uuid1, uuid2))
+    }
+
+    @Test
+    fun `Skriver og leser ÅrMånedPeriode og null-verdi riktig`() {
+        dataSource.transaction { connection ->
+            connection.execute(
+                """
+                    INSERT INTO TEST_MÅNEDRANGE (TEST, TEST_NULL)
+                    VALUES (?, ?)
+                """.trimMargin()
+            ) {
+                setParams {
+                    setMånedPeriode(1, ÅrMånedPeriode(YearMonth.now(), YearMonth.of(9999, 12)))
+                    setMånedPeriode(2, null)
+                }
+            }
+            connection.queryFirst("SELECT * FROM TEST_MÅNEDRANGE") {
+                setRowMapper { row ->
+                    assertThat(row.getÅrMånedPeriodeOrNull("TEST"))
+                        .isEqualTo(ÅrMånedPeriode(YearMonth.now(), YearMonth.of(9999, 12)))
+                    assertThat(row.getÅrMånedPeriode("TEST")).isEqualTo(ÅrMånedPeriode(YearMonth.now(), YearMonth.of(9999, 12)))
+                    assertThat(row.getÅrMånedPeriodeOrNull("TEST_NULL")).isNull()
+                    assertThrows<IllegalArgumentException> { row.getÅrMånedPeriode("TEST_NULL") }
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `Skriver og leser med månedperiode-array`() {
+        dataSource.transaction { connection ->
+            val årMånedPerioderInns = listOf(
+                ÅrMånedPeriode(YearMonth.of(1990, 6), YearMonth.of(2200, 1)),
+                ÅrMånedPeriode(YearMonth.of(2020, 1), YearMonth.of(2020, 5)),
+            )
+            connection.execute(
+                """
+                    INSERT INTO TEST_MÅNEDPERIODE_ARRAY(TEST)
+                    VALUES (?::text[])
+                """,
+            ) {
+                setParams {
+                    setMånedPeriodeArray(1, årMånedPerioderInns)
+                }
+            }
+
+
+            val månedPerioderUt = connection.queryFirst("SELECT TEST FROM TEST_MÅNEDPERIODE_ARRAY") {
+                setRowMapper { row ->
+                    row.getMånedPeriodeArray("TEST")
+                }
+            }
+            assertThat(månedPerioderUt)
+                .isEqualTo(årMånedPerioderInns)
+        }
+    }
+
+    @Test
+    fun `Skriver og leser med nullable månedperiode-array`() {
+        dataSource.transaction { connection ->
+            val månedPerioderInn1 = null
+            val årMånedPerioderInn2s = listOf(
+                ÅrMånedPeriode(YearMonth.of(1990, 6), YearMonth.of(2200, 1)),
+                ÅrMånedPeriode(YearMonth.of(2020, 1), YearMonth.of(2020, 5)),
+            )
+
+            connection.execute(
+                """
+                    INSERT INTO TEST_NULLABLE_MÅNEDPERIODE_ARRAY(TEST)
+                    VALUES (?::text[]), (?::text[])
+                """,
+            ) {
+                setParams {
+                    setMånedPeriodeArray(1, månedPerioderInn1)
+                    setMånedPeriodeArray(2, årMånedPerioderInn2s)
+                }
+            }
+
+            data class Wrapper(val årMånedPerioder: List<ÅrMånedPeriode>?)
+
+            val månedPerioderUt = connection.queryList("SELECT TEST FROM TEST_NULLABLE_MÅNEDPERIODE_ARRAY") {
+                setRowMapper { row ->
+                    Wrapper(row.getMånedPeriodeArrayOrNull("TEST"))
+                }
+            }
+            assertThat(månedPerioderUt.map { it.årMånedPerioder })
+                .containsExactly(månedPerioderInn1, årMånedPerioderInn2s)
+        }
     }
 
     companion object {

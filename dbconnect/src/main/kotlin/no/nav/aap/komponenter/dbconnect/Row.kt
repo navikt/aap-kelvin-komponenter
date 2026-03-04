@@ -1,5 +1,6 @@
 package no.nav.aap.komponenter.dbconnect
 
+import no.nav.aap.komponenter.type.ÅrMånedPeriode
 import no.nav.aap.komponenter.type.Periode
 import java.math.BigDecimal
 import java.sql.Date
@@ -162,6 +163,18 @@ public class Row internal constructor(private val resultSet: ResultSet) {
         return DaterangeParser.fromSQL(dateRange)
     }
 
+    public fun getÅrMånedPeriode(columnLabel: String): ÅrMånedPeriode {
+        return ÅrMånedRangeParser.fromSQL(getString(columnLabel))
+    }
+
+    public fun getÅrMånedPeriodeOrNull(columnLabel: String): ÅrMånedPeriode? {
+        val dateRange = getStringOrNull(columnLabel)
+        if (dateRange == null) {
+            return null
+        }
+        return ÅrMånedRangeParser.fromSQL(dateRange)
+    }
+
     public fun getPeriodeArray(columnLabel: String): List<Periode> {
         return (resultSet.getArray(columnLabel).array as Array<*>)
             .map { DaterangeParser.fromSQL(it.toString()) }
@@ -174,6 +187,20 @@ public class Row internal constructor(private val resultSet: ResultSet) {
         }
         return (arr.array as Array<*>)
             .map { DaterangeParser.fromSQL(it.toString()) }
+    }
+
+    public fun getMånedPeriodeArray(columnLabel: String): List<ÅrMånedPeriode> {
+        return (resultSet.getArray(columnLabel).array as Array<*>)
+            .map { ÅrMånedRangeParser.fromSQL(it.toString()) }
+    }
+
+    public fun getMånedPeriodeArrayOrNull(columnLabel: String): List<ÅrMånedPeriode>? {
+        val arr = resultSet.getArray(columnLabel)
+        if (arr == null) {
+            return null
+        }
+        return (arr.array as Array<*>)
+            .map { ÅrMånedRangeParser.fromSQL(it.toString()) }
     }
 
     /**
