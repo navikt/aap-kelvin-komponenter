@@ -336,6 +336,68 @@ class TidslinjeTest {
             )
         )
     }
+
+    @Test
+    fun `map7 uten periode - alle tidslinjer overlapper`() {
+        val periode = Periode(LocalDate.of(2020, 1, 1), LocalDate.of(2020, 1, 10))
+        val a = Tidslinje(periode, 1)
+        val b = Tidslinje(periode, 2)
+        val c = Tidslinje(periode, 3)
+        val d = Tidslinje(periode, 4)
+        val e = Tidslinje(periode, 5)
+        val f = Tidslinje(periode, 6)
+        val g = Tidslinje(periode, 7)
+
+        val resultat = Tidslinje.map7(a, b, c, d, e, f, g) { av, bv, cv, dv, ev, fv, gv ->
+            (av ?: 0) + (bv ?: 0) + (cv ?: 0) + (dv ?: 0) + (ev ?: 0) + (fv ?: 0) + (gv ?: 0)
+        }
+
+        assertThat(resultat).isEqualTo(tidslinjeOf(periode to 28))
+    }
+
+    @Test
+    fun `map7 med delvis overlapp`() {
+        val periodeABC = Periode(LocalDate.of(2020, 1, 1), LocalDate.of(2020, 1, 10))
+        val periodeDEFG = Periode(LocalDate.of(2020, 1, 5), LocalDate.of(2020, 1, 15))
+
+        val a = Tidslinje(periodeABC, "a")
+        val b = Tidslinje(periodeABC, "b")
+        val c = Tidslinje(periodeABC, "c")
+        val d = Tidslinje(periodeDEFG, "d")
+        val e = Tidslinje(periodeDEFG, "e")
+        val f = Tidslinje(periodeDEFG, "f")
+        val g = Tidslinje(periodeDEFG, "g")
+
+        val resultat = Tidslinje.map7(a, b, c, d, e, f, g) { av, bv, cv, dv, ev, fv, gv ->
+            listOfNotNull(av, bv, cv, dv, ev, fv, gv).joinToString("")
+        }
+
+        assertThat(resultat).isEqualTo(
+            tidslinjeOf(
+                Periode(LocalDate.of(2020, 1, 1), LocalDate.of(2020, 1, 4)) to "abc",
+                Periode(LocalDate.of(2020, 1, 5), LocalDate.of(2020, 1, 10)) to "abcdefg",
+                Periode(LocalDate.of(2020, 1, 11), LocalDate.of(2020, 1, 15)) to "defg",
+            )
+        )
+    }
+
+    @Test
+    fun `map7 med tom tidslinje`() {
+        val periode = Periode(LocalDate.of(2020, 1, 1), LocalDate.of(2020, 1, 10))
+        val a = Tidslinje(periode, 1)
+        val b = Tidslinje(periode, 2)
+        val c = Tidslinje(periode, 3)
+        val d = Tidslinje(periode, 4)
+        val e = Tidslinje(periode, 5)
+        val f = Tidslinje(periode, 6)
+        val g = Tidslinje.empty<Int>()
+
+        val resultat = Tidslinje.map7(a, b, c, d, e, f, g) { av, bv, cv, dv, ev, fv, gv ->
+            (av ?: 0) + (bv ?: 0) + (cv ?: 0) + (dv ?: 0) + (ev ?: 0) + (fv ?: 0) + (gv ?: 0)
+        }
+
+        assertThat(resultat).isEqualTo(tidslinjeOf(periode to 21))
+    }
 }
 
 data class Utbetaling(val beløp: Beløp, val prosent: Prosent) {
