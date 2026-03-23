@@ -21,7 +21,7 @@ dependencies {
     testImplementation("org.assertj:assertj-core:3.27.7")
 
     testImplementation(project(":motor-test-utils"))
-    testImplementation("org.testcontainers:testcontainers:2.0.3")
+    testImplementation("org.testcontainers:testcontainers:2.0.4")
     testImplementation("ch.qos.logback:logback-classic:1.5.32")
     testImplementation("net.logstash.logback:logstash-logback-encoder:9.0")
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")

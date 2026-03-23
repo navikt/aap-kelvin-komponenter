@@ -5,7 +5,7 @@ plugins {
 }
 
 val ktorVersion = "3.4.1"
-val swaggerUiVersion = "5.32.0"
+val swaggerUiVersion = "5.32.1"
 val junitVersjon = "6.0.0"
 
 kotlin {
