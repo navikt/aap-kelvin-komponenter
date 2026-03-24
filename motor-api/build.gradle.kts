@@ -11,7 +11,7 @@ dependencies {
     // Skille ut disse til egen modul for motor-api
     implementation(project(":ktor-openapi-generator"))
     implementation("io.ktor:ktor-http-jvm:$ktorVersion")
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.21.1")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.21.2")
 
     testImplementation(project(":dbtest"))
     testImplementation(project(":server"))
@@ -21,7 +21,7 @@ dependencies {
     testImplementation("org.assertj:assertj-core:3.27.7")
 
     testImplementation(project(":motor-test-utils"))
-    testImplementation("org.testcontainers:testcontainers:2.0.3")
+    testImplementation("org.testcontainers:testcontainers:2.0.4")
     testImplementation("ch.qos.logback:logback-classic:1.5.32")
     testImplementation("net.logstash.logback:logstash-logback-encoder:9.0")
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
