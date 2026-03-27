@@ -93,6 +93,14 @@ public fun NormalOpenAPIRoute.motorApi(dataSource: DataSource) {
                 respond("Avbryter videre kjøring av feilende jobb med ID $jobbId startet, antall jobber avbrutt $antallSchedulert.")
             }
         }
+        route("/avbrytAlle") {
+            get<Unit, String>(modules) {
+                val antallSchedulert = dataSource.transaction { connection ->
+                    DriftJobbRepositoryExposed(connection).markerAlleFeiledeSomAvbrutt()
+                }
+                respond("Avbyter alle feilede jobber, $antallSchedulert antall jobber avbrutt.")
+            }
+        }
         route("/rekjorAlleFeilede") {
             get<Unit, String>(modules) {
                 val antallSchedulert = dataSource.transaction { connection ->

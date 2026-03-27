@@ -21,6 +21,10 @@ public class DriftJobbRepositoryExposed(connection: DBConnection) {
         return retryFeiledeOppgaverRepository.markerAlleFeiledeForKlare()
     }
 
+    public fun markerAlleFeiledeSomAvbrutt(): Int {
+        return retryFeiledeOppgaverRepository.markerAlleFeiledeSomAvbrutt()
+    }
+
     public fun markerFeilendeForKlar(jobbId: Long): Int {
         return retryFeiledeOppgaverRepository.markerFeiledeForKlare(jobbId)
     }
