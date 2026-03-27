@@ -22,7 +22,7 @@ dependencies {
 
     implementation("org.slf4j:slf4j-api:2.0.17")
 
-    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.21.1") // needed for multipart parsing
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.21.2") // needed for multipart parsing
 
     // when updating the version here, don't forge to update version in OpenAPIGen.kt line 68
     api("org.webjars:swagger-ui:$swaggerUiVersion")
