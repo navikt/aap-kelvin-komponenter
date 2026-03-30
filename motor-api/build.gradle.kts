@@ -6,6 +6,7 @@ val ktorVersion = "3.4.1"
 
 dependencies {
     implementation(project(":dbconnect"))
+    implementation(project(":infrastructure"))
     implementation(project(":motor"))
     implementation("org.slf4j:slf4j-api:2.0.17")
     // Skille ut disse til egen modul for motor-api
