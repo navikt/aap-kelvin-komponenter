@@ -9,6 +9,7 @@ import com.papsign.ktor.openapigen.route.response.respond
 import com.papsign.ktor.openapigen.route.route
 import no.nav.aap.komponenter.dbconnect.DBConnection
 import no.nav.aap.komponenter.dbconnect.transaction
+import no.nav.aap.komponenter.miljo.Miljø
 import no.nav.aap.motor.JobbInput
 import no.nav.aap.motor.mdc.JobbLogInfoProviderHolder
 import no.nav.aap.motor.retry.DriftJobbRepositoryExposed
@@ -95,10 +96,14 @@ public fun NormalOpenAPIRoute.motorApi(dataSource: DataSource) {
         }
         route("/avbrytAlle") {
             get<Unit, String>(modules) {
-                val antallSchedulert = dataSource.transaction { connection ->
-                    DriftJobbRepositoryExposed(connection).markerAlleFeiledeSomAvbrutt()
+                if (Miljø.erDev() || Miljø.erLokal()) {
+                    val antallSchedulert = dataSource.transaction { connection ->
+                        DriftJobbRepositoryExposed(connection).markerAlleFeiledeSomAvbrutt()
+                    }
+                    respond("Avbyter alle feilede jobber, $antallSchedulert antall jobber avbrutt.")
+                } else {
+                    respond("Avbryting av alle jobber kun tillat i dev og lokalt")
                 }
-                respond("Avbyter alle feilede jobber, $antallSchedulert antall jobber avbrutt.")
             }
         }
         route("/rekjorAlleFeilede") {
