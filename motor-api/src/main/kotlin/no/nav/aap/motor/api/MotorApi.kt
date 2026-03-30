@@ -100,7 +100,7 @@ public fun NormalOpenAPIRoute.motorApi(dataSource: DataSource) {
                     val antallSchedulert = dataSource.transaction { connection ->
                         DriftJobbRepositoryExposed(connection).markerAlleFeiledeSomAvbrutt()
                     }
-                    respond("Avbyter alle feilede jobber, $antallSchedulert antall jobber avbrutt.")
+                    respond("Avbryter alle feilede jobber, $antallSchedulert antall jobber avbrutt.")
                 } else {
                     respond("Avbryting av alle jobber kun tillat i dev og lokalt")
                 }
