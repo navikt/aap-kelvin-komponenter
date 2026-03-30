@@ -94,7 +94,7 @@ public fun NormalOpenAPIRoute.motorApi(dataSource: DataSource) {
                 respond("Avbryter videre kjøring av feilende jobb med ID $jobbId startet, antall jobber avbrutt $antallSchedulert.")
             }
         }
-        route("/avbrytAlle") {
+        route("/avbrytAlleFeilede") {
             get<Unit, String>(modules) {
                 if (Miljø.erDev() || Miljø.erLokal()) {
                     val antallSchedulert = dataSource.transaction { connection ->
