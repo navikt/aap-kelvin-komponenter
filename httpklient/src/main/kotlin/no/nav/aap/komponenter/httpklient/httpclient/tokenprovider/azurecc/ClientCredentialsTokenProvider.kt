@@ -36,7 +36,7 @@ public object ClientCredentialsTokenProvider : TokenProvider {
 
         val cachedToken = cache[scope]
         if (cachedToken != null && cachedToken.isNotExpired()) {
-            log.info("Fant token for $scope som ikke har utløpt. Utløper ${cachedToken.expires()}")
+            log.debug("Fant token for {} som ikke har utløpt. Utløper {}", scope, cachedToken.expires())
             return cachedToken
         }
         val postRequest = PostRequest(
@@ -46,11 +46,7 @@ public object ClientCredentialsTokenProvider : TokenProvider {
             additionalHeaders = listOf(Header("Cache-Control", "no-cache"))
         )
 
-        val response: OidcTokenResponse? = client.post(uri = config.tokenEndpoint, request = postRequest)
-
-        if (response == null) {
-            return null
-        }
+        val response: OidcTokenResponse = client.post(uri = config.tokenEndpoint, request = postRequest) ?: return null
 
         val oidcToken = OidcToken(response.access_token)
         log.info("Hentet nytt token for $scope. Utløper ${oidcToken.expires()}")
@@ -69,5 +65,5 @@ internal fun calculateExpiresTime(expiresInSec: Int): LocalDateTime {
     val expiresIn =
         Duration.ofSeconds(expiresInSec.toLong()).minus(Duration.ofSeconds(30))
 
-    return LocalDateTime.now().plus(expiresIn);
+    return LocalDateTime.now().plus(expiresIn)
 }
