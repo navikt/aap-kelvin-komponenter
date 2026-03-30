@@ -20,10 +20,10 @@ dependencies {
     api("io.ktor:ktor-server-cors:$ktorVersion")
     api("io.ktor:ktor-server-status-pages:$ktorVersion")
 
-    api("io.micrometer:micrometer-registry-prometheus:1.16.3")
+    api("io.micrometer:micrometer-registry-prometheus:1.16.4")
 
     api("io.ktor:ktor-serialization-jackson:$ktorVersion")
-    api("com.fasterxml.jackson.core:jackson-databind:2.21.1")
+    api("com.fasterxml.jackson.core:jackson-databind:2.21.2")
     api(project(":ktor-openapi-generator"))
 
 
