@@ -7,6 +7,7 @@ import com.papsign.ktor.openapigen.route.path.normal.get
 import com.papsign.ktor.openapigen.route.path.normal.post
 import com.papsign.ktor.openapigen.route.response.respond
 import com.papsign.ktor.openapigen.route.route
+import io.ktor.http.HttpStatusCode
 import no.nav.aap.komponenter.dbconnect.DBConnection
 import no.nav.aap.komponenter.dbconnect.transaction
 import no.nav.aap.komponenter.miljo.Miljø
@@ -102,7 +103,7 @@ public fun NormalOpenAPIRoute.motorApi(dataSource: DataSource) {
                     }
                     respond("Avbryter alle feilede jobber, $antallSchedulert antall jobber avbrutt.")
                 } else {
-                    respond("Avbryting av alle jobber kun tillat i dev og lokalt")
+                    respond("Avbryting av alle jobber kun tillat i dev og lokalt", HttpStatusCode.Forbidden)
                 }
             }
         }
