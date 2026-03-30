@@ -7,8 +7,10 @@ import com.papsign.ktor.openapigen.route.path.normal.get
 import com.papsign.ktor.openapigen.route.path.normal.post
 import com.papsign.ktor.openapigen.route.response.respond
 import com.papsign.ktor.openapigen.route.route
+import io.ktor.http.HttpStatusCode
 import no.nav.aap.komponenter.dbconnect.DBConnection
 import no.nav.aap.komponenter.dbconnect.transaction
+import no.nav.aap.komponenter.miljo.Miljø
 import no.nav.aap.motor.JobbInput
 import no.nav.aap.motor.mdc.JobbLogInfoProviderHolder
 import no.nav.aap.motor.retry.DriftJobbRepositoryExposed
@@ -91,6 +93,18 @@ public fun NormalOpenAPIRoute.motorApi(dataSource: DataSource) {
                     DriftJobbRepositoryExposed(connection).markerSomAvbrutt(jobbId.jobbId)
                 }
                 respond("Avbryter videre kjøring av feilende jobb med ID $jobbId startet, antall jobber avbrutt $antallSchedulert.")
+            }
+        }
+        route("/avbrytAlleFeilede") {
+            get<Unit, String>(modules) {
+                if (Miljø.erDev() || Miljø.erLokal()) {
+                    val antallSchedulert = dataSource.transaction { connection ->
+                        DriftJobbRepositoryExposed(connection).markerAlleFeiledeSomAvbrutt()
+                    }
+                    respond("Avbryter alle feilede jobber, $antallSchedulert antall jobber avbrutt.")
+                } else {
+                    respond("Avbryting av alle jobber kun tillat i dev og lokalt", HttpStatusCode.Forbidden)
+                }
             }
         }
         route("/rekjorAlleFeilede") {
