@@ -2,7 +2,7 @@ plugins {
     id("aap.conventions")
 }
 
-val ktorVersion = "3.4.1"
+val ktorVersion = "3.4.2"
 
 dependencies {
     implementation(project(":dbconnect"))
