@@ -287,7 +287,7 @@ public class Tidslinje<T>(initSegmenter: NavigableSet<Segment<T>> = TreeSet()) {
         return Tidslinje(segmenter)
     }
 
-    /* Knekker opp segmenterene i henhold til period fom startDato tom sluttDato, og grupperer
+    /** Knekker opp segmenterene i henhold til period fom startDato tom sluttDato, og grupperer
      * alle segmentene innenfor periodene som tidslinjer. */
     public fun splittOppOgGrupper(
         startDato: LocalDate,
