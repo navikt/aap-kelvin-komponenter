@@ -48,7 +48,7 @@ abstract class OpenAPIRoute<T : OpenAPIRoute<T>>(val ktorRoute: Route, val provi
         val BHandler = ValidationHandler.build(bodyType)
         val PHandler = ValidationHandler.build(paramsType)
 
-        ktorRoute.apply {
+        with(ktorRoute) {
             getAcceptMap<R>(responseType).let {
                 if (it.isNotEmpty()) it else listOf(ContentType.Any to listOf(SelectedSerializer(KtorContentProvider)))
             }.forEach { (acceptType, serializers) ->

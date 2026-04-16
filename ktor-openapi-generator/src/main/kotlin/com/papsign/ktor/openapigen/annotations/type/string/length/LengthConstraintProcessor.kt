@@ -11,7 +11,7 @@ import com.papsign.ktor.openapigen.validation.ValidatorBuilder
 import kotlin.reflect.KType
 import kotlin.reflect.full.withNullability
 
-abstract class LengthConstraintProcessor<A: Annotation>(): SchemaProcessor<A>, ValidatorBuilder<A> {
+abstract class LengthConstraintProcessor<A: Annotation>: SchemaProcessor<A>, ValidatorBuilder<A> {
 
     private val log = classLogger()
 
