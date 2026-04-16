@@ -29,11 +29,11 @@ object BinaryContentTypeParser: BodyParser, ResponseSerializer, OpenAPIGenModule
     }
 
     override fun <T : Any> getParseableContentTypes(type: KType): List<ContentType> {
-        return type.jvmErasure.findAnnotation<BinaryRequest>()?.contentTypes?.map(ContentType.Companion::parse) ?: listOf()
+        return type.jvmErasure.findAnnotation<BinaryRequest>()?.contentTypes?.map(ContentType.Companion::parse).orEmpty()
     }
 
     override fun <T: Any> getSerializableContentTypes(type: KType):  List<ContentType> {
-        return type.jvmErasure.findAnnotation<BinaryResponse>()?.contentTypes?.map(ContentType.Companion::parse) ?: listOf()
+        return type.jvmErasure.findAnnotation<BinaryResponse>()?.contentTypes?.map(ContentType.Companion::parse).orEmpty()
     }
 
     override suspend fun <T : Any> respond(response: T, request: RoutingContext, contentType: ContentType) {
@@ -79,7 +79,7 @@ object BinaryContentTypeParser: BodyParser, ResponseSerializer, OpenAPIGenModule
         }
         when(usage) {
             ContentTypeProvider.Usage.PARSE -> {
-                assertContent (type.jvmErasure.constructors.find { it.parameters.size == 1 && acceptedTypes.contains(it.parameters[0].type) } != null) {
+                assertContent (type.jvmErasure.constructors.any { it.parameters.size == 1 && acceptedTypes.contains(it.parameters[0].type) }) {
                     "${this::class.simpleName} can only be used with types taking $acceptedTypes as constructor parameter"
                 }
             }

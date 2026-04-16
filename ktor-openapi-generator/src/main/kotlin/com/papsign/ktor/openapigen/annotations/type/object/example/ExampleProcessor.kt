@@ -16,7 +16,7 @@ object ExampleProcessor : SchemaProcessor<WithExample> {
         }
         @Suppress("UNCHECKED_CAST")
         (model as SchemaModel<Any?>).apply {
-            examples = examples?.plus(exampleClass.examples ?: listOf()) ?: exampleClass.examples
+            examples = examples?.plus(exampleClass.examples.orEmpty()) ?: exampleClass.examples
             if (example != null) {
                 if (exampleClass.example != null)
                     examples = examples?.plus(exampleClass.example)

@@ -47,9 +47,9 @@ class ValidationHandler private constructor(
                         transformFun = { t: Any? ->
                             if (t != null) {
                                 val size = java.lang.reflect.Array.getLength(t)
-                                (0 until size).forEach {
-                                    val value = java.lang.reflect.Array.get(t, it)
-                                    java.lang.reflect.Array.set(t, it, handler.handle(value))
+                                for (i in 0 until size) {
+                                    val value = java.lang.reflect.Array.get(t, i)
+                                    java.lang.reflect.Array.set(t, i, handler.handle(value))
                                 }
                             }
                             transform(t)
@@ -60,9 +60,9 @@ class ValidationHandler private constructor(
                         transformFun = { t: Any? ->
                             if (t != null) {
                                 val size = java.lang.reflect.Array.getLength(t)
-                                (0 until size).forEach {
-                                    val value = java.lang.reflect.Array.get(t, it)
-                                    java.lang.reflect.Array.set(t, it, handler.handle(value))
+                                for (i in 0 until size) {
+                                    val value = java.lang.reflect.Array.get(t, i)
+                                    java.lang.reflect.Array.set(t, i, handler.handle(value))
                                 }
                             }
                             t
@@ -183,7 +183,7 @@ class ValidationHandler private constructor(
             }
 
             type.jvmErasure.isSealed -> {
-                val possibleClasses = type.jvmErasure.sealedSubclasses.map { it }
+                val possibleClasses = type.jvmErasure.sealedSubclasses
                 val handlers = possibleClasses.associateWith {
                     build(
                         it.starProjectedType,
@@ -388,7 +388,6 @@ class ValidationHandler private constructor(
         private val iterableType = getKType<Iterable<*>?>()
         private val listType = getKType<List<*>?>()
         private val setType = getKType<Set<*>?>()
-        private val mapType = getKType<Map<*, *>?>()
     }
 }
 

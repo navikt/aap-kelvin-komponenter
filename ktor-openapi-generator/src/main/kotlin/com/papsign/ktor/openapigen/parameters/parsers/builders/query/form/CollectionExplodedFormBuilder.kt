@@ -15,6 +15,6 @@ abstract class CollectionExplodedFormBuilder(type: KType): FormBuilder() {
     private val converter: Converter = ConverterFactory.buildConverterForced(ListToArray.arrayComponentKType(type))
 
     override fun build(key: String, parameters: Map<String, List<String>>): Any? {
-        return (parameters[key] ?: listOf()).map(converter::convert).let(::transform)
+        return (parameters[key].orEmpty()).map(converter::convert).let(::transform)
     }
 }

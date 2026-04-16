@@ -6,7 +6,7 @@ object SwaggerUIVersion {
 
     private val log = classLogger()
 
-    // TODO: unngå manuell oppdatering
+    // TODO unngå manuell oppdatering
     val version: String
 
     init {

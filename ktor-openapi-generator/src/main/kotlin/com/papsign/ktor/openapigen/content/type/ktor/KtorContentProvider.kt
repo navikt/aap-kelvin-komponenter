@@ -58,7 +58,7 @@ object KtorContentProvider : ContentTypeProvider, BodyParser, ResponseSerializer
                     ?.get(record)
             }
             ?.toSet()
-            ?: emptySet()
+            .orEmpty()
 
         contentTypes = reflectedContentTypes
         return contentTypes
