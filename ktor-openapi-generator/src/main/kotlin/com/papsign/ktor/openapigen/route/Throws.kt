@@ -20,7 +20,7 @@ data class ThrowsInfo(override val exceptions: List<APIException<*, *>>) : Throw
 /**
  * exists for simpler syntax
  */
-inline fun <T: OpenAPIRoute<T>, reified EX : Throwable> T.throws(status: HttpStatusCode, exClass: KClass<EX>, crossinline fn: T.() -> Unit = {}): T {
+inline fun <T: OpenAPIRoute<T>, reified EX : Throwable> T.throws(status: HttpStatusCode, @Suppress("UNUSED_PARAMETER") exClass: KClass<EX>, crossinline fn: T.() -> Unit = {}): T {
     return throws<T, EX>(status, fn)
 }
 
@@ -31,7 +31,7 @@ inline fun <T: OpenAPIRoute<T>, reified EX : Throwable> T.throws(status: HttpSta
 /**
  * exists for simpler syntax
  */
-inline fun <T: OpenAPIRoute<T>, reified EX : Throwable, reified B> T.throws(status: HttpStatusCode, example: B? = null, exClass: KClass<EX>, crossinline fn: T.() -> Unit = {}): T {
+inline fun <T: OpenAPIRoute<T>, reified EX : Throwable, reified B> T.throws(status: HttpStatusCode, example: B? = null, @Suppress("UNUSED_PARAMETER") exClass: KClass<EX>, crossinline fn: T.() -> Unit = {}): T {
     return throws<T, EX, B>(status, example, null, fn)
 }
 
