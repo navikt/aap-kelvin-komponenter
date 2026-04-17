@@ -8,12 +8,16 @@ import no.nav.aap.komponenter.httpklient.httpclient.post
 import no.nav.aap.komponenter.httpklient.httpclient.request.PostRequest
 import java.net.URI
 
-/** Tokenprovider som benytter [Texas](https://doc.nais.io/auth/explanations/#texas). */
-public class TexasTokenProvider(
+/**
+ * Tokenprovider som benytter [Texas](https://doc.nais.io/auth/explanations/#texas).
+ *
+ * [How to consume OBO](https://docs.nais.io/auth/entra-id/how-to/consume-obo)
+ **/
+public class TexasOBOTokenProvider(
     private val identityProvider: String,
     texasUri: URI? = null,
     private val prometheus: MeterRegistry,
-): TokenProvider {
+) : TokenProvider {
     private val texasUri = texasUri ?: URI(requiredConfigForKey("nais.token.exchange.endpoint"))
 
     private val client = RestClient.withDefaultResponseHandler(
@@ -23,14 +27,18 @@ public class TexasTokenProvider(
     )
 
     override fun getToken(scope: String?, currentToken: OidcToken?): OidcToken {
-        if (scope == null) throw IllegalArgumentException("scope må være definert for token exchange med texas")
-        if (currentToken == null) throw IllegalArgumentException("token må være tilstede for token exchange for texas")
+        requireNotNull(scope) { "scope må være definert for token exchange med texas" }
+        requireNotNull(currentToken) { "token må være tilstede for token exchange for texas" }
 
-        val response: OidcTokenResponse = client.post(texasUri, PostRequest(body = mapOf(
-            "identity_provider" to identityProvider,
-            "target" to scope,
-            "user_token" to currentToken.token(),
-        ))) ?: error("oidc-token-response forventet fra texas")
+        val response: OidcTokenResponse = client.post(
+            texasUri, PostRequest(
+                body = mapOf(
+                    "identity_provider" to identityProvider,
+                    "target" to scope,
+                    "user_token" to currentToken.token(),
+                )
+            )
+        ) ?: error("oidc-token-response forventet fra texas")
 
         return OidcToken(response.access_token)
     }

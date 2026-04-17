@@ -10,16 +10,24 @@ import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.NoTokenTokenPr
 import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.OidcToken
 import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.OidcTokenResponse
 import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.TokenProvider
+import no.nav.aap.komponenter.miljo.Miljø
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.net.URLEncoder
 import java.time.Duration
 import java.time.LocalDateTime
+import kotlin.jvm.java
 import kotlin.text.Charsets.UTF_8
 
-public object ClientCredentialsTokenProvider : TokenProvider {
+@Deprecated("Bruk AzureM2MTokenProvider")
+public object ClientCredentialsTokenProvider : TokenProvider by
+if (Miljø.erProd() || Miljø.erDev() || Miljø.erLokal())
+    GammelClientCredentialsTokenProvider
+else
+    AzureM2MTokenProvider()
 
-    private val log: Logger = LoggerFactory.getLogger(ClientCredentialsTokenProvider::class.java)
+public object GammelClientCredentialsTokenProvider : TokenProvider {
+    private val log: Logger = LoggerFactory.getLogger(this::class.java)
 
     private val client = RestClient.withDefaultResponseHandler(
         config = ClientConfig(),
