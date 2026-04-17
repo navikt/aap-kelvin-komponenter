@@ -15,7 +15,7 @@ import java.net.URLEncoder
 import java.time.Duration
 import kotlin.text.Charsets.UTF_8
 
-@Deprecated("Bruk AzureOBOTokenProvider eller ClientCredentialsTokenProvider")
+@Deprecated("Bruk AzureOBOTokenProvider")
 public object OnBehalfOfTokenProvider : TokenProvider by
 /* Unit-tester feiler i behandlingsflyt. Regner med at endringen må gjøres i behandlingsflyt. Har
  * ikke tid til å undersøke nå. */
