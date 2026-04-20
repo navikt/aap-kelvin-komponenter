@@ -39,7 +39,9 @@ public fun Application.commonKtorModule(
     identityProvider: IdentityProvider
 ): CommonResponse = commonKtorModule(
     prometheus = prometheus,
+    azureConfig = null,
     infoModel = infoModel,
+    tokenxConfig = null,
     identityProvider = identityProvider
 )
 

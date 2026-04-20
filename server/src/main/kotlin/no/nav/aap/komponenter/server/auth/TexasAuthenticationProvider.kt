@@ -105,9 +105,6 @@ internal class TexasAuthenticationProvider(
     private data class IntrospectResponse(
         val active: Boolean,
         val error: String? = null,
-        val azp: String? = null,
-        val idtyp: String? = null,
-        val NAVident: String? = null
     )
 
     private fun AuthenticationContext.loginChallenge(cause: AuthenticationFailedCause) {
