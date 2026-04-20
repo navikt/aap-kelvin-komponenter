@@ -9,6 +9,8 @@ import io.ktor.server.auth.jwt.*
 import io.ktor.server.response.*
 import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.azurecc.AzureConfig
 import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.tokenx.TokenxConfig
+import no.nav.aap.komponenter.server.auth.IdentityProvider
+import no.nav.aap.komponenter.server.auth.TexasAuthenticationProvider
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.net.URI
@@ -61,5 +63,15 @@ internal fun Application.authentication(azureConfig: AzureConfig?, tokenxConfig:
                 }
             }
         }
+    }
+}
+
+/**
+ * Installerer Authentication med TexasAuthenticationProvider for validering av token.
+ * [Texas](https://docs.nais.io/auth/explanations/#texas)
+ **/
+internal fun Application.authentication(name: IdentityProvider) {
+    install(Authentication) {
+        register(TexasAuthenticationProvider.Config(name).build())
     }
 }

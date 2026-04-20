@@ -14,9 +14,34 @@ import io.micrometer.core.instrument.binder.logging.LogbackMetrics
 import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.azurecc.AzureConfig
 import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.tokenx.TokenxConfig
 import no.nav.aap.komponenter.json.DefaultJsonMapper
+import no.nav.aap.komponenter.server.auth.IdentityProvider
 import no.nav.aap.komponenter.server.auth.bruker
 import no.nav.aap.komponenter.server.common.MdcKeys
 import java.util.*
+
+@Deprecated("Ta i bruk commonKtorModule med identityProvider (med Texas)")
+public fun Application.commonKtorModule(
+    prometheus: MeterRegistry,
+    azureConfig: AzureConfig? = null,
+    infoModel: InfoModel,
+    tokenxConfig: TokenxConfig? = null,
+): CommonResponse = commonKtorModule(
+    prometheus = prometheus,
+    azureConfig = azureConfig,
+    infoModel = infoModel,
+    tokenxConfig = tokenxConfig,
+    identityProvider = null
+)
+
+public fun Application.commonKtorModule(
+    prometheus: MeterRegistry,
+    infoModel: InfoModel,
+    identityProvider: IdentityProvider
+): CommonResponse = commonKtorModule(
+    prometheus = prometheus,
+    infoModel = infoModel,
+    identityProvider = identityProvider
+)
 
 /**
  * Installs common Ktor plugins:
@@ -26,11 +51,12 @@ import java.util.*
  *  - Sets up JWT authentication against Azure or tokenx.
  *  - Genererer Swagger-dokumentasjon
  */
-public fun Application.commonKtorModule(
+private fun Application.commonKtorModule(
     prometheus: MeterRegistry,
     azureConfig: AzureConfig? = null,
     infoModel: InfoModel,
     tokenxConfig: TokenxConfig? = null,
+    identityProvider: IdentityProvider? = null,
 ): CommonResponse {
     install(MicrometerMetrics) {
         registry = prometheus
@@ -55,7 +81,11 @@ public fun Application.commonKtorModule(
         generate { UUID.randomUUID().toString() }
     }
 
-    authentication(azureConfig, tokenxConfig)
+    if (identityProvider != null) {
+        authentication(IdentityProvider.ENTRA_ID)
+    } else {
+        authentication(azureConfig, tokenxConfig)
+    }
 
     val openApiGen = generateOpenAPI(
         infoModel = infoModel
