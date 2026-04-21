@@ -31,7 +31,7 @@ application.apiRouting {
 }
 ```
 
-## Expose the OpenAPI.json and swager-ui
+## Expose the OpenAPI.json and swagger-ui
 
 ```kotlin
 application.routing {
@@ -230,8 +230,8 @@ You would define it like this
 
 const val contentType = "image/png"
 
-@BinaryRequest([contentType]) // can be omitted if you don' t want to use it as request
-@BinaryResponse([contentType]) // can be omitted if you don' t want to use it as response
+@BinaryRequest([contentType]) // can be omitted if you don't want to use it as request
+@BinaryResponse([contentType]) // can be omitted if you don't want to use it as response
 data class RawPng(val stream: InputStream)
 
 // then in your route like usual

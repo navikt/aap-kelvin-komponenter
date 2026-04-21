@@ -47,4 +47,5 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersjon") // junit testing framework
     testImplementation("org.junit.jupiter:junit-jupiter-params:$junitVersjon") // generated parameters for tests
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersjon") // testing runtime
+    testImplementation("org.assertj:assertj-core:3.27.7")
 }

@@ -27,7 +27,7 @@ install(OpenAPIGen) {
     }
 }
 
-// Content negociation is required
+// Content negotiation is required
 install(ContentNegotiation) {
     jackson()
 }
