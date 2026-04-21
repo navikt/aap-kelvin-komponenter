@@ -83,7 +83,7 @@ internal class TexasAuthenticationProvider(
                     "unauthenticated: fikk tom respons fra introspect"
                 }
             } catch (e: Exception) {
-                logger.error("unauthenticated: introspect request failed: ${e.message}")
+                logger.error("unauthenticated: introspect request failed", e)
                 context.loginChallenge(AuthenticationFailedCause.Error(e.message ?: "introspect request failed"))
                 return
             }
