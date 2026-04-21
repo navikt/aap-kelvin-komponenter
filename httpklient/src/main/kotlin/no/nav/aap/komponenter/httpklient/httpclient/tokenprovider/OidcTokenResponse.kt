@@ -12,7 +12,6 @@ internal class OidcTokenResponse(
     @param:JsonProperty("expires_in") val expires_in: Int
 ) {
     override fun toString(): String {
-        return "OidcTokenResponse{" + "token_type='" + token_type + ", scope='" + (scope
-            ?: "") + ", expires_in=" + expires_in + '}'
+        return "OidcTokenResponse(token_type='$token_type', scope='$scope', expires_in='$expires_in')"
     }
 }
