@@ -70,8 +70,8 @@ internal fun Application.authentication(azureConfig: AzureConfig?, tokenxConfig:
  * Installerer Authentication med TexasAuthenticationProvider for validering av token.
  * [Texas](https://docs.nais.io/auth/explanations/#texas)
  **/
-internal fun Application.authentication(name: IdentityProvider) {
+internal fun Application.authentication(identityProvider: IdentityProvider) {
     install(Authentication) {
-        register(TexasAuthenticationProvider.Config(name).build())
+        register(TexasAuthenticationProvider.Config(identityProvider).build())
     }
 }
