@@ -84,7 +84,7 @@ private fun Application.commonKtorModule(
     }
 
     if (identityProvider != null) {
-        authentication(IdentityProvider.ENTRA_ID)
+        authentication(identityProvider)
     } else {
         authentication(azureConfig, tokenxConfig)
     }

@@ -79,21 +79,26 @@ internal class TexasAuthenticationProvider(
                     URI(introspectUrl),
                     postRequest
                 )
-                requireNotNull(response)
+                requireNotNull(response) {
+                    "unauthenticated: fikk tom respons fra introspect"
+                }
             } catch (e: Exception) {
                 logger.error("unauthenticated: introspect request failed: ${e.message}")
                 context.loginChallenge(AuthenticationFailedCause.Error(e.message ?: "introspect request failed"))
                 return
             }
 
-        if (!introspectResponse.active) {
+        if (introspectResponse.active) {
+            /*
+            * TODO:
+            *  Erstatte med egendefinert Principal. Bruker JWT inntil alt er over på Texas.
+            *  Ny principal må også støtte ulikt innhold avhengig av om det er OBO eller M2M.
+            */
+            context.principal(JWTPrincipal(JWT.decode(token)))
+        } else {
             logger.warn("unauthenticated: ${introspectResponse.error}")
             context.loginChallenge(AuthenticationFailedCause.InvalidCredentials)
-            return
         }
-
-        // TODO: Erstatte med egendefinert Principal. Bruker JWT inntil alt er over på Texas.
-        context.principal(JWTPrincipal(JWT.decode(token)))
     }
 
     private data class IntrospectRequest(
@@ -117,5 +122,5 @@ internal class TexasAuthenticationProvider(
 
 public enum class IdentityProvider(public val value: String) {
     ENTRA_ID("entra_id"), // Tidligere AzureAD
-    // TODO: Støtte TokenX i [NaisTokenAuthenticationProvider.kt]
+    TOKENX("tokenx"),
 }
