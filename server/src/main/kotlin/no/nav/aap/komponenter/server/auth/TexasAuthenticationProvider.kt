@@ -7,6 +7,7 @@ import io.ktor.http.auth.*
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
 import io.ktor.server.response.*
+import no.nav.aap.komponenter.config.requiredConfigForKey
 import no.nav.aap.komponenter.httpklient.httpclient.ClientConfig
 import no.nav.aap.komponenter.httpklient.httpclient.Header
 import no.nav.aap.komponenter.httpklient.httpclient.RestClient
@@ -37,7 +38,7 @@ internal class TexasAuthenticationProvider(
 ) : AuthenticationProvider(config) {
     private val logger = LoggerFactory.getLogger(TexasAuthenticationProvider::class.java)
 
-    private val introspectUrl = requireNotNull(System.getProperty("nais.token.introspection.endpoint"))
+    private val introspectUrl = requiredConfigForKey("nais.token.introspection.endpoint")
     private val client = config.client
     private val identityProvider = config.identityProvider
 
