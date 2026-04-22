@@ -1,7 +1,9 @@
 # Transformers and Validators
+
 Inspired by Javax validators
 
 #### Performance considerations:
+
 Reflection is performed during the route build to create a list of transformers on the request payloads, at runtime the parameters are transformed by the built list of transformers.
 
 ## Basic Example
@@ -29,6 +31,7 @@ route("invite") {
 ## Creating a new Transformer/Validator
 
 ### 1. Create the Transformer Validator
+
 ```kotlin
 
 @Retention(AnnotationRetention.RUNTIME)

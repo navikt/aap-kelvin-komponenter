@@ -10,7 +10,7 @@ import io.ktor.server.routing.routing
 import io.ktor.utils.io.KtorDsl
 
 /**
- * Wrapper for [io.ktor.routing.routing] to create the endpoints while configuring OpenAPI
+ * Wrapper for [io.ktor.server.routing.routing] to create the endpoints while configuring OpenAPI
  * documentation at the same time.
  */
 @KtorDsl

@@ -4,6 +4,12 @@ plugins {
     id("aap.conventions")
 }
 
+dokka {
+    dokkaSourceSets.configureEach {
+        includes.from(files("docs/module.md"))
+    }
+}
+
 val ktorVersion = "3.4.2"
 val swaggerUiVersion = "5.32.4"
 val junitVersjon = "6.0.0"

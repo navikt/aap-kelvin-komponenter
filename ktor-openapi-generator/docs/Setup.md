@@ -3,6 +3,7 @@
 To setup the library in the ktor context, a few initial informations must be registered.
 
 ## Minimal configuration
+
 ```kotlin
 install(OpenAPIGen) {
     // basic info

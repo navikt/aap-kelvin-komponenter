@@ -470,7 +470,7 @@ public class Tidslinje<T>(initSegmenter: NavigableSet<Segment<T>> = TreeSet()) {
         return rightJoin(other) { _, left, right -> body(left, right) }
     }
 
-    /** Lag tidslinje for de periodene som ikke er i [this]. */
+    /** Lag tidslinje for de periodene som ikke er i denne tidslinjen. */
     public fun <U> komplement(periode: Periode, body: (Periode) -> U): Tidslinje<U> {
         return outerJoinNotNull(Tidslinje(periode, Unit)) { segmentPeriode, eksisterende, _ ->
             if (eksisterende == null) {
