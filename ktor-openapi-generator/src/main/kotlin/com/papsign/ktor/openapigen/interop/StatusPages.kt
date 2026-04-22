@@ -9,7 +9,7 @@ import io.ktor.server.plugins.statuspages.StatusPagesConfig
 import io.ktor.server.response.respond
 
 /**
- * Wraps [StatusPages.Configuration] to enable OpenAPI configuration for exception handling.
+ * Wraps [StatusPagesConfig] to enable OpenAPI configuration for exception handling.
  * ```
  *  val api = install(OpenAPIGen)  { ... }
  *  ...
@@ -28,7 +28,7 @@ import io.ktor.server.response.respond
  *  }
  * ```
  *
- * @param api the installed instance of [OpenAPIGen] in the [io.ktor.application.Application]
+ * @param api the installed instance of [OpenAPIGen] in the [io.ktor.server.application.Application]
  * @param cfg the block that loads the configuration, see [OpenAPIGenStatusPagesInterop]
  */
 inline fun StatusPagesConfig.withAPI(api: OpenAPIGen, crossinline cfg: OpenAPIGenStatusPagesInterop.() -> Unit = {}) {

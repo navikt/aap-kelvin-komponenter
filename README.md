@@ -10,16 +10,18 @@ For oppdatert oppskrift for å kjøre koden, se stegene i Github Actions.
 
 ## Unleash ApiToken
 
-Hvis du må rullere token for Unleash, er du nødt til å slette det gamle først. 
+Hvis du må rullere token for Unleash, er du nødt til å slette det gamle først.
 
 **OBS:** Husk å sette riktig miljø _før_ du kjører kommandoene under. `dev-gcp` for `apply *-dev.yaml` filen, osv.
 
-Slette gammelt token: 
+Slette gammelt token:
+
 ```shell
 kubectl delete apitoken kelvin-unleash-api-token -n aap
 ```
 
 Opprette nytt token:
+
 ```shell
 kubectl apply -f unleash-apitoken-dev.yaml
 ```

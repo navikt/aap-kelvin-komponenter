@@ -1,6 +1,7 @@
 # A few Examples
 
 ## Setup
+
 ```kotlin
 application.install(OpenAPIGen) {
     // basic info
@@ -44,8 +45,8 @@ application.routing {
 }
 ```
 
-
 ## Routing
+
 ```kotlin
     get<ParameterType, ResponseType> { params ->       // get request on '/' because no path is specified
         respond(ResponseType(...))
@@ -60,10 +61,13 @@ application.routing {
 ```
 
 Routes can be written in a chained manner:
+
 ```kotlin
 route("a").route("b")...
 ```
+
 or in blocks if you want a hierarchy
+
 ```kotlin
 route("a") {
     route("b") {
@@ -71,9 +75,13 @@ route("a") {
     }
 }
 ```
+
 ## Parameters
+
 You may have noticed the `ParameterType` or `Params` in the `get` and `post` handlers, these allow to configure the parameters.
+
 ### Path Parameters:
+
 ```kotlin
 @Path("{a}")
 data class LongParam(@PathParam("A simple Long Param") val a: Long)
@@ -86,14 +94,16 @@ route("someroute") {
     }
 }
 route("{str}") {
-    get<StringParam, ResponseType> { params ->  // get request on '/{str}', str will be the string 
+    get<StringParam, ResponseType> { params ->  // get request on '/{str}', str will be the string
         respond(ResponseType(...))
     }
 }
 ```
+
 Note that the name of the parameter's field must be the one in the brackets, if you have multiple ones it is undefined behavior.
 
 ### Query Parameters:
+
 ```kotlin
 data class LongParam(@QueryParam("A simple Long Param") val a: Long)
 
@@ -103,7 +113,9 @@ route("someroute") {
     }
 }
 ```
+
 ### Header Parameters:
+
 ```kotlin
 data class LongParam(@HeaderParam("A simple Long Param") val `A-HEADER`: Long)
 
@@ -113,12 +125,15 @@ route("someroute") {
     }
 }
 ```
+
 ### Styles
+
 All Parameter annotations have a `style` optional parameter that allows you to specify the style according to spec.
 
 ## Exceptions and multiple responses
 
 The options you have:
+
 ```kotlin
 throws(HttpStatusCode.BadRequest, CustomException::class) { ... // no example, just the exception handling
 throws(HttpStatusCode.BadRequest, "example", CustomException::class) { ... // exception  handling with example, will respond example
@@ -126,44 +141,51 @@ throws(HttpStatusCode.BadRequest, "example", {ex: CustomException -> ex.toString
 ```
 
 Now we want to respond a custom generic `Error` object when an exception is thrown:
+
 ```kotlin
 data class Error<P>(val id: String, val payload: P)
 
 throws(HttpStatusCode.BadRequest, Error("bad.request", mapOf<String, String>()), {ex: CustomException -> Error(ex.id, ex.payload)}) {
-    get<ParameterType, ResponseType> { params -> 
+    get<ParameterType, ResponseType> { params ->
         respond(ResponseType(...))
     }
 }
 ```
+
 You can also define multiple ones:
+
 ```kotlin
 data class Error<P>(val id: String, val payload: P)
 
 throws(HttpStatusCode.BadRequest, Error("bad.request", mapOf<String, String>()), {ex: CustomException -> Error(ex.id, ex.payload)}) {
     throws(HttpStatusCode.InternalServerError, Error("internal.error", mapOf<String, String>()), {ex: OtherCustomException -> Error(ex.id, ex.payload)}) {
-        get<ParameterType, ResponseType> { params -> 
+        get<ParameterType, ResponseType> { params ->
             respond(ResponseType(...))
         }
     }
 }
 ```
+
 And different response types:
+
 ```kotlin
 data class Error<P>(val id: String, val payload: P)
 
 throws(HttpStatusCode.BadRequest, Error("bad.request", mapOf<String, String>()), {ex: CustomException -> Error(ex.id, ex.payload)}) {
     throws(HttpStatusCode.InternalServerError, "err", {ex: OtherCustomException -> ex.id}) {
-        get<ParameterType, ResponseType> { params -> 
+        get<ParameterType, ResponseType> { params ->
             respond(ResponseType(...))
         }
     }
 }
 ```
+
 If you want to respond normally you can also do:
+
 ```kotlin
 // null example means no example, you can of course also add one if you want
 throws(HttpStatusCode.OK, null, {ex: CustomException -> OtherResponseType(ex.response)}) {
-    get<ParameterType, ResponseType> { params -> 
+    get<ParameterType, ResponseType> { params ->
         if (shouldRespondOther) throw CustomException(response)
         respond(ResponseType(...))
     }
@@ -171,29 +193,37 @@ throws(HttpStatusCode.OK, null, {ex: CustomException -> OtherResponseType(ex.res
 ```
 
 ## Sealed Class Support / Jackson Polymorphic Deserialization
+
 If you use polymorphic json, and you:
 You have Type A
+
 ```json
 {
-    "@type" : "a",
+    "@type": "a",
     "str": "Some String"
 }
 ```
+
 You have Type B
+
 ```json
 {
-    "@type" : "b",
+    "@type": "b",
     "i": 1
 }
 ```
+
 You have Type C
+
 ```json
 {
-    "@type" : "c",
+    "@type": "c",
     "l": 0
 }
 ```
+
 You would define it like this
+
 ```kotlin
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
     @JsonSubTypes(
@@ -256,4 +286,3 @@ post<Params, Response, PDFFileCreateDTO> { params, fileCreate ->
 ...
 }
 ```
-
