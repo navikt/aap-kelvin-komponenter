@@ -13,7 +13,7 @@ import java.net.URI
  *
  * [How to consume M2M](https://docs.nais.io/auth/entra-id/how-to/consume-m2m)
  **/
-public class TexasM2MTokenProvider(
+internal class TexasM2MTokenProvider(
     private val identityProvider: String,
     texasUri: URI? = null,
     private val prometheus: MeterRegistry,

@@ -13,7 +13,7 @@ import java.net.URI
  *
  * [How to consume OBO](https://docs.nais.io/auth/entra-id/how-to/consume-obo)
  **/
-public class TexasOBOTokenProvider(
+internal class TexasOBOTokenProvider(
     private val identityProvider: String,
     texasUri: URI? = null,
     private val prometheus: MeterRegistry,

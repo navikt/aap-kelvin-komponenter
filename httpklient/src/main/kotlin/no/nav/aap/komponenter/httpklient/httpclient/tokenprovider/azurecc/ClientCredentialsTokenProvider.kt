@@ -24,7 +24,7 @@ public object ClientCredentialsTokenProvider : TokenProvider by
 if (Miljø.erProd() || Miljø.erDev() || Miljø.erLokal())
     GammelClientCredentialsTokenProvider
 else
-    AzureM2MTokenProvider()
+    AzureM2MTokenProvider
 
 public object GammelClientCredentialsTokenProvider : TokenProvider {
     private val log: Logger = LoggerFactory.getLogger(this::class.java)

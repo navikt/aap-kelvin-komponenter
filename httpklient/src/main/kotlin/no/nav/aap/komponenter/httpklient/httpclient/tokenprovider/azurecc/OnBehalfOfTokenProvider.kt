@@ -22,7 +22,7 @@ public object OnBehalfOfTokenProvider : TokenProvider by
 if (Miljø.erProd() || Miljø.erDev() || Miljø.erLokal())
     GammelOnBehalfOfTokenProvider
 else
-    AzureOBOTokenProvider()
+    AzureOBOTokenProvider
 
 private object GammelOnBehalfOfTokenProvider : TokenProvider {
     private val client = RestClient.withDefaultResponseHandler(
