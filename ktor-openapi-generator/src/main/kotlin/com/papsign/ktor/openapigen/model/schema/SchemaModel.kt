@@ -8,6 +8,7 @@ sealed class SchemaModel<T> : DataModel {
     abstract var example: T?
     abstract var examples: List<T>?
     abstract var description: String?
+    abstract var deprecated: Boolean?
 
     data class SchemaModelObj<T>(
         var properties: Map<String, SchemaModel<*>>,
@@ -17,6 +18,7 @@ sealed class SchemaModel<T> : DataModel {
         override var examples: List<T>? = null,
         var type: DataType = DataType.`object`,
         override var description: String? = null,
+        override var deprecated: Boolean? = null,
         var discriminator: Discriminator<T>? = null
     ) : SchemaModel<T>()
 
@@ -26,7 +28,8 @@ sealed class SchemaModel<T> : DataModel {
         override var example: T? = null,
         override var examples: List<T>? = null,
         var type: DataType = DataType.`object`,
-        override var description: String? = null
+        override var description: String? = null,
+        override var deprecated: Boolean? = null
     ) : SchemaModel<T>()
 
     data class SchemaModelEnum<T>(
@@ -35,7 +38,8 @@ sealed class SchemaModel<T> : DataModel {
         override var example: T? = null,
         override var examples: List<T>? = null,
         var type: DataType = DataType.string,
-        override var description: String? = null
+        override var description: String? = null,
+        override var deprecated: Boolean? = null
     ) : SchemaModel<T>()
 
     data class SchemaModelArr<T>(
@@ -47,7 +51,8 @@ sealed class SchemaModel<T> : DataModel {
         var minItems: Int? = null,
         var maxItems: Int? = null,
         var type: DataType = DataType.array,
-        override var description: String? = null
+        override var description: String? = null,
+        override var deprecated: Boolean? = null
     ) : SchemaModel<T>()
 
     data class SchemaModelLitteral<T>(
@@ -61,13 +66,15 @@ sealed class SchemaModel<T> : DataModel {
         var pattern: String? = null,
         override var example: T? = null,
         override var examples: List<T>? = null,
-        override var description: String? = null
+        override var description: String? = null,
+        override var deprecated: Boolean? = null
     ) : SchemaModel<T>()
 
     data class SchemaModelRef<T>(override val `$ref`: String) : SchemaModel<T>(), RefModel<SchemaModel<T>> {
         override var example: T? = null
         override var examples: List<T>? = null
         override var description: String? = null
+        override var deprecated: Boolean? = null
     }
 
     data class OneSchemaModelOf<T>(
@@ -79,5 +86,6 @@ sealed class SchemaModel<T> : DataModel {
         override var example: T? = null
         override var examples: List<T>? = null
         override var description: String? = null
+        override var deprecated: Boolean? = null
     }
 }

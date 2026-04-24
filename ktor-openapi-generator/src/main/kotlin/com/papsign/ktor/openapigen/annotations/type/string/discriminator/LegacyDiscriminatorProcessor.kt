@@ -44,6 +44,7 @@ object LegacyDiscriminatorProcessor : SchemaProcessor<DiscriminatorAnnotation> {
                 model.examples,
                 model.type,
                 model.description,
+                model.deprecated,
                 Discriminator(annotation.fieldName)
             )
         }

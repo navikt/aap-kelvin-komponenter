@@ -37,7 +37,7 @@ object FinalSchemaBuilderProvider : FinalSchemaBuilderProviderModule, OpenAPIGen
     }
 
     private fun SchemaModel<*>.applyAnnotations(type: KType, annotations: List<Annotation>): SchemaModel<*> {
-        return annotations.mapNotNull { annot ->
+        val model = annotations.mapNotNull { annot ->
             annot.annotationClass
                 .findAnnotation<SchemaProcessorAnnotation>()
                 ?.getHandlerInstance()
@@ -46,6 +46,13 @@ object FinalSchemaBuilderProvider : FinalSchemaBuilderProviderModule, OpenAPIGen
             @Suppress("UNCHECKED_CAST")
             (handler as SchemaProcessor<Annotation>).process(model, type, annot)
         }
+        annotations.filterIsInstance<Deprecated>().firstOrNull()?.let { deprecated ->
+            model.deprecated = true
+            if (deprecated.message.isNotBlank()) {
+                model.description = deprecated.message
+            }
+        }
+        return model
     }
 
     private class Builder(builders: List<SchemaBuilder>) : FinalSchemaBuilder {
