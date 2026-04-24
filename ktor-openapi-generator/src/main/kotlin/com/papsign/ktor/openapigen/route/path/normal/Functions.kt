@@ -5,7 +5,6 @@ import com.papsign.ktor.openapigen.route.method
 import com.papsign.ktor.openapigen.route.preHandle
 import com.papsign.ktor.openapigen.route.response.OpenAPIPipelineResponseContext
 import io.ktor.http.HttpMethod
-import io.ktor.utils.io.KtorDsl
 import kotlin.reflect.full.starProjectedType
 import kotlin.reflect.typeOf
 
@@ -19,7 +18,6 @@ import kotlin.reflect.typeOf
  * @param body a block that received the request parameters builds the response
  * @return the new created route
  */
-@KtorDsl
 inline fun <reified TParams : Any, reified TResponse : Any> NormalOpenAPIRoute.get(
     vararg modules: RouteOpenAPIModule,
     example: TResponse? = null,
@@ -38,7 +36,6 @@ inline fun <reified TParams : Any, reified TResponse : Any> NormalOpenAPIRoute.g
  * @param body a block that received the request parameters builds the response
  * @return the new created route
  */
-@KtorDsl
 inline fun <reified TParams : Any, reified TResponse : Any, reified TRequest : Any> NormalOpenAPIRoute.post(
     vararg modules: RouteOpenAPIModule,
     exampleResponse: TResponse? = null,
@@ -58,7 +55,6 @@ inline fun <reified TParams : Any, reified TResponse : Any, reified TRequest : A
  * @param body a block that received the request parameters builds the response
  * @return the new created route
  */
-@KtorDsl
 inline fun <reified TParams : Any, reified TResponse : Any, reified TRequest : Any> NormalOpenAPIRoute.put(
     vararg modules: RouteOpenAPIModule,
     exampleResponse: TResponse? = null,
@@ -78,7 +74,6 @@ inline fun <reified TParams : Any, reified TResponse : Any, reified TRequest : A
  * @param body a block that received the request parameters builds the response
  * @return the new created route
  */
-@KtorDsl
 inline fun <reified TParams : Any, reified TResponse : Any, reified TRequest : Any> NormalOpenAPIRoute.patch(
     vararg modules: RouteOpenAPIModule,
     exampleResponse: TResponse? = null,
@@ -96,7 +91,6 @@ inline fun <reified TParams : Any, reified TResponse : Any, reified TRequest : A
  * @param body a block that received the request parameters builds the response
  * @return the new created route
  */
-@KtorDsl
 inline fun <reified TParams : Any, reified TResponse : Any> NormalOpenAPIRoute.delete(
     vararg modules: RouteOpenAPIModule,
     example: TResponse? = null,
@@ -113,7 +107,6 @@ inline fun <reified TParams : Any, reified TResponse : Any> NormalOpenAPIRoute.d
  * @param body a block that received the request parameters builds the response
  * @return the new created route
  */
-@KtorDsl
 inline fun <reified TParams : Any, reified TResponse : Any> NormalOpenAPIRoute.head(
     vararg modules: RouteOpenAPIModule,
     example: TResponse? = null,
@@ -133,7 +126,6 @@ inline fun <reified TParams : Any, reified TResponse : Any> NormalOpenAPIRoute.h
  * @param body a block that received the request parameters builds the response
  * @return the new created route
  */
-@KtorDsl
 inline fun <reified TParams : Any, reified TResponse : Any, reified TRequest : Any> NormalOpenAPIRoute.route(
     method: HttpMethod,
     modules: Array<out RouteOpenAPIModule>,
@@ -145,7 +137,6 @@ inline fun <reified TParams : Any, reified TResponse : Any, reified TRequest : A
         .handle(exampleResponse, exampleRequest, body)
 }
 
-@KtorDsl
 inline fun <reified TParams : Any, reified TResponse : Any> NormalOpenAPIRoute.route(
     method: HttpMethod,
     modules: Array<out RouteOpenAPIModule>,
@@ -156,7 +147,6 @@ inline fun <reified TParams : Any, reified TResponse : Any> NormalOpenAPIRoute.r
         .handle(exampleResponse, body)
 }
 
-@KtorDsl
 inline fun <reified TParams : Any, reified TResponse : Any, reified TRequest : Any> NormalOpenAPIRoute.handle(
     exampleResponse: TResponse? = null,
     exampleRequest: TRequest? = null,
@@ -170,7 +160,6 @@ inline fun <reified TParams : Any, reified TResponse : Any, reified TRequest : A
     }
 }
 
-@KtorDsl
 inline fun <reified TParams : Any, reified TResponse : Any> NormalOpenAPIRoute.handle(
     exampleResponse: TResponse? = null,
     noinline body: suspend OpenAPIPipelineResponseContext<TResponse>.(TParams) -> Unit

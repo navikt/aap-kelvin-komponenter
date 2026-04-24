@@ -29,7 +29,10 @@ class ValidationHandler private constructor(
         val type = annotatedType.type
         val validators = annotations.mapNotNull { annot ->
             annot.annotationClass.findAnnotation<ValidatorAnnotation>()
-                ?.let { (it.getHandlerInstance() as ValidatorBuilder<Annotation>).build(type, annot) }
+                ?.let {
+                    @Suppress("UNCHECKED_CAST")
+                    (it.getHandlerInstance() as ValidatorBuilder<Annotation>).build(type, annot)
+                }
         }
         val shouldTransform = validators.isNotEmpty()
         val transform: (Any?) -> Any? = { source: Any? ->
@@ -302,6 +305,7 @@ class ValidationHandler private constructor(
     }
 
     fun <T> handle(t: T): T {
+        @Suppress("UNCHECKED_CAST")
         return if (t != null) transformFun?.invoke(t) as T ?: t else t
     }
 

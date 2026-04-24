@@ -7,13 +7,11 @@ import io.ktor.server.application.plugin
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.application
 import io.ktor.server.routing.routing
-import io.ktor.utils.io.KtorDsl
 
 /**
  * Wrapper for [io.ktor.server.routing.routing] to create the endpoints while configuring OpenAPI
  * documentation at the same time.
  */
-@KtorDsl
 fun Application.apiRouting(config: NormalOpenAPIRoute.() -> Unit) {
     routing {
         NormalOpenAPIRoute(
@@ -29,7 +27,6 @@ fun Application.apiRouting(config: NormalOpenAPIRoute.() -> Unit) {
  *
  * @param config
  */
-@KtorDsl
 fun Route.apiRouting(config: NormalOpenAPIRoute.() -> Unit) {
     NormalOpenAPIRoute(
         this,

@@ -11,6 +11,7 @@ interface ModuleProvider<THIS: ModuleProvider<THIS>> {
 }
 
 inline fun <reified T: OpenAPIModule> ModuleProvider<*>.ofType(): Collection<T> {
+    @Suppress("UNCHECKED_CAST")
     return ofType(getKType<T>()) as Collection<T>
 }
 

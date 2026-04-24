@@ -6,6 +6,7 @@ import kotlin.reflect.KType
 
 object StringExampleProcessor: SchemaProcessor<StringExample> {
     override fun process(model: SchemaModel<*>, type: KType, annotation: StringExample): SchemaModel<*> {
+        @Suppress("UNCHECKED_CAST")
         (model as SchemaModel<String?>).apply {
             if (annotation.examples.size > 1) {
                 examples = examples?.plus(annotation.examples) ?: annotation.examples.asList()

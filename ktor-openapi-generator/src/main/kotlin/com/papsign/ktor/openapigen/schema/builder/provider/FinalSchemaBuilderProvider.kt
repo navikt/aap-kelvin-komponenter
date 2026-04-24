@@ -12,7 +12,7 @@ import com.papsign.ktor.openapigen.schema.builder.FinalSchemaBuilder
 import com.papsign.ktor.openapigen.schema.builder.SchemaBuilder
 import com.papsign.ktor.openapigen.schema.processor.SchemaProcessor
 import com.papsign.ktor.openapigen.schema.processor.SchemaProcessorAnnotation
-import io.ktor.util.reflect.platformType
+import kotlin.reflect.jvm.javaType
 import java.util.Optional
 import java.util.TreeMap
 import kotlin.reflect.KType
@@ -92,7 +92,7 @@ object FinalSchemaBuilderProvider : FinalSchemaBuilderProviderModule, OpenAPIGen
 
         private fun extractedType(type: KType): KType {
             if (type.isSubtypeOf(getKType<Enum<*>?>())) {
-                val jsonFormat = (type.platformType as Class<*>).getAnnotation(JsonFormat::class.java)
+                val jsonFormat = (type.javaType as Class<*>).getAnnotation(JsonFormat::class.java)
                 if (jsonFormat != null && jsonFormat.shape == JsonFormat.Shape.OBJECT) {
                     return getKType<ComplexEnum>()
                 }

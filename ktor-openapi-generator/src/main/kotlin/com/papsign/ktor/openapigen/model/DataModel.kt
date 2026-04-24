@@ -9,6 +9,7 @@ interface DataModel {
 
     fun serialize(): Map<String, Any?> {
         return this::class.memberProperties.associateBy { it.name }.mapValues { (_, prop) ->
+            @Suppress("UNCHECKED_CAST")
             convertToValue((prop as KProperty1<DataModel, *>).get(this))
         }.cleanEmptyValues()
     }
