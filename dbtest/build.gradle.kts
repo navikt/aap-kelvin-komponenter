@@ -8,5 +8,5 @@ dependencies {
     runtimeOnly("org.postgresql:postgresql:42.7.10")
     api("org.junit.jupiter:junit-jupiter-api:6.0.0")
 
-    implementation("org.testcontainers:testcontainers-postgresql:2.0.4")
+    implementation("org.testcontainers:testcontainers-postgresql:2.0.5")
 }
