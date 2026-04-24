@@ -32,6 +32,12 @@ internal class FieldAnnotationTest {
     )
 
     @Response("Svar")
+    data class MedDeprecated(
+        val nyttFelt: String,
+        @property:Deprecated("Bruk nyttFelt") val gammeltFelt: String? = null,
+    )
+
+    @Response("Svar")
     data class MedStringExample(
         @StringExample("abc-123") val id: String,
     )
@@ -57,6 +63,21 @@ internal class FieldAnnotationTest {
         @Length(3, 15) val mellom: String,
         @RegularExpression("^[a-z]+$") val mønster: String,
     )
+
+    @Test
+    fun `@Deprecated vises i schema for responsfelt`() = testApplication {
+        application {
+            setupBaseTestServer()
+            apiRouting {
+                route("test") { get<Unit, MedDeprecated> { respond(MedDeprecated("ny")) } }
+            }
+        }
+        client.get("/openapi.json").apply {
+            val json = bodyAsText()
+            assertThat(json).contains(""""deprecated" : true""")
+            assertThat(json).contains(""""description" : "Bruk nyttFelt"""")
+        }
+    }
 
     @Test
     fun `@Description vises i schema for responsfelt`() = testApplication {
