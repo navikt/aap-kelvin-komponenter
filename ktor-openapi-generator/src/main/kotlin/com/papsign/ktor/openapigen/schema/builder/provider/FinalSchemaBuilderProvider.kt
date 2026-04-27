@@ -75,28 +75,27 @@ object FinalSchemaBuilderProvider : FinalSchemaBuilderProviderModule, OpenAPIGen
         }
 
         override fun build(type: KType, annotations: List<Annotation>): SchemaModel<*> {
-            type.let {
-                when {
-                    type.jvmErasure.isSubclassOf(Optional::class) -> type.arguments[0].type!!.withNullability(true)
-                    else -> type
-                }
-            }.let { kType ->
-                val extractedType = extractedType(kType)
-                // Property-annotasjoner (annotations) inkluderes IKKE i finalize-lambdaen, fordi finalize
-                // brukes til å lagre det globale type-skjemaet. Hvis property-annotasjoner som @Deprecated
-                // ble inkludert her, ville de forurense det globale skjemaet for alle brukere av typen.
-                val built = map.getOrPut(extractedType) {
-                    map.entries.firstOrNull { extractedType.isSubtypeOf(it.key) }?.value
-                        ?: error("Schema builder could not find declared builder for kType $kType, make sure it has a provider registered on the route")
-                }.build(kType, this) {
-                    it.applyAnnotations(kType, kType.jvmErasure.annotations)
-                        .applyAnnotations(kType, kType.annotations)
-                }
-                // Property-annotasjoner legges på det returnerte skjemaet (ikke det bufrede globale).
-                // For SchemaModelRef (komplekse typer) lages en kopi for å unngå å mutere det delte ref-objektet.
-                return if (annotations.isEmpty()) built
-                else if (built is SchemaModel.SchemaModelRef<*>) built.copy().applyAnnotations(kType, annotations)
-                else built.applyAnnotations(kType, annotations)
+            val kType = when {
+                type.jvmErasure.isSubclassOf(Optional::class) -> type.arguments[0].type!!.withNullability(true)
+                else -> type
+            }
+            val extractedType = extractedType(kType)
+            // Property-annotasjoner (annotations) inkluderes IKKE i finalize-lambdaen, fordi finalize
+            // brukes til å lagre det globale type-skjemaet. Hvis property-annotasjoner som @Deprecated
+            // ble inkludert her, ville de forurense det globale skjemaet for alle brukere av typen.
+            val built = map.getOrPut(extractedType) {
+                map.entries.firstOrNull { extractedType.isSubtypeOf(it.key) }?.value
+                    ?: error("Schema builder could not find declared builder for kType $kType, make sure it has a provider registered on the route")
+            }.build(kType, this) {
+                it.applyAnnotations(kType, kType.jvmErasure.annotations)
+                    .applyAnnotations(kType, kType.annotations)
+            }
+            // Property-annotasjoner legges på det returnerte skjemaet (ikke det bufrede globale).
+            // For SchemaModelRef (komplekse typer) lages en kopi for å unngå å mutere det delte ref-objektet.
+            return when {
+                annotations.isEmpty() -> built
+                built is SchemaModel.SchemaModelRef<*> -> built.copy().applyAnnotations(kType, annotations)
+                else -> built.applyAnnotations(kType, annotations)
             }
         }
 
