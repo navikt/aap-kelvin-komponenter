@@ -1,6 +1,7 @@
 package com.papsign.ktor.openapigen
 
 import TestServer.setupBaseTestServer
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.papsign.ktor.openapigen.annotations.Response
 import com.papsign.ktor.openapigen.annotations.properties.description.Description
 import com.papsign.ktor.openapigen.annotations.type.number.floating.clamp.FClamp
@@ -161,6 +162,43 @@ internal class FieldAnnotationTest {
                 .contains(""""minLength" : 3""")
                 .contains(""""maxLength" : 15""")
                 .contains(""""pattern" : "^[a-z]+$"""")
+        }
+    }
+
+    // Delt kompleks type som refereres fra to ulike klasser
+    data class DeltType(val verdi: String)
+
+    @Response("Svar")
+    data class UtenDeprecatedRef(
+        val element: DeltType? = null,
+    )
+
+    @Response("Svar")
+    data class MedDeprecatedRef(
+        @Deprecated("Ikke i bruk av konsument.")
+        val element: DeltType? = null,
+    )
+
+    @Test
+    fun `@Deprecated på property forurenser ikke globalt type-skjema`() = testApplication {
+        application {
+            setupBaseTestServer()
+            apiRouting {
+                route("a") { get<Unit, UtenDeprecatedRef> { respond(UtenDeprecatedRef()) } }
+                route("b") { get<Unit, MedDeprecatedRef> { respond(MedDeprecatedRef()) } }
+            }
+        }
+        client.get("/openapi.json").apply {
+            val json = bodyAsText()
+            val tree = ObjectMapper().readTree(json)
+            val deltTypeSchema = tree.path("components").path("schemas").path("DeltType")
+
+            assertThat(deltTypeSchema.isMissingNode)
+                .describedAs("DeltType skal finnes i components/schemas")
+                .isFalse()
+            assertThat(deltTypeSchema.path("deprecated").isMissingNode)
+                .describedAs("DeltType skal ikke være deprecated globalt – bare propertyen i MedDeprecatedRef er deprecated")
+                .isTrue()
         }
     }
 }
