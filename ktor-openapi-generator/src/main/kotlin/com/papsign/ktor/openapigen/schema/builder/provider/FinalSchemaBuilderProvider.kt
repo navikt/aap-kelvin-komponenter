@@ -12,7 +12,6 @@ import com.papsign.ktor.openapigen.schema.builder.FinalSchemaBuilder
 import com.papsign.ktor.openapigen.schema.builder.SchemaBuilder
 import com.papsign.ktor.openapigen.schema.processor.SchemaProcessor
 import com.papsign.ktor.openapigen.schema.processor.SchemaProcessorAnnotation
-import io.ktor.util.reflect.platformType
 import java.util.Optional
 import java.util.TreeMap
 import kotlin.reflect.KType
@@ -20,8 +19,10 @@ import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.full.isSubtypeOf
 import kotlin.reflect.full.withNullability
+import kotlin.reflect.jvm.javaType
 import kotlin.reflect.jvm.jvmErasure
 
+@Suppress("unused")
 object FinalSchemaBuilderProvider : FinalSchemaBuilderProviderModule, OpenAPIGenModuleExtension {
 
     private val log = classLogger()
@@ -33,7 +34,8 @@ object FinalSchemaBuilderProvider : FinalSchemaBuilderProviderModule, OpenAPIGen
     }
 
     private fun SchemaProcessorAnnotation.getHandlerInstance(): SchemaProcessor<*> {
-        return handler.objectInstance ?: error("${SchemaProcessorAnnotation::class.simpleName} handler must be an object")
+        return handler.objectInstance
+            ?: error("${SchemaProcessorAnnotation::class.simpleName} handler must be an object")
     }
 
     private fun SchemaModel<*>.applyAnnotations(type: KType, annotations: List<Annotation>): SchemaModel<*> {
@@ -73,26 +75,33 @@ object FinalSchemaBuilderProvider : FinalSchemaBuilderProviderModule, OpenAPIGen
         }
 
         override fun build(type: KType, annotations: List<Annotation>): SchemaModel<*> {
-            type.let {
-                when {
-                    type.jvmErasure.isSubclassOf(Optional::class) -> type.arguments[0].type!!.withNullability(true)
-                    else -> type
-                }
-            }.let { kType ->
-                val extractedType = extractedType(kType)
-                return map.getOrPut(extractedType) {
-                    map.entries.firstOrNull { extractedType.isSubtypeOf(it.key) }?.value
-                        ?: error("Schema builder could not find declared builder for kType $kType, make sure it has a provider registered on the route")
-                }.build(kType, this) {
-                    it.applyAnnotations(kType, kType.jvmErasure.annotations)
-                        .applyAnnotations(kType, kType.annotations).applyAnnotations(kType, annotations)
-                }
+            val kType = when {
+                type.jvmErasure.isSubclassOf(Optional::class) -> type.arguments[0].type!!.withNullability(true)
+                else -> type
+            }
+            val extractedType = extractedType(kType)
+            // Property-annotasjoner (annotations) inkluderes IKKE i finalize-lambdaen, fordi finalize
+            // brukes til å lagre det globale type-skjemaet. Hvis property-annotasjoner som @Deprecated
+            // ble inkludert her, ville de forurense det globale skjemaet for alle brukere av typen.
+            val built = map.getOrPut(extractedType) {
+                map.entries.firstOrNull { extractedType.isSubtypeOf(it.key) }?.value
+                    ?: error("Schema builder could not find declared builder for kType $kType, make sure it has a provider registered on the route")
+            }.build(kType, this) {
+                it.applyAnnotations(kType, kType.jvmErasure.annotations)
+                    .applyAnnotations(kType, kType.annotations)
+            }
+            // Property-annotasjoner legges på det returnerte skjemaet (ikke det bufrede globale).
+            // For SchemaModelRef (komplekse typer) lages en kopi for å unngå å mutere det delte ref-objektet.
+            return when {
+                annotations.isEmpty() -> built
+                built is SchemaModel.SchemaModelRef<*> -> built.copy().applyAnnotations(kType, annotations)
+                else -> built.applyAnnotations(kType, annotations)
             }
         }
 
         private fun extractedType(type: KType): KType {
             if (type.isSubtypeOf(getKType<Enum<*>?>())) {
-                val jsonFormat = (type.platformType as Class<*>).getAnnotation(JsonFormat::class.java)
+                val jsonFormat = (type.javaType as Class<*>).getAnnotation(JsonFormat::class.java)
                 if (jsonFormat != null && jsonFormat.shape == JsonFormat.Shape.OBJECT) {
                     return getKType<ComplexEnum>()
                 }
