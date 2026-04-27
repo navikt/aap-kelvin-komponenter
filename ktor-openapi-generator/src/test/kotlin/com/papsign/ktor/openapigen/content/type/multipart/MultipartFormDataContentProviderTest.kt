@@ -32,6 +32,7 @@ class MultipartFormDataContentProviderTest {
                              val bln: Boolean?) {
         fun toParts(): List<PartData> {
             return this::class.declaredMemberProperties.mapNotNull {
+                @Suppress("UNCHECKED_CAST")
                 val prop = it as KProperty1<SimpleRequest, Any?>
                 val res = prop.get(this) ?: return@mapNotNull null
                 PartData.FormItem(

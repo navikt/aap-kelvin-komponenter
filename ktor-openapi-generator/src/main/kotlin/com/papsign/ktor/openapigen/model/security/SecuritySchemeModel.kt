@@ -20,6 +20,7 @@ data class SecuritySchemeModel<TScope> constructor(
 
     override fun serialize(): Map<String, Any?> {
         return this::class.memberProperties.associateBy { it.name }.mapValues<String, KProperty1<out SecuritySchemeModel<TScope>, Any?>, Any?> { (_, prop) ->
+            @Suppress("UNCHECKED_CAST")
             convertToValue((prop as KProperty1<DataModel, *>).get(this))
         }.filter { it.key != "referenceName" }.cleanEmptyValues()
     }

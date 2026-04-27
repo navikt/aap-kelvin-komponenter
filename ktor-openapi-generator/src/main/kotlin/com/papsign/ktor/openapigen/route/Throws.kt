@@ -72,6 +72,7 @@ fun makeExceptionHandler(info: Array<out APIException<*, *>>): suspend PipelineC
     }
     return { t: Throwable ->
         val handler: APIException<*, *> = findHandlerByType(t::class) ?: throw t
+        @Suppress("UNCHECKED_CAST")
         val gen = handler.contentGen as ((Throwable) -> Any?)?
         val ex = handler.example
         when {
