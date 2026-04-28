@@ -34,7 +34,7 @@ dependencies {
     testImplementation("io.ktor:ktor-serialization-jackson:$ktorVersion")
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
     constraints {
-        implementation("commons-codec:commons-codec:1.21.0")
+        implementation("commons-codec:commons-codec:1.22.0")
     }
     testImplementation("org.junit.jupiter:junit-jupiter-api:6.0.0")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:6.0.0")
