@@ -371,14 +371,14 @@ public class Tidslinje<T>(initSegmenter: NavigableSet<Segment<T>> = TreeSet()) {
 
     public fun minDato(): LocalDate {
         check(!segmenter.isEmpty()) {
-            "Timeline is empty" //$NON-NLS-1$
+            "Timeline is empty"
         }
         return segmenter.first().fom()
     }
 
     public fun maxDato(): LocalDate {
         check(!segmenter.isEmpty()) {
-            "Timeline is empty" //$NON-NLS-1$
+            "Timeline is empty"
         }
         return segmenter.last().tom()
     }

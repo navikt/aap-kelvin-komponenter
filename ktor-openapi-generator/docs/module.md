@@ -20,4 +20,3 @@ route definitions.
 | `com.papsign.ktor.openapigen.route`       | Typed routing DSL                                   |
 | `com.papsign.ktor.openapigen.annotations` | Annotations for documenting routes and data classes |
 | `com.papsign.ktor.openapigen.model`       | OpenAPI model classes                               |
-

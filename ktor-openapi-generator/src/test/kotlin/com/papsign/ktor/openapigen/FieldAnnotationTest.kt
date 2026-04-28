@@ -201,4 +201,81 @@ internal class FieldAnnotationTest {
                 .isTrue()
         }
     }
+
+    // Modellerer SakStatus-caset: sealed interface med enum-diskriminator der
+    // hver subtype har en fast verdi for enum-feltet.
+    enum class Kilde { ARENA, KELVIN }
+
+    sealed interface SakStatus {
+        val sakId: String
+        val kilde: Kilde
+    }
+
+    @Response("Arena-sak")
+    data class ArenaSak(
+        override val sakId: String,
+        @StringExample("ARENA") override val kilde: Kilde = Kilde.ARENA,
+    ) : SakStatus
+
+    @Response("Kelvin-sak")
+    data class KelvinSak(
+        override val sakId: String,
+        val ytelsestatus: String,
+        @StringExample("KELVIN") override val kilde: Kilde = Kilde.KELVIN,
+    ) : SakStatus
+
+    @Test
+    fun `@StringExample på enum-felt setter riktig eksempelverdi per subtype`() = testApplication {
+        application {
+            setupBaseTestServer()
+            apiRouting {
+                route("arena") { get<Unit, ArenaSak> { respond(ArenaSak("123")) } }
+                route("kelvin") { get<Unit, KelvinSak> { respond(KelvinSak("456", "LOPENDE")) } }
+            }
+        }
+        client.get("/openapi.json").apply {
+            val json = bodyAsText()
+            val tree = ObjectMapper().readTree(json)
+            val schemas = tree.path("components").path("schemas")
+
+            val arenaKilde = schemas.path("ArenaSak").path("properties").path("kilde")
+            assertThat(arenaKilde.path("example").asText())
+                .describedAs("Arena-subtype skal ha example ARENA")
+                .isEqualTo("ARENA")
+
+            val kelvinKilde = schemas.path("KelvinSak").path("properties").path("kilde")
+            assertThat(kelvinKilde.path("example").asText())
+                .describedAs("Kelvin-subtype skal ha example KELVIN")
+                .isEqualTo("KELVIN")
+        }
+    }
+
+    @Test
+    fun `@StringExample på enum-felt fungerer også når respons er List av sealed interface`() = testApplication {
+        application {
+            setupBaseTestServer()
+            apiRouting {
+                route("saker") {
+                    get<Unit, List<SakStatus>> {
+                        respond(listOf(ArenaSak("123"), KelvinSak("456", "LOPENDE")))
+                    }
+                }
+            }
+        }
+        client.get("/openapi.json").apply {
+            val json = bodyAsText()
+            val tree = ObjectMapper().readTree(json)
+            val schemas = tree.path("components").path("schemas")
+
+            val arenaKilde = schemas.path("ArenaSak").path("properties").path("kilde")
+            assertThat(arenaKilde.path("example").asText())
+                .describedAs("Arena-subtype skal ha example ARENA også i List-respons")
+                .isEqualTo("ARENA")
+
+            val kelvinKilde = schemas.path("KelvinSak").path("properties").path("kilde")
+            assertThat(kelvinKilde.path("example").asText())
+                .describedAs("Kelvin-subtype skal ha example KELVIN også i List-respons")
+                .isEqualTo("KELVIN")
+        }
+    }
 }

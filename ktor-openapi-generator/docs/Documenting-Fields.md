@@ -21,10 +21,10 @@ data class Item(
 > `@Description`. The schema generator reads annotations from the Kotlin property
 > (`KProperty`), so only the `property` use-site target is picked up.
 
-## `@StringExample` — example values for `String` fields
+## `@StringExample` — example values for `String` and enum fields
 
-Provide a representative value for a `String` property. A single example is set as
-`example`; when two or more are given they are emitted as `examples`:
+Provide a representative value for a `String` or enum property. A single example is
+set as `example`; when two or more are given they are emitted as `examples`:
 
 ```kotlin
 data class Item(
@@ -32,6 +32,34 @@ data class Item(
     @StringExample("Foo", "Bar") val name: String,     // → "examples": ["Foo", "Bar"]
 )
 ```
+
+### Enum fields — controlling Swagger UI examples for sealed subtypes
+
+Swagger UI picks the first enum value alphabetically as the default example. This
+can produce impossible combinations for sealed class subtypes where an enum
+discriminator has a fixed value per subtype. Use `@StringExample` to override:
+
+```kotlin
+enum class Kilde { ARENA, KELVIN }
+
+sealed interface SakStatus {
+    val sakId: String
+    val kilde: Kilde
+}
+
+data class ArenaSak(
+    override val sakId: String,
+    @StringExample("ARENA") override val kilde: Kilde = Kilde.ARENA,
+) : SakStatus
+
+data class KelvinSak(
+    override val sakId: String,
+    @StringExample("KELVIN") override val kilde: Kilde = Kilde.KELVIN,
+) : SakStatus
+```
+
+This also works when the response type is `List<SakStatus>` — the enum example is
+set on each subtype's schema in `components/schemas`.
 
 ## Numeric constraints
 
