@@ -1,12 +1,18 @@
 package no.nav.aap.komponenter.httpklient.httpclient.tokenprovider
 
+import com.github.benmanes.caffeine.cache.Cache
+import com.github.benmanes.caffeine.cache.Caffeine
+import com.github.benmanes.caffeine.cache.Expiry
 import io.micrometer.core.instrument.MeterRegistry
+import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics
 import no.nav.aap.komponenter.config.requiredConfigForKey
 import no.nav.aap.komponenter.httpklient.httpclient.ClientConfig
 import no.nav.aap.komponenter.httpklient.httpclient.RestClient
 import no.nav.aap.komponenter.httpklient.httpclient.post
 import no.nav.aap.komponenter.httpklient.httpclient.request.PostRequest
 import java.net.URI
+import java.time.Duration
+import java.time.LocalDateTime
 
 /**
  * Tokenprovider som benytter [Texas](https://doc.nais.io/auth/explanations/#texas).
@@ -26,9 +32,23 @@ internal class TexasM2MTokenProvider(
         prometheus = prometheus,
     )
 
+    private val cache: Cache<String, OidcToken> = Caffeine.newBuilder()
+        .maximumSize(1_000)
+        .expireAfter(tokenExpiry())
+        .recordStats()
+        .build()
+
+    init {
+        CaffeineCacheMetrics.monitor(prometheus, cache, "texas_m2m_token")
+    }
+
     override fun getToken(scope: String?, currentToken: OidcToken?): OidcToken {
         requireNotNull(scope) { "scope må være definert for token exchange med texas" }
 
+        return cache.get(scope) { fetchToken(scope) }
+    }
+
+    private fun fetchToken(scope: String): OidcToken {
         val response: OidcTokenResponse = client.post(
             texasUri, PostRequest(
                 body = mapOf(
@@ -40,4 +60,18 @@ internal class TexasM2MTokenProvider(
 
         return OidcToken(response.access_token)
     }
+}
+
+/** Expiry based on each token's own expiration time with a 30-second safety buffer. */
+internal fun tokenExpiry() = object : Expiry<Any, OidcToken> {
+    override fun expireAfterCreate(key: Any, value: OidcToken, currentTime: Long): Long {
+        val remaining = Duration.between(LocalDateTime.now(), value.expires())
+        return remaining.minus(Duration.ofSeconds(30)).toNanos().coerceAtLeast(0)
+    }
+
+    override fun expireAfterUpdate(key: Any, value: OidcToken, currentTime: Long, currentDuration: Long) =
+        expireAfterCreate(key, value, currentTime)
+
+    override fun expireAfterRead(key: Any, value: OidcToken, currentTime: Long, currentDuration: Long) =
+        currentDuration
 }
