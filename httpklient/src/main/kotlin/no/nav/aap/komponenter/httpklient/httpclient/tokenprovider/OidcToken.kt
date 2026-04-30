@@ -20,6 +20,10 @@ public class OidcToken(accessToken: String) {
         return accessToken.token
     }
 
+    public fun sub(): String {
+        return accessToken.subject
+    }
+
     public fun expires(): LocalDateTime {
         return LocalDateTime.ofInstant(accessToken.expiresAt.toInstant(), ZoneId.systemDefault())
     }

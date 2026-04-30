@@ -43,7 +43,7 @@ internal class TexasOBOTokenProvider(
         requireNotNull(scope) { "scope må være definert for token exchange med texas" }
         requireNotNull(currentToken) { "token må være tilstede for token exchange for texas" }
 
-        val key = "$scope:${currentToken.navIdent()}"
+        val key = "$scope:${currentToken.sub()}"
         return cache.get(key) { fetchToken(scope, currentToken) }
     }
 
