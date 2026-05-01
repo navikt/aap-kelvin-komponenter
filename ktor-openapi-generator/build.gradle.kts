@@ -11,7 +11,7 @@ dokka {
 }
 
 val ktorVersion = "3.4.3"
-val swaggerUiVersion = "5.32.4"
+val swaggerUiVersion = "5.32.5"
 val junitVersjon = "6.0.0"
 
 kotlin {
