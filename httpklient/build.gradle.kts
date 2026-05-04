@@ -16,8 +16,8 @@ dependencies {
     implementation(project(":verdityper"))
     implementation("com.github.ben-manes.caffeine:caffeine:3.2.3")
     implementation("io.ktor:ktor-server-auth-jwt:$ktorVersion")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.21.2")
-    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.21.2")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.21.3")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.21.3")
     implementation("ch.qos.logback:logback-classic:1.5.32")
     implementation((project(":ktor-openapi-generator")))
     api("io.micrometer:micrometer-registry-prometheus:1.16.5")
@@ -28,8 +28,8 @@ dependencies {
     testImplementation("org.assertj:assertj-core:3.27.7")
     testImplementation("io.ktor:ktor-server-netty:$ktorVersion")
     testImplementation("io.ktor:ktor-serialization-jackson:$ktorVersion")
-    testImplementation("com.fasterxml.jackson.core:jackson-databind:2.21.2")
-    testImplementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.21.2")
+    testImplementation("com.fasterxml.jackson.core:jackson-databind:2.21.3")
+    testImplementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.21.3")
     testImplementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
 
 }
