@@ -1,5 +1,6 @@
 package no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.azurecc
 
+import no.nav.aap.komponenter.config.configForKey
 import no.nav.aap.komponenter.httpklient.httpclient.ClientConfig
 import no.nav.aap.komponenter.httpklient.httpclient.Header
 import no.nav.aap.komponenter.httpklient.httpclient.RestClient
@@ -10,18 +11,16 @@ import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.NoTokenTokenPr
 import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.OidcToken
 import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.OidcTokenResponse
 import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.TokenProvider
-import no.nav.aap.komponenter.miljo.Miljø
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.net.URLEncoder
 import java.time.Duration
 import java.time.LocalDateTime
-import kotlin.jvm.java
 import kotlin.text.Charsets.UTF_8
 
 @Deprecated("Bruk AzureM2MTokenProvider")
 public object ClientCredentialsTokenProvider : TokenProvider by
-if (Miljø.erProd() || Miljø.erDev() || Miljø.erLokal())
+if (!configForKey("ENABLE_TEXAS").toBoolean())
     GammelClientCredentialsTokenProvider
 else
     AzureM2MTokenProvider
