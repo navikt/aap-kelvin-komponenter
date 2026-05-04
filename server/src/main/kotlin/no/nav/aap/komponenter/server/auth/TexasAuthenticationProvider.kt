@@ -1,21 +1,20 @@
 package no.nav.aap.komponenter.server.auth
 
 import com.auth0.jwt.JWT
-import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.databind.DeserializationFeature
+import io.ktor.client.HttpClient
+import io.ktor.client.call.body
+import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.request.forms.submitForm
 import io.ktor.http.*
 import io.ktor.http.auth.*
+import io.ktor.serialization.jackson.*
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
 import io.ktor.server.response.*
 import no.nav.aap.komponenter.config.requiredConfigForKey
-import no.nav.aap.komponenter.httpklient.httpclient.ClientConfig
-import no.nav.aap.komponenter.httpklient.httpclient.Header
-import no.nav.aap.komponenter.httpklient.httpclient.RestClient
-import no.nav.aap.komponenter.httpklient.httpclient.post
-import no.nav.aap.komponenter.httpklient.httpclient.request.PostRequest
-import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.NoTokenTokenProvider
 import org.slf4j.LoggerFactory
-import java.net.URI
 
 /**
  * Ktor [AuthenticationProvider] that validates Bearer tokens using
@@ -38,17 +37,22 @@ internal class TexasAuthenticationProvider(
 ) : AuthenticationProvider(config) {
     private val logger = LoggerFactory.getLogger(TexasAuthenticationProvider::class.java)
 
-    private val introspectUrl = requiredConfigForKey("nais.token.introspection.endpoint")
+    private val introspectEndpoint = requiredConfigForKey("nais.token.introspection.endpoint")
     private val client = config.client
     private val identityProvider = config.identityProvider
 
     internal class Config(
-        val identityProvider: IdentityProvider
+        val identityProvider: IdentityProvider,
+        httpClient: HttpClient? = null,
     ) : AuthenticationProvider.Config(identityProvider.value) {
-        val client = RestClient.withDefaultResponseHandler(
-            config = ClientConfig(),
-            tokenProvider = NoTokenTokenProvider(),
-        )
+        val client = httpClient ?: HttpClient(CIO) {
+            expectSuccess = true
+            install(ContentNegotiation) {
+                jackson {
+                    configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+                }
+            }
+        }
 
         internal fun build() = TexasAuthenticationProvider(this)
     }
@@ -66,23 +70,13 @@ internal class TexasAuthenticationProvider(
 
         val introspectResponse =
             try {
-                val postRequest = PostRequest(
-                    body = IntrospectRequest(
-                        token = token,
-                        identityProvider = identityProvider.value
-                    ),
-                    additionalHeaders = listOf(
-                        Header("Content-Type", "application/json")
-                    )
-                )
-
-                val response = client.post<IntrospectRequest, IntrospectResponse>(
-                    URI(introspectUrl),
-                    postRequest
-                )
-                requireNotNull(response) {
-                    "unauthenticated: fikk tom respons fra introspect"
-                }
+                client.submitForm(
+                    introspectEndpoint,
+                    parameters {
+                        set("token", token)
+                        set("identity_provider", identityProvider.value)
+                    },
+                ).body<IntrospectResponse>()
             } catch (e: Exception) {
                 logger.error("unauthenticated: introspect request failed", e)
                 context.loginChallenge(AuthenticationFailedCause.Error(e.message ?: "introspect request failed"))
@@ -101,12 +95,6 @@ internal class TexasAuthenticationProvider(
             context.loginChallenge(AuthenticationFailedCause.InvalidCredentials)
         }
     }
-
-    private data class IntrospectRequest(
-        val token: String,
-        @param:JsonProperty("identity_provider")
-        val identityProvider: String
-    )
 
     private data class IntrospectResponse(
         val active: Boolean,
