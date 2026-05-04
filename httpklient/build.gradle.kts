@@ -14,6 +14,7 @@ dependencies {
     api(project(":json"))
     implementation(project(":infrastructure"))
     implementation(project(":verdityper"))
+    implementation("com.github.ben-manes.caffeine:caffeine:3.2.3")
     implementation("io.ktor:ktor-server-auth-jwt:$ktorVersion")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.21.3")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.21.3")

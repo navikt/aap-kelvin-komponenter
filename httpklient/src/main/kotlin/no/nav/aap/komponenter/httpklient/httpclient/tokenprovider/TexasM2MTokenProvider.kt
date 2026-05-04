@@ -1,6 +1,9 @@
 package no.nav.aap.komponenter.httpklient.httpclient.tokenprovider
 
+import com.github.benmanes.caffeine.cache.Cache
+import com.github.benmanes.caffeine.cache.Caffeine
 import io.micrometer.core.instrument.MeterRegistry
+import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics
 import no.nav.aap.komponenter.config.requiredConfigForKey
 import no.nav.aap.komponenter.httpklient.httpclient.ClientConfig
 import no.nav.aap.komponenter.httpklient.httpclient.RestClient
@@ -26,9 +29,23 @@ internal class TexasM2MTokenProvider(
         prometheus = prometheus,
     )
 
+    private val cache: Cache<String, OidcToken> = Caffeine.newBuilder()
+        .maximumSize(1_000)
+        .expireAfter(tokenExpiry())
+        .recordStats()
+        .build()
+
+    init {
+        CaffeineCacheMetrics.monitor(prometheus, cache, "texas_m2m_token")
+    }
+
     override fun getToken(scope: String?, currentToken: OidcToken?): OidcToken {
         requireNotNull(scope) { "scope må være definert for token exchange med texas" }
 
+        return cache.get(scope) { fetchToken(scope) }
+    }
+
+    private fun fetchToken(scope: String): OidcToken {
         val response: OidcTokenResponse = client.post(
             texasUri, PostRequest(
                 body = mapOf(

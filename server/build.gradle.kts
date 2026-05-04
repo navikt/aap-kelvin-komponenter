@@ -27,6 +27,7 @@ dependencies {
     api(project(":ktor-openapi-generator"))
 
     api(project(":httpklient"))
+    implementation("com.github.ben-manes.caffeine:caffeine:3.2.3")
     api(project(":verdityper"))
     implementation(project(":infrastructure"))
 
@@ -36,6 +37,7 @@ dependencies {
 
     testImplementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
     testImplementation("io.ktor:ktor-serialization-jackson:$ktorVersion")
+    testImplementation("io.ktor:ktor-client-mock:$ktorVersion")
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
     constraints {
         implementation("commons-codec:commons-codec:1.22.0")
