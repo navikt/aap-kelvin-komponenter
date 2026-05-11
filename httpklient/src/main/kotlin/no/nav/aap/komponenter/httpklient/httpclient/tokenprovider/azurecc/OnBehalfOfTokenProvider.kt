@@ -1,6 +1,5 @@
 package no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.azurecc
 
-import no.nav.aap.komponenter.config.configForKey
 import no.nav.aap.komponenter.httpklient.httpclient.ClientConfig
 import no.nav.aap.komponenter.httpklient.httpclient.Header
 import no.nav.aap.komponenter.httpklient.httpclient.RestClient
@@ -11,13 +10,16 @@ import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.OidcToken
 import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.OidcTokenResponse
 import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.TokenProvider
 import no.nav.aap.komponenter.json.DefaultJsonMapper
+import no.nav.aap.komponenter.miljo.Miljø
 import java.net.URLEncoder
 import java.time.Duration
 import kotlin.text.Charsets.UTF_8
 
 @Deprecated("Bruk AzureOBOTokenProvider")
 public object OnBehalfOfTokenProvider : TokenProvider by
-if (!configForKey("ENABLE_TEXAS").toBoolean())
+/* Unit-tester feiler i behandlingsflyt. Regner med at endringen må gjøres i behandlingsflyt. Har
+ * ikke tid til å undersøke nå. */
+if (Miljø.erProd() || Miljø.erDev() || Miljø.erLokal())
     GammelOnBehalfOfTokenProvider
 else
     AzureOBOTokenProvider
