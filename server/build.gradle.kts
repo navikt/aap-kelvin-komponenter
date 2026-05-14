@@ -27,7 +27,7 @@ dependencies {
     api(project(":ktor-openapi-generator"))
 
     api(project(":httpklient"))
-    implementation("com.github.ben-manes.caffeine:caffeine:3.2.3")
+    implementation("com.github.ben-manes.caffeine:caffeine:3.2.4")
     api(project(":verdityper"))
     implementation(project(":infrastructure"))
 
