@@ -10,7 +10,7 @@ dokka {
     }
 }
 
-val ktorVersion = "3.4.3"
+val ktorVersion = "3.5.0"
 val swaggerUiVersion = "5.32.5"
 val junitVersjon = "6.0.0"
 
@@ -26,7 +26,7 @@ dependencies {
     implementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
     implementation("io.ktor:ktor-server-status-pages:$ktorVersion")
 
-    implementation("org.slf4j:slf4j-api:2.0.17")
+    implementation("org.slf4j:slf4j-api:2.0.18")
 
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.21.3") // needed for multipart parsing
 

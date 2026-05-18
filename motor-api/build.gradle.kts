@@ -2,13 +2,13 @@ plugins {
     id("aap.conventions")
 }
 
-val ktorVersion = "3.4.3"
+val ktorVersion = "3.5.0"
 
 dependencies {
     implementation(project(":dbconnect"))
     implementation(project(":infrastructure"))
     implementation(project(":motor"))
-    implementation("org.slf4j:slf4j-api:2.0.17")
+    implementation("org.slf4j:slf4j-api:2.0.18")
     // Skille ut disse til egen modul for motor-api
     implementation(project(":ktor-openapi-generator"))
     implementation("io.ktor:ktor-http-jvm:$ktorVersion")
