@@ -4,7 +4,7 @@ plugins {
     id("aap.conventions")
 }
 
-val ktorVersion = "3.4.3"
+val ktorVersion = "3.5.0"
 
 kotlin.explicitApi = ExplicitApiMode.Warning
 
