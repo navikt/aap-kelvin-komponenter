@@ -13,7 +13,10 @@ internal class DBTransaction(connection: Connection, private val readOnly: Boole
     internal fun <T> transaction(block: (DBConnection) -> T): T {
         try {
             dbConnection.autoCommitOff()
-            val result = block(dbConnection)
+
+            val result = span("transaction-body") {
+                block(dbConnection)
+            }
             // Commit må kalles på i readOnly og read/write for å frigjøre eventuelle låser
             dbConnection.commit()
             return result
