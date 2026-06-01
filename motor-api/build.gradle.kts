@@ -2,7 +2,7 @@ plugins {
     id("aap.conventions")
 }
 
-val ktorVersion = "3.4.3"
+val ktorVersion = "3.5.0"
 
 dependencies {
     implementation(project(":dbconnect"))
@@ -23,7 +23,7 @@ dependencies {
 
     testImplementation(project(":motor-test-utils"))
     testImplementation("org.testcontainers:testcontainers:2.0.5")
-    testImplementation("ch.qos.logback:logback-classic:1.5.32")
+    testImplementation("ch.qos.logback:logback-classic:1.5.33")
     testImplementation("net.logstash.logback:logstash-logback-encoder:9.0")
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
 }

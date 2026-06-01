@@ -5,7 +5,7 @@ plugins {
 dependencies {
     implementation(libs.slfj)
 
-    implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.22.0")
+    implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.28.1")
     implementation(kotlin("reflect"))
     testImplementation(project(":dbtest"))
     testImplementation("org.postgresql:postgresql:42.7.11")

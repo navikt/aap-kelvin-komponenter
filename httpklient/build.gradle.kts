@@ -4,7 +4,7 @@ plugins {
     id("aap.conventions")
 }
 
-val ktorVersion = "3.4.3"
+val ktorVersion = "3.5.0"
 val junitVersion = "6.0.0"
 
 kotlin.explicitApi = ExplicitApiMode.Warning
@@ -18,7 +18,7 @@ dependencies {
     implementation("io.ktor:ktor-server-auth-jwt:$ktorVersion")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.21.3")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.21.3")
-    implementation("ch.qos.logback:logback-classic:1.5.32")
+    implementation("ch.qos.logback:logback-classic:1.5.33")
     implementation((project(":ktor-openapi-generator")))
     api("io.micrometer:micrometer-registry-prometheus:1.16.5")
 
