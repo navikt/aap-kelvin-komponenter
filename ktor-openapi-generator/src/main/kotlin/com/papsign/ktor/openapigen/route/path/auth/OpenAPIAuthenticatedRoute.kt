@@ -7,10 +7,14 @@ import com.papsign.ktor.openapigen.route.OpenAPIRoute
 import com.papsign.ktor.openapigen.route.response.AuthResponseContextImpl
 import com.papsign.ktor.openapigen.route.response.OpenAPIPipelineAuthContext
 import io.ktor.server.routing.Route
-import io.ktor.util.reflect.TypeInfo
-import io.ktor.util.reflect.typeInfo
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.withContext
+import java.util.concurrent.Executors
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
+
+private val virtualThreadPerRequestDispatcher = Executors.newVirtualThreadPerTaskExecutor().asCoroutineDispatcher()
+private val enableVirtualThreadPerRequest = System.getenv("NAIS_CLUSTER_NAME").orEmpty().lowercase().contains(Regex("dev|local"))
 
 class OpenAPIAuthenticatedRoute<TAuth>(
     route: Route,
@@ -36,6 +40,16 @@ class OpenAPIAuthenticatedRoute<TAuth>(
                 responseType,
                 requestType
             ) { pipeline, responder, p, b ->
+                if (enableVirtualThreadPerRequest) {
+                    return@handle withContext(virtualThreadPerRequestDispatcher) {
+                        AuthResponseContextImpl<TAuth, TResponse>(
+                            pipeline,
+                            authProvider,
+                            this@handle,
+                            responder
+                        ).body(p, b)
+                    }
+                }
                 AuthResponseContextImpl<TAuth, TResponse>(pipeline, authProvider, this, responder).body(p, b)
             }
         }
@@ -54,6 +68,16 @@ class OpenAPIAuthenticatedRoute<TAuth>(
                 responseType,
                 typeOf<Unit>()
             ) { pipeline, responder, p: TParams, _ ->
+                if (enableVirtualThreadPerRequest) {
+                    return@handle withContext(virtualThreadPerRequestDispatcher) {
+                        AuthResponseContextImpl<TAuth, TResponse>(
+                            pipeline,
+                            authProvider,
+                            this@handle,
+                            responder
+                        ).body(p)
+                    }
+                }
                 AuthResponseContextImpl<TAuth, TResponse>(pipeline, authProvider, this, responder).body(p)
             }
         }
