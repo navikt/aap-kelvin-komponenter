@@ -7,10 +7,10 @@ plugins {
 kotlin.explicitApi = ExplicitApiMode.Warning
 
 dependencies {
-    api("com.fasterxml.jackson.module:jackson-module-kotlin:2.21.3")
-    api("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.21.3")
+    api(libs.jackson.module.kotlin)
+    api(libs.jackson.datatype.jsr310)
 
-    testImplementation("org.assertj:assertj-core:3.27.7")
+    testImplementation(libs.assertj.core)
     testImplementation(project(":tidslinje"))
     testImplementation(project(":dbconnect")) // her bor Periode :)
 }

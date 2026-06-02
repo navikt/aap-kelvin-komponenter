@@ -4,45 +4,43 @@ plugins {
     id("aap.conventions")
 }
 
-val ktorVersion = "3.4.3"
-
 kotlin.explicitApi = ExplicitApiMode.Warning
 
 dependencies {
-    api("io.ktor:ktor-server-auth:$ktorVersion")
-    api("io.ktor:ktor-server-auth-jwt:$ktorVersion")
-    api("io.ktor:ktor-server-call-logging:$ktorVersion")
-    api("io.ktor:ktor-server-call-id:$ktorVersion")
-    api("io.ktor:ktor-server-content-negotiation:$ktorVersion")
-    api("io.ktor:ktor-server-metrics-micrometer:$ktorVersion")
-    api("io.ktor:ktor-server-netty:$ktorVersion")
+    api(libs.ktor.server.auth)
+    api(libs.ktor.server.auth.jwt)
+    api(libs.ktor.server.call.logging)
+    api(libs.ktor.server.call.id)
+    api(libs.ktor.server.content.negotiation)
+    api(libs.ktor.server.metrics.micrometer)
+    api(libs.ktor.server.netty)
     api(project(":verdityper"))
-    api("io.ktor:ktor-server-cors:$ktorVersion")
-    api("io.ktor:ktor-server-status-pages:$ktorVersion")
+    api(libs.ktor.server.cors)
+    api(libs.ktor.server.status.pages)
 
-    api("io.micrometer:micrometer-registry-prometheus:1.16.5")
+    api(libs.micrometer.prometheus)
 
-    api("io.ktor:ktor-serialization-jackson:$ktorVersion")
-    api("com.fasterxml.jackson.core:jackson-databind:2.21.3")
+    api(libs.ktor.serialization.jackson)
+    api(libs.jackson.databind)
     api(project(":ktor-openapi-generator"))
 
     api(project(":httpklient"))
-    implementation("com.github.ben-manes.caffeine:caffeine:3.2.4")
+    implementation(libs.caffeine)
     api(project(":verdityper"))
     implementation(project(":infrastructure"))
 
-    implementation("io.ktor:ktor-client-core:$ktorVersion")
-    implementation("io.ktor:ktor-client-cio:$ktorVersion")
-    implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
+    implementation(libs.ktor.client.core)
+    implementation(libs.ktor.client.cio)
+    implementation(libs.ktor.client.content.negotiation)
 
-    testImplementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
-    testImplementation("io.ktor:ktor-serialization-jackson:$ktorVersion")
-    testImplementation("io.ktor:ktor-client-mock:$ktorVersion")
-    testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
+    testImplementation(libs.ktor.client.content.negotiation)
+    testImplementation(libs.ktor.serialization.jackson)
+    testImplementation(libs.ktor.client.mock)
+    testImplementation(libs.ktor.server.test.host)
     constraints {
-        implementation("commons-codec:commons-codec:1.22.0")
+        implementation(libs.commons.codec)
     }
-    testImplementation("org.junit.jupiter:junit-jupiter-api:6.0.0")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:6.0.0")
-    testImplementation("org.assertj:assertj-core:3.27.7")
+    testImplementation(libs.junit.jupiter.api)
+    testRuntimeOnly(libs.junit.jupiter.engine)
+    testImplementation(libs.assertj.core)
 }

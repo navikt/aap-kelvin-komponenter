@@ -3,10 +3,10 @@ plugins {
 }
 
 dependencies {
-    implementation("com.zaxxer:HikariCP:7.0.2")
-    implementation("org.flywaydb:flyway-database-postgresql:12.6.2")
-    runtimeOnly("org.postgresql:postgresql:42.7.11")
-    api("org.junit.jupiter:junit-jupiter-api:6.0.0")
+    implementation(libs.hikaricp)
+    implementation(libs.flyway.postgresql)
+    runtimeOnly(libs.postgresql)
+    api(libs.junit.jupiter.api)
 
-    implementation("org.testcontainers:testcontainers-postgresql:2.0.5")
+    implementation(libs.testcontainers.postgresql)
 }
