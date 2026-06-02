@@ -10,48 +10,44 @@ dokka {
     }
 }
 
-val ktorVersion = "3.4.3"
-val swaggerUiVersion = "5.32.5"
-val junitVersjon = "6.0.0"
-
 kotlin {
     explicitApi = ExplicitApiMode.Disabled
 }
 
 dependencies {
     // Ktor server dependencies
-    implementation("io.ktor:ktor-server-core:$ktorVersion")
-    implementation("io.ktor:ktor-server-auth:$ktorVersion")
-    implementation("io.ktor:ktor-serialization-jackson:$ktorVersion")
-    implementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
-    implementation("io.ktor:ktor-server-status-pages:$ktorVersion")
+    implementation(libs.ktor.server.core)
+    implementation(libs.ktor.server.auth)
+    implementation(libs.ktor.serialization.jackson)
+    implementation(libs.ktor.server.content.negotiation)
+    implementation(libs.ktor.server.status.pages)
 
-    implementation("org.slf4j:slf4j-api:2.0.18")
+    implementation(libs.slf4j.api)
 
-    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.21.3") // needed for multipart parsing
+    implementation(libs.jackson.datatype.jsr310) // needed for multipart parsing
 
     // when updating the version here, don't forge to update version in OpenAPIGen.kt line 68
-    api("org.webjars:swagger-ui:$swaggerUiVersion")
+    api(libs.swagger.ui)
 
-    implementation("org.reflections:reflections:0.10.2") // only used while initializing
+    implementation(libs.reflections) // only used while initializing
 
     // testing
-    testImplementation("io.ktor:ktor-server-netty:$ktorVersion")
-    testImplementation("io.ktor:ktor-server-core:$ktorVersion")
-    testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
-    testImplementation("io.ktor:ktor-server-auth:$ktorVersion")
-    testImplementation("io.ktor:ktor-server-auth-jwt:$ktorVersion")
-    testImplementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
-    testImplementation("io.ktor:ktor-serialization-jackson:$ktorVersion")
-    testImplementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
+    testImplementation(libs.ktor.server.netty)
+    testImplementation(libs.ktor.server.core)
+    testImplementation(libs.ktor.server.test.host)
+    testImplementation(libs.ktor.server.auth)
+    testImplementation(libs.ktor.server.auth.jwt)
+    testImplementation(libs.ktor.server.content.negotiation)
+    testImplementation(libs.ktor.serialization.jackson)
+    testImplementation(libs.ktor.client.content.negotiation)
 
     testImplementation(kotlin("test"))
     testImplementation(kotlin("stdlib-jdk8"))
 
-    testImplementation("ch.qos.logback:logback-classic:1.5.32") // logging framework for the tests
+    testImplementation(libs.logback.classic) // logging framework for the tests
 
-    testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersjon") // junit testing framework
-    testImplementation("org.junit.jupiter:junit-jupiter-params:$junitVersjon") // generated parameters for tests
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersjon") // testing runtime
-    testImplementation("org.assertj:assertj-core:3.27.7")
+    testImplementation(libs.junit.jupiter.api) // junit testing framework
+    testImplementation(libs.junit.jupiter.params) // generated parameters for tests
+    testRuntimeOnly(libs.junit.jupiter.engine) // testing runtime
+    testImplementation(libs.assertj.core)
 }

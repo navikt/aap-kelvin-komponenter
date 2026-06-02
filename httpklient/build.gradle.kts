@@ -4,9 +4,6 @@ plugins {
     id("aap.conventions")
 }
 
-val ktorVersion = "3.4.3"
-val junitVersion = "6.0.0"
-
 kotlin.explicitApi = ExplicitApiMode.Warning
 
 
@@ -14,22 +11,21 @@ dependencies {
     api(project(":json"))
     implementation(project(":infrastructure"))
     implementation(project(":verdityper"))
-    implementation("com.github.ben-manes.caffeine:caffeine:3.2.4")
-    implementation("io.ktor:ktor-server-auth-jwt:$ktorVersion")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.21.3")
-    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.21.3")
-    implementation("ch.qos.logback:logback-classic:1.5.32")
+    implementation(libs.caffeine)
+    implementation(libs.ktor.server.auth.jwt)
+    implementation(libs.jackson.module.kotlin)
+    implementation(libs.jackson.datatype.jsr310)
+    implementation(libs.logback.classic)
     implementation((project(":ktor-openapi-generator")))
-    api("io.micrometer:micrometer-registry-prometheus:1.16.5")
+    api(libs.micrometer.prometheus)
 
-    testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
-    testImplementation("org.junit.jupiter:junit-jupiter-params:$junitVersion")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
-    testImplementation("org.assertj:assertj-core:3.27.7")
-    testImplementation("io.ktor:ktor-server-netty:$ktorVersion")
-    testImplementation("io.ktor:ktor-serialization-jackson:$ktorVersion")
-    testImplementation("com.fasterxml.jackson.core:jackson-databind:2.21.3")
-    testImplementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.21.3")
-    testImplementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
-
+    testImplementation(libs.junit.jupiter.api)
+    testImplementation(libs.junit.jupiter.params)
+    testRuntimeOnly(libs.junit.jupiter.engine)
+    testImplementation(libs.assertj.core)
+    testImplementation(libs.ktor.server.netty)
+    testImplementation(libs.ktor.serialization.jackson)
+    testImplementation(libs.jackson.databind)
+    testImplementation(libs.jackson.datatype.jsr310)
+    testImplementation(libs.ktor.server.content.negotiation)
 }

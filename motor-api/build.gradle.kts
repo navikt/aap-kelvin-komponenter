@@ -2,30 +2,28 @@ plugins {
     id("aap.conventions")
 }
 
-val ktorVersion = "3.4.3"
-
 dependencies {
     implementation(project(":dbconnect"))
     implementation(project(":infrastructure"))
     implementation(project(":motor"))
-    implementation("org.slf4j:slf4j-api:2.0.18")
+    implementation(libs.slf4j.api)
     // Skille ut disse til egen modul for motor-api
     implementation(project(":ktor-openapi-generator"))
-    implementation("io.ktor:ktor-http-jvm:$ktorVersion")
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.21.3")
+    implementation(libs.ktor.http.jvm)
+    implementation(libs.jackson.databind)
 
     testImplementation(project(":dbtest"))
     testImplementation(project(":server"))
 
-    testImplementation("org.junit.jupiter:junit-jupiter-api:6.0.0")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:6.0.0")
-    testImplementation("org.assertj:assertj-core:3.27.7")
+    testImplementation(libs.junit.jupiter.api)
+    testRuntimeOnly(libs.junit.jupiter.engine)
+    testImplementation(libs.assertj.core)
 
     testImplementation(project(":motor-test-utils"))
-    testImplementation("org.testcontainers:testcontainers:2.0.5")
-    testImplementation("ch.qos.logback:logback-classic:1.5.32")
-    testImplementation("net.logstash.logback:logstash-logback-encoder:9.0")
-    testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
+    testImplementation(libs.testcontainers)
+    testImplementation(libs.logback.classic)
+    testImplementation(libs.logstash.logback.encoder)
+    testImplementation(libs.ktor.server.test.host)
 }
 
 sourceSets {

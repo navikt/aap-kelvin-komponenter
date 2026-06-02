@@ -6,22 +6,22 @@ dependencies {
     api(project(":dbconnect"))
     api(project(":json"))
     api(project(":gateway"))
-    api("io.opentelemetry.instrumentation:opentelemetry-instrumentation-api:2.28.1")
-    implementation("org.slf4j:slf4j-api:2.0.18")
-    api("io.micrometer:micrometer-registry-prometheus:1.16.5")
+    api(libs.opentelemetry.api)
+    implementation(libs.slf4j.api)
+    api(libs.micrometer.prometheus)
 
 
     testImplementation(project(":dbtest"))
 
-    testImplementation("io.micrometer:micrometer-registry-prometheus:1.16.5")
-    testImplementation("ch.qos.logback:logback-classic:1.5.32")
-    testImplementation("net.logstash.logback:logstash-logback-encoder:9.0")
-    testImplementation("org.junit.jupiter:junit-jupiter-api:6.0.0")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:6.0.0")
-    testImplementation("org.assertj:assertj-core:3.27.7")
+    testImplementation(libs.micrometer.prometheus)
+    testImplementation(libs.logback.classic)
+    testImplementation(libs.logstash.logback.encoder)
+    testImplementation(libs.junit.jupiter.api)
+    testRuntimeOnly(libs.junit.jupiter.engine)
+    testImplementation(libs.assertj.core)
 
     testImplementation(project(":motor-test-utils"))
-    testImplementation("org.testcontainers:testcontainers:2.0.5")
+    testImplementation(libs.testcontainers)
 
     testImplementation(kotlin("test"))
 }
