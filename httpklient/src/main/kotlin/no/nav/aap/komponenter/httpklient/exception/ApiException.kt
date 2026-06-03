@@ -8,6 +8,7 @@ public enum class ApiErrorCode {
     IKKE_FUNNET,
     ENDEPUNKT_IKKE_FUNNET,
     UGYLDIG_FORESPØRSEL,
+    TIMEOUT,
 }
 
 /**
@@ -59,6 +60,16 @@ public class InternfeilException(
 ) : ApiException(
     status = HttpStatusCode.InternalServerError,
     code = ApiErrorCode.INTERNFEIL,
+    message = message,
+    cause = cause
+)
+
+public class TimeoutException(
+    override val message: String,
+    override val cause: Throwable? = null,
+) : ApiException(
+    status = HttpStatusCode.RequestTimeout,
+    code = ApiErrorCode.TIMEOUT,
     message = message,
     cause = cause
 )
