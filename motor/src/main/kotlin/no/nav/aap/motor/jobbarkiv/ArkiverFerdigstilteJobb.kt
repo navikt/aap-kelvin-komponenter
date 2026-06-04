@@ -7,7 +7,7 @@ import no.nav.aap.motor.JobbUtfører
 import no.nav.aap.motor.cron.CronExpression
 import org.slf4j.LoggerFactory
 
-internal const val ARKIVER_FERDIGSTILTE_JOBBER = "jobber.arkiverFerdigstilte"
+internal const val ARKIVER_FERDIGSTILTE_JOBB_TYPE = "jobber.arkiverFerdigstilte"
 internal const val BATCH_STØRRELSE = 50_000
 
 internal class ArkiverFerdigstilteJobb(private val repository: ArkiverFerdigstilteJobberRepository) : JobbUtfører {
@@ -38,7 +38,7 @@ internal class ArkiverFerdigstilteJobb(private val repository: ArkiverFerdigstil
             return ArkiverFerdigstilteJobb(ArkiverFerdigstilteJobberRepository(connection))
         }
 
-        override val type = ARKIVER_FERDIGSTILTE_JOBBER
+        override val type = ARKIVER_FERDIGSTILTE_JOBB_TYPE
 
         override val navn = "Arkiver ferdigstilte jobber"
 
