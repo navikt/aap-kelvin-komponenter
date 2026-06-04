@@ -20,10 +20,10 @@ internal class ArkiverFerdigstilteJobb(private val repository: ArkiverFerdigstil
 
             while (true) {
                 val arkiverteDenneRunden = repository.arkiverFerdigstilteJobber(BATCH_STØRRELSE)
+                antallArkiverteJobber += arkiverteDenneRunden
                 if (arkiverteDenneRunden != BATCH_STØRRELSE) {
                     break
                 }
-                antallArkiverteJobber += arkiverteDenneRunden
             }
 
             log.info("Arkivert {} jobber til jobbarkivet", antallArkiverteJobber)
