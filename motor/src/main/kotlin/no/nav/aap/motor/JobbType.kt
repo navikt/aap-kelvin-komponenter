@@ -1,5 +1,6 @@
 package no.nav.aap.motor
 
+import no.nav.aap.motor.jobbarkiv.ArkiverFerdigstilteJobb
 import no.nav.aap.motor.retry.RekjørFeiledeJobb
 
 public object JobbType {
@@ -7,6 +8,7 @@ public object JobbType {
 
     init {
         jobber[RekjørFeiledeJobb.type] = RekjørFeiledeJobb
+        jobber[ArkiverFerdigstilteJobb.type] = ArkiverFerdigstilteJobb
     }
 
     public fun leggTil(jobb: JobbSpesifikasjon) {
