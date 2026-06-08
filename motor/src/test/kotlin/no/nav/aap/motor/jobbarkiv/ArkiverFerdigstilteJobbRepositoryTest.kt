@@ -58,7 +58,7 @@ internal class ArkiverFerdigstilteJobbRepositoryTest {
             opprettHistorikk(connection, nyFerdigJobbId, JobbStatus.FERDIG)
             opprettHistorikk(connection, gammelKlarJobbId, JobbStatus.KLAR)
 
-            val antallArkiverte = ArkiverFerdigstilteJobberRepository(connection).arkiverFerdigstilteJobber()
+            val antallArkiverte = ArkiverFerdigstilteJobberRepository(connection).arkiverFerdigstilteJobber(20)
 
             assertThat(antallArkiverte).isEqualTo(1)
             assertThat(
@@ -102,7 +102,7 @@ internal class ArkiverFerdigstilteJobbRepositoryTest {
     }
 
     @Test
-    fun `skal prosessere alle`() {
+    fun `skal kun prosessere så mange som batchen tillater`() {
         dataSource.transaction { connection ->
             opprettArkivtabeller(connection)
             val cutoff = LocalDateTime.now().minusDays(61)
@@ -129,21 +129,21 @@ internal class ArkiverFerdigstilteJobbRepositoryTest {
             )
 
             val repository = ArkiverFerdigstilteJobberRepository(connection)
-            val arkiverteDenneRunden = repository.arkiverFerdigstilteJobber()
+            val arkiverteDenneRunden = repository.arkiverFerdigstilteJobber(100)
 
-            assertThat(arkiverteDenneRunden).isEqualTo(170)
-            assertThat(antall(connection, "SELECT count(*) AS antall FROM JOBB WHERE type = 'batch-jobb'")).isEqualTo(0)
+            assertThat(arkiverteDenneRunden).isEqualTo(100)
+            assertThat(antall(connection, "SELECT count(*) AS antall FROM JOBB WHERE type = 'batch-jobb'")).isEqualTo(70)
             assertThat(
                 antall(
                     connection,
                     "SELECT count(*) AS antall FROM jobb_arkiv WHERE type = 'batch-jobb'"
                 )
-            ).isEqualTo(170)
+            ).isEqualTo(100)
         }
     }
 
     @Test
-    fun `skal prosessere flere batcher til tomt`() {
+    fun `skal kun prosessere en batch`() {
         dataSource.transaction { connection ->
             opprettArkivtabeller(connection)
             val cutoff = LocalDateTime.now().minusDays(61)
@@ -152,7 +152,7 @@ internal class ArkiverFerdigstilteJobbRepositoryTest {
                 """
                 INSERT INTO JOBB (status, type, neste_kjoring)
                 SELECT '${JobbStatus.FERDIG.name}', 'batch-jobb', ?
-                FROM generate_series(1, 50_001)
+                FROM generate_series(1, 500_001)
                 """.trimIndent()
             ) {
                 setParams {
@@ -173,13 +173,13 @@ internal class ArkiverFerdigstilteJobbRepositoryTest {
 
             arkiverFerdigstilteJobb.utfør(JobbInput(ArkiverFerdigstilteJobb))
 
-            assertThat(antall(connection, "SELECT count(*) AS antall FROM JOBB WHERE type = 'batch-jobb'")).isZero()
+            assertThat(antall(connection, "SELECT count(*) AS antall FROM JOBB WHERE type = 'batch-jobb'")).isEqualTo(1)
             assertThat(
                 antall(
                     connection,
                     "SELECT count(*) AS antall FROM jobb_arkiv WHERE type = 'batch-jobb'"
                 )
-            ).isEqualTo(50_001)
+            ).isEqualTo(500_000)
         }
     }
 

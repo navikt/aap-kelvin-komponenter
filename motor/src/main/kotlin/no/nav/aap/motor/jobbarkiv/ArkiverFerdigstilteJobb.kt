@@ -8,14 +8,16 @@ import no.nav.aap.motor.cron.CronExpression
 import org.slf4j.LoggerFactory
 
 internal const val ARKIVER_FERDIGSTILTE_JOBB_TYPE = "jobber.arkiverFerdigstilte"
+internal const val BATCH_STØRRELSE = 500_000
 
 internal class ArkiverFerdigstilteJobb(private val repository: ArkiverFerdigstilteJobberRepository) : JobbUtfører {
     private val log = LoggerFactory.getLogger(ArkiverFerdigstilteJobb::class.java)
 
     override fun utfør(input: JobbInput) {
+
         if (repository.arkivtabellerFinnes()) {
-            log.info("Starter på jobb for å arkivere ferdigstilte jobber")
-            val antallArkiverteJobber = repository.arkiverFerdigstilteJobber()
+            log.info("Forsøker å arkivere inntil $BATCH_STØRRELSE jobber")
+            val antallArkiverteJobber = repository.arkiverFerdigstilteJobber(BATCH_STØRRELSE)
             log.info("Arkivert {} jobber til jobbarkivet", antallArkiverteJobber)
 
         } else {

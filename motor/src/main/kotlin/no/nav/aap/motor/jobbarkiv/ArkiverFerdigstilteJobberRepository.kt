@@ -8,7 +8,7 @@ import java.time.LocalDateTime
 internal class ArkiverFerdigstilteJobberRepository(private val connection: DBConnection) {
     private val log = LoggerFactory.getLogger(ArkiverFerdigstilteJobberRepository::class.java)
 
-    internal fun arkiverFerdigstilteJobber(): Int {
+    internal fun arkiverFerdigstilteJobber(batchStørrelse: Int): Int {
         if (!arkivtabellerFinnes()) {
             log.info("Kan ikke gjennomføre arkivering: mangler tabellene jobb_arkiv og/eller jobb_historikk_arkiv")
             return 0
@@ -22,6 +22,7 @@ internal class ArkiverFerdigstilteJobberRepository(private val connection: DBCon
                 FROM JOBB
                 WHERE status = ?
                   AND neste_kjoring < ?
+                LIMIT $batchStørrelse
             ),
             jobber_arkivert AS (
                 INSERT INTO jobb_arkiv
