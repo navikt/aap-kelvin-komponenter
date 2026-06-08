@@ -23,7 +23,7 @@ internal class ArkiverFerdigstilteJobb(private val repository: ArkiverFerdigstil
                 kjøringer++
                 val antallArkiverteJobber = repository.arkiverFerdigstilteJobber(BATCH_STØRRELSE)
                 log.info("Arkivert {} jobber til jobbarkivet", antallArkiverteJobber)
-                if (antallArkiverteJobber == 0 || kjøringer == MAKS_BATCH_ITERASJONER) {
+                if (antallArkiverteJobber != BATCH_STØRRELSE || kjøringer == MAKS_BATCH_ITERASJONER) {
                     log.info("Fant ingen jobber å arkivere eller nådde maks antall iterasjoner - stopper jobb")
                     break
                 }
