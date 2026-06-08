@@ -143,7 +143,7 @@ internal class ArkiverFerdigstilteJobbRepositoryTest {
     }
 
     @Test
-    fun `skal kun prosessere en batch`() {
+    fun `skal kun prosessere maks 10 batcher`() {
         dataSource.transaction { connection ->
             opprettArkivtabeller(connection)
             val cutoff = LocalDateTime.now().minusDays(61)
@@ -152,7 +152,7 @@ internal class ArkiverFerdigstilteJobbRepositoryTest {
                 """
                 INSERT INTO JOBB (status, type, neste_kjoring)
                 SELECT '${JobbStatus.FERDIG.name}', 'batch-jobb', ?
-                FROM generate_series(1, 50_001)
+                FROM generate_series(1, 500_001)
                 """.trimIndent()
             ) {
                 setParams {
@@ -179,7 +179,7 @@ internal class ArkiverFerdigstilteJobbRepositoryTest {
                     connection,
                     "SELECT count(*) AS antall FROM jobb_arkiv WHERE type = 'batch-jobb'"
                 )
-            ).isEqualTo(50_000)
+            ).isEqualTo(500_000)
         }
     }
 
