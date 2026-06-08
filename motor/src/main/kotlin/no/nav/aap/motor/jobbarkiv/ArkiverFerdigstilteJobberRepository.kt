@@ -16,52 +16,85 @@ internal class ArkiverFerdigstilteJobberRepository(private val connection: DBCon
 
         val cutoff = LocalDateTime.now().minusDays(DAGER_FOR_ARKIVERING)
 
-        val query = """
-            WITH kandidater_for_arkivering AS (
-                SELECT id
-                FROM JOBB
-                WHERE status = ?
-                  AND neste_kjoring < ?
-                LIMIT $batchStørrelse
-            ),
-            jobber_arkivert AS (
-                INSERT INTO jobb_arkiv
-                    (id, status, type, sak_id, behandling_id, parameters, payload, neste_kjoring, opprettet_tid)
-                SELECT j.id, j.status, j.type, j.sak_id, j.behandling_id, j.parameters, j.payload, j.neste_kjoring, j.opprettet_tid
-                FROM JOBB j
-                INNER JOIN kandidater_for_arkivering k ON k.id = j.id
-            ),
-            jobb_historikk_arkivert AS (
-                INSERT INTO jobb_historikk_arkiv
-                    (id, jobb_id, status, feilmelding, opprettet_tid)
-                SELECT h.id, h.jobb_id, h.status, h.feilmelding, h.opprettet_tid
-                FROM JOBB_HISTORIKK h
-                INNER JOIN kandidater_for_arkivering k ON k.id = h.jobb_id
-            ),
-            jobb_historikk_slettet AS (
-                DELETE FROM JOBB_HISTORIKK h
-                USING kandidater_for_arkivering k
-                WHERE h.jobb_id = k.id
-            ),
-            jobber_slettet AS (
-                DELETE FROM JOBB j
-                USING kandidater_for_arkivering k
-                WHERE j.id = k.id
-                RETURNING j.id
-            )
-            SELECT count(*) AS antall
-            FROM jobber_slettet
-        """.trimIndent()
-
-        return connection.queryFirst(query) {
+        // Hent liste over ID-er som skal arkiveres
+        val jobberSomSkalArkiveres = connection.queryList(
+            """
+            SELECT id
+            FROM JOBB
+            WHERE status = ?
+              AND neste_kjoring < ?
+            LIMIT ?
+            """.trimIndent()
+        ) {
             setParams {
                 setEnumName(1, JobbStatus.FERDIG)
                 setLocalDateTime(2, cutoff)
+                setInt(3, batchStørrelse)
             }
             setRowMapper {
-                it.getInt("antall")
+                it.getLong("id")
             }
         }
+
+        if (jobberSomSkalArkiveres.isEmpty()) {
+            return 0
+        }
+
+        // 1. Flytt JOBB-rader til arkiv
+        connection.execute(
+            """
+            INSERT INTO jobb_arkiv
+                (id, status, type, sak_id, behandling_id, parameters, payload, neste_kjoring, opprettet_tid)
+            SELECT id, status, type, sak_id, behandling_id, parameters, payload, neste_kjoring, opprettet_tid
+            FROM JOBB
+            WHERE id = ANY(?::bigint[])
+            """.trimIndent()
+        ) {
+            setParams {
+                setLongArray(1, jobberSomSkalArkiveres)
+            }
+        }
+
+        // 2. Flytt JOBB_HISTORIKK-rader til arkiv
+        connection.execute(
+            """
+            INSERT INTO jobb_historikk_arkiv
+                (id, jobb_id, status, feilmelding, opprettet_tid)
+            SELECT id, jobb_id, status, feilmelding, opprettet_tid
+            FROM JOBB_HISTORIKK
+            WHERE jobb_id = ANY(?::bigint[])
+            """.trimIndent()
+        ) {
+            setParams {
+                setLongArray(1, jobberSomSkalArkiveres)
+            }
+        }
+
+        // 3. Slett fra JOBB_HISTORIKK
+        connection.execute(
+            """
+            DELETE FROM JOBB_HISTORIKK
+            WHERE jobb_id = ANY(?::bigint[])
+            """.trimIndent()
+        ) {
+            setParams {
+                setLongArray(1, jobberSomSkalArkiveres)
+            }
+        }
+
+        // 4. Slett fra JOBB
+        connection.execute(
+            """
+            DELETE FROM JOBB
+            WHERE id = ANY(?::bigint[])
+            """.trimIndent()
+        ) {
+            setParams {
+                setLongArray(1, jobberSomSkalArkiveres)
+            }
+        }
+
+        return jobberSomSkalArkiveres.size
     }
 
     internal fun arkivtabellerFinnes(): Boolean {
