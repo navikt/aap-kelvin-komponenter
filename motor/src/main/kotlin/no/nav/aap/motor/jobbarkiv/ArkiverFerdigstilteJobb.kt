@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory
 
 internal const val ARKIVER_FERDIGSTILTE_JOBB_TYPE = "jobber.arkiverFerdigstilte"
 internal const val BATCH_STØRRELSE = 50_000
+internal const val MAKS_BATCH_ITERASJONER = 10
 
 internal class ArkiverFerdigstilteJobb(private val repository: ArkiverFerdigstilteJobberRepository) : JobbUtfører {
     private val log = LoggerFactory.getLogger(ArkiverFerdigstilteJobb::class.java)
@@ -16,10 +17,18 @@ internal class ArkiverFerdigstilteJobb(private val repository: ArkiverFerdigstil
     override fun utfør(input: JobbInput) {
 
         if (repository.arkivtabellerFinnes()) {
-            log.info("Forsøker å arkivere inntil $BATCH_STØRRELSE jobber")
-            val antallArkiverteJobber = repository.arkiverFerdigstilteJobber(BATCH_STØRRELSE)
-            log.info("Arkivert {} jobber til jobbarkivet", antallArkiverteJobber)
-
+            log.info("Forsøker å arkivere jobber inntil $MAKS_BATCH_ITERASJONER ganger med batch på $BATCH_STØRRELSE per kjøring")
+            var kjøringer = 0
+            while (true) {
+                kjøringer++
+                val antallArkiverteJobber = repository.arkiverFerdigstilteJobber(BATCH_STØRRELSE)
+                log.info("Arkivert {} jobber til jobbarkivet", antallArkiverteJobber)
+                if (antallArkiverteJobber == 0 || kjøringer == MAKS_BATCH_ITERASJONER) {
+                    log.info("Fant ingen jobber å arkivere eller nådde maks antall iterasjoner - stopper jobb")
+                    break
+                }
+            }
+            log.info("Ferdig med kjøring av arkivering av ferdigstilte jobber")
         } else {
             log.info("Finnes ingen arkivtabeller - kan derfor ikke arkivere ferdigstilte jobber")
         }
