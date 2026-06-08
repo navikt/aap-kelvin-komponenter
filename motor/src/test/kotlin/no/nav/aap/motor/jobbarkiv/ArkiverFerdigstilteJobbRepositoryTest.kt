@@ -152,7 +152,7 @@ internal class ArkiverFerdigstilteJobbRepositoryTest {
                 """
                 INSERT INTO JOBB (status, type, neste_kjoring)
                 SELECT '${JobbStatus.FERDIG.name}', 'batch-jobb', ?
-                FROM generate_series(1, 500_001)
+                FROM generate_series(1, 50_001)
                 """.trimIndent()
             ) {
                 setParams {
@@ -179,7 +179,7 @@ internal class ArkiverFerdigstilteJobbRepositoryTest {
                     connection,
                     "SELECT count(*) AS antall FROM jobb_arkiv WHERE type = 'batch-jobb'"
                 )
-            ).isEqualTo(500_000)
+            ).isEqualTo(50_000)
         }
     }
 

@@ -8,7 +8,7 @@ import no.nav.aap.motor.cron.CronExpression
 import org.slf4j.LoggerFactory
 
 internal const val ARKIVER_FERDIGSTILTE_JOBB_TYPE = "jobber.arkiverFerdigstilte"
-internal const val BATCH_STØRRELSE = 500_000
+internal const val BATCH_STØRRELSE = 50_000
 
 internal class ArkiverFerdigstilteJobb(private val repository: ArkiverFerdigstilteJobberRepository) : JobbUtfører {
     private val log = LoggerFactory.getLogger(ArkiverFerdigstilteJobb::class.java)
@@ -38,7 +38,7 @@ internal class ArkiverFerdigstilteJobb(private val repository: ArkiverFerdigstil
             "Finner ferdigstilte jobber og flytter disse til arkivtabeller dersom det eksisterer."
 
         /**
-         * Hver dag kl 01:00
+         * Hver dag kl 01:00 - Bør justeres til å kjøre oftere for å tømme initielt!
          */
         override val cron = CronExpression.create("0 0 1 * * *")
 
