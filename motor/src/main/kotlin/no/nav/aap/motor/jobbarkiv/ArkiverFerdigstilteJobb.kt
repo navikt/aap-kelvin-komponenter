@@ -15,7 +15,6 @@ internal class ArkiverFerdigstilteJobb(private val repository: ArkiverFerdigstil
     private val log = LoggerFactory.getLogger(ArkiverFerdigstilteJobb::class.java)
 
     override fun utfør(input: JobbInput) {
-
         if (repository.arkivtabellerFinnes()) {
             log.info("Forsøker å arkivere jobber inntil $MAKS_BATCH_ITERASJONER ganger med batch på $BATCH_STØRRELSE per kjøring")
             var kjøringer = 0
