@@ -94,6 +94,7 @@ internal class ArkiverFerdigstilteJobberRepository(private val connection: DBCon
             }
         }
 
+        connection.markerSavepoint()
         return jobberSomSkalArkiveres.size
     }
 
