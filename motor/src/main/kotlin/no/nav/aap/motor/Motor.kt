@@ -100,14 +100,14 @@ public class MotorImpl(
             .name("forbrenningskammer-", 1L)
             .factory()
     )
-    private val watchdogExecutor = Executors.newScheduledThreadPool(1)
+    private val watchdogExecutor = Executors.newScheduledThreadPool(1, Thread.ofVirtual().name("motor-watchdog").factory())
+    private val metricExecutor = Executors.newScheduledThreadPool(1, Thread.ofVirtual().name("motor-metrics").factory())
 
     @Volatile
     private var stopped = false
     private var started = false
     private val workers = HashMap<Int, Future<*>>()
     private var lastWatchdogLog = LocalDateTime.now()
-
 
     public override fun start() {
         log.info("Starter prosessering av jobber")
@@ -120,6 +120,7 @@ public class MotorImpl(
         }
         log.info("Startet prosessering av jobber")
         watchdogExecutor.schedule(Watchdog(), 1, TimeUnit.MINUTES)
+        metricExecutor.scheduleWithFixedDelay(MetricsUpdater(), 0, 60, TimeUnit.SECONDS)
         started = true
     }
 
@@ -127,6 +128,7 @@ public class MotorImpl(
         log.info("Avslutter prosessering av jobber")
         stopped = true
         watchdogExecutor.shutdownNow()
+        metricExecutor.shutdownNow()
         executor.shutdown()
         val res = executor.awaitTermination(timeout.inWholeSeconds, TimeUnit.SECONDS)
         if (!res) {
@@ -157,10 +159,6 @@ public class MotorImpl(
                     while (plukker && !stopped) {
                         dataSource.transaction { connection ->
                             val repository = JobbRepository(connection)
-
-                            antallJobberKlar.set(repository.antallJobber(JobbStatus.KLAR))
-                            antallJobberFeilet.set(repository.antallJobber(JobbStatus.FEILET))
-
                             val plukketJobb = repository.plukkJobb()
 
                             /* Ønsker å oppdage trege jobber før jobben har kjørt ferdig (f.eks. pga deadlock).
@@ -318,6 +316,21 @@ public class MotorImpl(
                 logger.warn("Ukjent feil under watchdog-aktivitet.", exception)
             }
             watchdogExecutor.schedule(Watchdog(), 1, TimeUnit.MINUTES)
+        }
+    }
+
+    private inner class MetricsUpdater: Runnable {
+        private val log = LoggerFactory.getLogger(javaClass)
+        override fun run() {
+            try {
+                dataSource.transaction(readOnly = true) { connection ->
+                    val repository = JobbRepository(connection)
+                    antallJobberKlar.set(repository.antallJobber(JobbStatus.KLAR))
+                    antallJobberFeilet.set(repository.antallJobber(JobbStatus.FEILET))
+                }
+            } catch (e: Exception) {
+                log.warn("Ukjent feil ved oppdatering av motor-metrics: {}", e.javaClass.name, e)
+            }
         }
     }
 
