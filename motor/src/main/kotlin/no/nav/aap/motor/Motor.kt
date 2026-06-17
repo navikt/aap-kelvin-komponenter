@@ -42,6 +42,7 @@ public interface Motor : Closeable {
             prometheus: MeterRegistry = SimpleMeterRegistry(),
             repositoryRegistry: RepositoryRegistry? = null,
             gatewayProvider: GatewayProvider? = null,
+            enableV2: () -> Boolean = { false },
         ): Motor = MotorImpl(
             dataSource = dataSource,
             antallKammer = antallKammer,
@@ -50,6 +51,7 @@ public interface Motor : Closeable {
             prometheus = prometheus,
             repositoryRegistry = repositoryRegistry,
             gatewayProvider = gatewayProvider,
+            enableV2 = enableV2,
         )
     }
 }
@@ -62,6 +64,7 @@ public class MotorImpl(
     private val prometheus: MeterRegistry = SimpleMeterRegistry(),
     private val repositoryRegistry: RepositoryRegistry? = null,
     private val gatewayProvider: GatewayProvider? = null,
+    private val enableV2: () -> Boolean = { false },
 ) : Motor {
 
     private val antallJobberKlar = AtomicInteger()
@@ -102,6 +105,7 @@ public class MotorImpl(
     )
     private val watchdogExecutor = Executors.newScheduledThreadPool(1, Thread.ofVirtual().name("motor-watchdog").factory())
     private val metricExecutor = Executors.newScheduledThreadPool(1, Thread.ofVirtual().name("motor-metrics").factory())
+    private val schedulerExecutor = Executors.newScheduledThreadPool(1, Thread.ofVirtual().name("motor-scheduler").factory())
 
     @Volatile
     private var stopped = false
@@ -121,6 +125,9 @@ public class MotorImpl(
         log.info("Startet prosessering av jobber")
         watchdogExecutor.schedule(Watchdog(), 1, TimeUnit.MINUTES)
         metricExecutor.scheduleWithFixedDelay(MetricsUpdater(), 0, 60, TimeUnit.SECONDS)
+        if (enableV2()) {
+            schedulerExecutor.scheduleWithFixedDelay(Scheduler(), 0, 100, TimeUnit.MILLISECONDS)
+        }
         started = true
     }
 
@@ -159,7 +166,7 @@ public class MotorImpl(
                     while (plukker && !stopped) {
                         dataSource.transaction { connection ->
                             val repository = JobbRepository(connection)
-                            val plukketJobb = repository.plukkJobb()
+                            val plukketJobb = if (enableV2()) repository.plukkJobbV2() else repository.plukkJobb()
 
                             /* Ønsker å oppdage trege jobber før jobben har kjørt ferdig (f.eks. pga deadlock).
                             * Registrerer derfor hvert (potensielle) start-tidspunkt for en jobb, slikt at vi i
@@ -274,6 +281,16 @@ public class MotorImpl(
                 for (feltMedVerdi in logInformasjon.felterMedVerdi) {
                     MDC.put(feltMedVerdi.key, feltMedVerdi.value)
                 }
+            }
+        }
+    }
+
+    private inner class Scheduler: Runnable {
+        private val logger = LoggerFactory.getLogger(Scheduler::class.java)
+        override fun run() {
+            dataSource.transaction {
+                val antallSkjedulert = JobbRepository(it).skjedulerJobber()
+                logger.info("markerte $antallSkjedulert jobber som klare for å kjøre")
             }
         }
     }
