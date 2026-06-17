@@ -3,6 +3,7 @@ package no.nav.aap.motor
 import io.micrometer.core.instrument.Gauge
 import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry
+import io.opentelemetry.api.trace.Span
 import no.nav.aap.komponenter.dbconnect.DBConnection
 import no.nav.aap.komponenter.dbconnect.transaction
 import no.nav.aap.komponenter.gateway.GatewayProvider
@@ -10,7 +11,6 @@ import no.nav.aap.komponenter.repository.RepositoryRegistry
 import no.nav.aap.motor.mdc.JobbLogInfoProvider
 import no.nav.aap.motor.mdc.JobbLogInfoProviderHolder
 import no.nav.aap.motor.mdc.NoExtraLogInfoProvider
-import io.opentelemetry.api.trace.Span
 import no.nav.aap.motor.trace.JobbInfoSpanBuilder
 import no.nav.aap.motor.trace.OpentelemetryUtil
 import org.slf4j.LoggerFactory
@@ -19,10 +19,10 @@ import java.io.Closeable
 import java.time.Instant
 import java.time.LocalDateTime
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 import javax.sql.DataSource
@@ -44,6 +44,7 @@ public interface Motor : Closeable {
             prometheus: MeterRegistry = SimpleMeterRegistry(),
             repositoryRegistry: RepositoryRegistry? = null,
             gatewayProvider: GatewayProvider? = null,
+            enableV2: () -> Boolean = { false },
         ): Motor = MotorImpl(
             dataSource = dataSource,
             antallKammer = antallKammer,
@@ -52,6 +53,7 @@ public interface Motor : Closeable {
             prometheus = prometheus,
             repositoryRegistry = repositoryRegistry,
             gatewayProvider = gatewayProvider,
+            enableV2 = enableV2,
         )
     }
 }
@@ -64,6 +66,7 @@ public class MotorImpl(
     private val prometheus: MeterRegistry = SimpleMeterRegistry(),
     private val repositoryRegistry: RepositoryRegistry? = null,
     private val gatewayProvider: GatewayProvider? = null,
+    private val enableV2: () -> Boolean = { false },
 ) : Motor {
 
     private val antallJobberKlar = AtomicInteger()
@@ -104,6 +107,7 @@ public class MotorImpl(
     )
     private val watchdogExecutor = Executors.newScheduledThreadPool(1, Thread.ofVirtual().name("motor-watchdog").factory())
     private val metricExecutor = Executors.newScheduledThreadPool(1, Thread.ofVirtual().name("motor-metrics").factory())
+    private val schedulerExecutor = Executors.newScheduledThreadPool(1, Thread.ofVirtual().name("motor-scheduler").factory())
 
     @Volatile
     private var stopped = false
@@ -123,6 +127,7 @@ public class MotorImpl(
         log.info("Startet prosessering av jobber")
         watchdogExecutor.schedule(Watchdog(), 1, TimeUnit.MINUTES)
         metricExecutor.scheduleWithFixedDelay(MetricsUpdater(), 0, 60, TimeUnit.SECONDS)
+        schedulerExecutor.scheduleWithFixedDelay(Scheduler(), 0, 100, TimeUnit.MILLISECONDS)
         started = true
     }
 
@@ -175,7 +180,7 @@ public class MotorImpl(
                     while (plukker && !stopped) {
                         dataSource.transaction(name = "jobbPlukkTransaction") { connection ->
                             val repository = JobbRepository(connection)
-                            val plukketJobb = repository.plukkJobb()
+                            val plukketJobb = if (enableV2()) repository.plukkJobbV2() else repository.plukkJobb()
 
                             /* Ønsker å oppdage trege jobber før jobben har kjørt ferdig (f.eks. pga deadlock).
                             * Registrerer derfor hvert (potensielle) start-tidspunkt for en jobb, slikt at vi i
@@ -281,6 +286,18 @@ if (plukketJobb != null) {
             if (logInformasjon != null) {
                 for (feltMedVerdi in logInformasjon.felterMedVerdi) {
                     MDC.put(feltMedVerdi.key, feltMedVerdi.value)
+                }
+            }
+        }
+    }
+
+    private inner class Scheduler: Runnable {
+        private val logger = LoggerFactory.getLogger(Scheduler::class.java)
+        override fun run() {
+            if (enableV2()) {
+                dataSource.transaction {
+                    val antallSkjedulert = JobbRepository(it).skjedulerJobber()
+                    logger.info("markerte $antallSkjedulert jobber som klare for å kjøre")
                 }
             }
         }
