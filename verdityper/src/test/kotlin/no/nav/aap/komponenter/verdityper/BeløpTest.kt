@@ -76,4 +76,9 @@ class BeløpTest {
         assertThat(deserialisertListe).containsExactly(Beløp("123.0"), Beløp("54.0"))
     }
 
+    @Test
+    fun `sammenligne beløp`() {
+        assertThat(maxOf(Beløp(10), Beløp(20))).isEqualTo(Beløp(20))
+    }
+
 }
