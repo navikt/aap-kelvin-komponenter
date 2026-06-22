@@ -11,7 +11,7 @@ import java.math.RoundingMode
  * Vær obs hvis man i fremtidig kode velger å returnere divisjonsresultater som Beløp i steden for
  * BigDecimal da det potensielt kan medføre avrundingsfeil i delresultater, se eksempel i enhetstest
  */
-public class Beløp(verdi: BigDecimal) {
+public class Beløp(verdi: BigDecimal) : Comparable<Beløp> {
     public val verdi: BigDecimal = verdi.setScale(ANTALL_DESIMALER, RoundingMode.HALF_UP)
 
     public constructor(intVerdi: Int) : this(BigDecimal(intVerdi))
@@ -86,5 +86,9 @@ public class Beløp(verdi: BigDecimal) {
 
     override fun toString(): String {
         return "Beløp(verdi=$verdi)"
+    }
+
+    override fun compareTo(other: Beløp): Int {
+        return this.verdi.compareTo(other.verdi)
     }
 }
