@@ -23,10 +23,10 @@ enum class NonStrictTestEnum {
 }
 
 @Path("/")
-data class NullableNonStrictEnumParams(@QueryParam("") val type: NonStrictTestEnum? = null)
+data class NullableNonStrictEnumParams(@param:QueryParam("") val type: NonStrictTestEnum? = null)
 
 @Path("/")
-data class NonNullableNonStrictEnumParams(@QueryParam("") val type: NonStrictTestEnum)
+data class NonNullableNonStrictEnumParams(@param:QueryParam("") val type: NonStrictTestEnum)
 
 class NonStrictEnumTestServer {
 
