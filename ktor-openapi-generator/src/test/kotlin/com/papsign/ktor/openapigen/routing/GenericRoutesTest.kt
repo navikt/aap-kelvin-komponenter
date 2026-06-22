@@ -172,7 +172,7 @@ class GenericRoutesTest {
         fun removeNode(nodeId: Long)
     }
 
-    data class PathId(@PathParam("Id") val id: Long)
+    data class PathId(@param:PathParam("Id") val id: Long)
 
     private inline fun <reified TNodeNew : TreeNodeNew, reified TNode : TreeNodeBase> NormalOpenAPIRoute.treeNodeRoute(
         service: TreeNodeService<TNodeNew, TNode>
