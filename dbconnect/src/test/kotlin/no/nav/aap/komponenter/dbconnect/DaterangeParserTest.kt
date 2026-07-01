@@ -4,6 +4,7 @@ import no.nav.aap.komponenter.type.Periode
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
+import java.time.Month
 
 internal class DaterangeParserTest {
 
@@ -54,6 +55,19 @@ internal class DaterangeParserTest {
 
         assertThat(periode.fom.minusDays(1)).isEqualTo(fom)
         assertThat(periode.tom.plusDays(1)).isEqualTo(tom)
+    }
+
+    @Test
+    fun `Kan parse Tid MIN og Tid MAKS`() {
+        val tidMin: LocalDate = LocalDate.of(1, Month.JANUARY, 1)
+        val tidMaks: LocalDate = LocalDate.of(2999, Month.JANUARY, 1)
+
+        val sqlPeriode = DaterangeParser.toSQL(Periode(tidMin, tidMaks))
+        assertThat(sqlPeriode).isEqualTo("[$tidMin,$tidMaks]")
+
+        val periode = DaterangeParser.fromSQL(sqlPeriode)
+        assertThat(periode.fom).isEqualTo(tidMin)
+        assertThat(periode.tom).isEqualTo(tidMaks)
     }
 
     @Test
