@@ -8,7 +8,7 @@ import java.time.temporal.ChronoField
 
 internal object DaterangeParser {
 
-    private val formater = DateTimeFormatterBuilder()
+    private val formatter = DateTimeFormatterBuilder()
         .appendValue(ChronoField.YEAR, 4, 10, SignStyle.NORMAL)
         .appendLiteral('-')
         .appendValue(ChronoField.MONTH_OF_YEAR, 2)
@@ -17,7 +17,7 @@ internal object DaterangeParser {
         .toFormatter()
 
     internal fun toSQL(periode: Periode): String {
-        return "[${formater.format(periode.fom)},${formater.format(periode.tom)}]"
+        return "[${formatter.format(periode.fom)},${formatter.format(periode.tom)}]"
     }
 
     internal fun fromSQL(daterange: String): Periode {
@@ -28,12 +28,12 @@ internal object DaterangeParser {
         val upperDate = upper.dropLast(1)
         val upperEnd = upper.last()
 
-        var fom = formater.parse(lowerDate, LocalDate::from)
+        var fom = formatter.parse(lowerDate, LocalDate::from)
         if (lowerEnd == '(') {
             fom = fom.plusDays(1)
         }
 
-        var tom = formater.parse(upperDate, LocalDate::from)
+        var tom = formatter.parse(upperDate, LocalDate::from)
         if (upperEnd == ')') {
             tom = tom.minusDays(1)
         }
