@@ -8,6 +8,11 @@ import java.time.temporal.ChronoField
 
 internal object DaterangeParser {
 
+    /**
+     * Skreddersydd DateTimeFormatter for å håndtere år fra 0001 til 10_000
+     * I Kelvin bruker vi år 0001 som Tid.MIN (f.eks. for å "nullstille" rettighetsperioden).
+     * Og fra bl.a. MEDL får vi år 10_000 som makstid (ingen sluttdato).
+     **/
     private val formatter = DateTimeFormatterBuilder()
         .appendValue(ChronoField.YEAR, 4, 10, SignStyle.NORMAL)
         .appendLiteral('-')
