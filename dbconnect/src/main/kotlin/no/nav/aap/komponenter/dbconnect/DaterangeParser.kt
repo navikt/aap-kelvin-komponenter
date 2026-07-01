@@ -2,11 +2,19 @@ package no.nav.aap.komponenter.dbconnect
 
 import no.nav.aap.komponenter.type.Periode
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeFormatterBuilder
+import java.time.format.SignStyle
+import java.time.temporal.ChronoField
 
 internal object DaterangeParser {
 
-    private val formater = DateTimeFormatter.ofPattern("y-MM-dd")
+    private val formater = DateTimeFormatterBuilder()
+        .appendValue(ChronoField.YEAR, 4, 10, SignStyle.NORMAL)
+        .appendLiteral('-')
+        .appendValue(ChronoField.MONTH_OF_YEAR, 2)
+        .appendLiteral('-')
+        .appendValue(ChronoField.DAY_OF_MONTH, 2)
+        .toFormatter()
 
     internal fun toSQL(periode: Periode): String {
         return "[${formater.format(periode.fom)},${formater.format(periode.tom)}]"
