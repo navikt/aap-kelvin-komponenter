@@ -513,7 +513,7 @@ public class Tidslinje<T>(initSegmenter: NavigableSet<Segment<T>> = TreeSet()) {
     }
 
     public companion object {
-        public fun <T> empty(): Tidslinje<T> = Tidslinje<T>(TreeSet())
+        public fun <T> empty(): Tidslinje<T> = Tidslinje(TreeSet())
 
         /** Flater ut en tidslinje av tidslinjer. Kaster exception hvis tidslinjenen overlapper. */
         public fun <T> Tidslinje<Tidslinje<T>>.flatten(): Tidslinje<T> {
@@ -750,10 +750,18 @@ public fun <T, S> Iterable<Tidslinje<T>>.outerJoinNotNull(action: (List<T>) -> S
 
 public fun <T> Tidslinje<T>?.orEmpty(): Tidslinje<T> = this ?: Tidslinje.empty()
 
+public inline fun <T> Tidslinje<T>.ifEmpty(defaultValue: () -> Tidslinje<T>): Tidslinje<T> {
+    return if (isEmpty()) defaultValue() else this
+}
+
+public inline fun <T> Tidslinje<T>.ifNotEmpty(defaultValue: () -> Tidslinje<T>): Tidslinje<T> {
+    return if (isNotEmpty()) defaultValue() else this
+}
+
 /** Lag tidslinje basert på verdiene ved å knytte dem til perioder. Verdier lenger ut
  * i lista får høyere prioritet, og legger seg over tidligere verdier. */
 public fun <T, R> Iterable<T>.somTidslinje(periodeSelector: (T) -> Periode, valueSelector: (T) -> R): Tidslinje<R> {
-    return fold(Tidslinje<R>()) { tidslinje, neste ->
+    return fold(Tidslinje()) { tidslinje, neste ->
         tidslinje.mergePrioriterHøyre(Tidslinje(periodeSelector(neste), valueSelector(neste)))
     }
 }
@@ -761,6 +769,6 @@ public fun <T, R> Iterable<T>.somTidslinje(periodeSelector: (T) -> Periode, valu
 /** Lag tidslinje basert på verdiene ved å knytte dem til perioder. Verdier lenger ut
  * i lista får høyere prioritet, og legger seg over tidligere verdier. */
 public fun <T> Iterable<T>.somTidslinje(periodeSelector: (T) -> Periode): Tidslinje<T> {
-    return this.somTidslinje(periodeSelector, { it })
+    return this.somTidslinje(periodeSelector) { it }
 }
 

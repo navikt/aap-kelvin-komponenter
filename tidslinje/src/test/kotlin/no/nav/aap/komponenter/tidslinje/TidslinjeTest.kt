@@ -382,6 +382,63 @@ class TidslinjeTest {
     }
 
     @Test
+    fun `ifEmpty returnerer defaultValue når tidslinja er tom`() {
+        val periode = Periode(LocalDate.of(2020, 1, 1), LocalDate.of(2020, 1, 10))
+        val default = Tidslinje(periode, 42)
+
+        val resultat = Tidslinje.empty<Int>().ifEmpty { default }
+
+        assertThat(resultat).isEqualTo(default)
+    }
+
+    @Test
+    fun `ifEmpty returnerer original tidslinje når den ikke er tom`() {
+        val periode = Periode(LocalDate.of(2020, 1, 1), LocalDate.of(2020, 1, 10))
+        val original = Tidslinje(periode, 1)
+        val default = Tidslinje(periode, 42)
+
+        val resultat = original.ifEmpty { default }
+
+        assertThat(resultat).isEqualTo(original)
+    }
+
+    @Test
+    fun `ifEmpty støtter early return når tidslinja er tom`() {
+        fun behandle(tidslinje: Tidslinje<Int>): String {
+            tidslinje.ifEmpty { return "tom" }
+            return "ikke tom"
+        }
+
+        assertThat(behandle(Tidslinje.empty())).isEqualTo("tom")
+        assertThat(
+            behandle(
+                Tidslinje(
+                    Periode(LocalDate.of(2020, 1, 1), LocalDate.of(2020, 1, 10)),
+                    1
+                )
+            )
+        ).isEqualTo("ikke tom")
+    }
+
+    @Test
+    fun `ifNotEmpty støtter early return når tidslinja ikke er tom`() {
+        fun behandle(tidslinje: Tidslinje<Int>): String {
+            tidslinje.ifNotEmpty { return "ikke tom" }
+            return "tom"
+        }
+
+        assertThat(behandle(Tidslinje.empty())).isEqualTo("tom")
+        assertThat(
+            behandle(
+                Tidslinje(
+                    Periode(LocalDate.of(2020, 1, 1), LocalDate.of(2020, 1, 10)),
+                    1
+                )
+            )
+        ).isEqualTo("ikke tom")
+    }
+
+    @Test
     fun `map7 med tom tidslinje`() {
         val periode = Periode(LocalDate.of(2020, 1, 1), LocalDate.of(2020, 1, 10))
         val a = Tidslinje(periode, 1)
