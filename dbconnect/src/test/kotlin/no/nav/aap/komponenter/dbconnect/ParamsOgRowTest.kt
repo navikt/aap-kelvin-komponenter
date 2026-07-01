@@ -469,15 +469,21 @@ internal class ParamsOgRowTest {
     }
 
     @Test
-    fun `CURRENT_TIMESTAMP i postgres (UTC) matcher LocalDateTime now() i pod (Europe Oslo)`() {
+    fun `CURRENT_TIMESTAMP lagret som TIMESTAMP castet til TIMESTAMPTZ i postgres (UTC) matcher Instant now() i pod (Europe Oslo)`() {
+        dataSource.transaction { connection ->
+            connection.execute( """
+                    INSERT INTO TEST_LOCALDATETIME (TEST, TEST_NULL)
+                    VALUES (CURRENT_TIMESTAMP, null)
+            """)
+        }
         dataSource.transaction { connection ->
             val currentTimestamp = connection.queryFirst(
                 """
-                SELECT CURRENT_TIMESTAMP as LOCALDATETIME;
+                SELECT TEST::TIMESTAMPTZ FROM TEST_LOCALDATETIME
             """.trimIndent()
             ) {
                 setRowMapper { row ->
-                    row.getLocalDateTime("LOCALDATETIME")
+                    row.getLocalDateTime("TEST")
                 }
             }
 
@@ -489,15 +495,21 @@ internal class ParamsOgRowTest {
     }
 
     @Test
-    fun `CURRENT_TIMESTAMP i postgres (UTC) matcher Instant now() i pod (Europe Oslo)`() {
+    fun `CURRENT_TIMESTAMP i postgres (UTC) matcher LocalDateTime now() i pod (Europe Oslo)`() {
+        dataSource.transaction { connection ->
+            connection.execute( """
+                    INSERT INTO TEST_INSTANT (TEST, TEST_NULL)
+                    VALUES (CURRENT_TIMESTAMP, null)
+            """)
+        }
         dataSource.transaction { connection ->
             val currentTimestamp = connection.queryFirst(
                 """
-                SELECT CURRENT_TIMESTAMP as INSTANT;
+                SELECT TEST::TIMESTAMPTZ as TEST FROM TEST_INSTANT
             """.trimIndent()
             ) {
                 setRowMapper { row ->
-                    row.getInstant("INSTANT")
+                    row.getInstant("TEST")
                 }
             }
 
