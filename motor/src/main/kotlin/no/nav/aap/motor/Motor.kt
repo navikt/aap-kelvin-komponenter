@@ -1,8 +1,7 @@
 package no.nav.aap.motor
 
+import io.micrometer.core.instrument.Gauge
 import io.micrometer.core.instrument.MeterRegistry
-import io.micrometer.core.instrument.MultiGauge
-import io.micrometer.core.instrument.Tags
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import no.nav.aap.komponenter.dbconnect.DBConnection
 import no.nav.aap.komponenter.dbconnect.transaction
@@ -22,7 +21,9 @@ import java.util.*
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicLong
 import javax.sql.DataSource
 import kotlin.system.measureTimeMillis
 import kotlin.time.Duration
@@ -147,9 +148,23 @@ public class MotorImpl(
 
     private inner class Forbrenningskammer(private val dataSource: DataSource) : Runnable {
         private val log = LoggerFactory.getLogger(Forbrenningskammer::class.java)
-        private val aktivJobbGauge = MultiGauge.builder("motor_siste_plukk_timestamp_seconds")
-            .tag("forbrenningskammer", forbrenningskammerId.getAndIncrement().toString())
-            .register(prometheus)
+        private val kammerId = forbrenningskammerId.getAndIncrement().toString()
+
+        // Én AtomicLong per jobb-type, registrert én gang i prometheus for å unngå DuplicateLabelsException
+        private val sistePlukketTimestamps = ConcurrentHashMap<String, AtomicLong>()
+
+        private fun oppdaterSistePlukk(jobbType: String) {
+            sistePlukketTimestamps
+                .getOrPut(jobbType) {
+                    AtomicLong(Instant.now().epochSecond).also { tidspunkt ->
+                        Gauge.builder("motor_siste_plukk_timestamp_seconds") { tidspunkt.get().toDouble() }
+                            .tag("forbrenningskammer", kammerId)
+                            .tag("jobb_type", jobbType)
+                            .register(prometheus)
+                    }
+                }
+                .set(Instant.now().epochSecond)
+        }
 
         override fun run() {
             while (!stopped) {
@@ -172,18 +187,8 @@ public class MotorImpl(
                             * timestamp(motor_siste_plukk_timestamp_seconds) - motor_siste_plukk_timestamp_seconds
                             **/
 
-                            aktivJobbGauge.register(
-                                listOfNotNull(plukketJobb)
-                                    .map { jobbInput ->
-                                        MultiGauge.Row.of(
-                                            Tags.of("jobb_type", jobbInput.type()),
-                                            Instant.now().epochSecond
-                                        )
-                                    },
-                                true,
-                            )
-
                             if (plukketJobb != null) {
+                                oppdaterSistePlukk(plukketJobb.type())
                                 log.info("Plukket jobb $plukketJobb.")
                                 val behandlingId = plukketJobb.behandlingIdOrNull()
                                 val sakId = plukketJobb.sakIdOrNull()
@@ -208,7 +213,9 @@ public class MotorImpl(
                     log.error("Feil under plukking av jobber", exception)
                 }
                 log.debug("Ingen flere jobber å plukke, hviler litt")
-                aktivJobbGauge.register(setOf(), true)
+                // Nullstill til nå slik at query-en viser ~0 når kammeret er ledig
+                val nå = Instant.now().epochSecond
+                sistePlukketTimestamps.values.forEach { it.set(nå) }
                 if (!stopped) {
                     Thread.sleep(500)
                 }
