@@ -16,8 +16,11 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.slf4j.LoggerFactory
+import java.time.Instant
 import java.time.LocalDateTime
 import java.util.*
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import kotlin.system.measureTimeMillis
 
 private val logger = LoggerFactory.getLogger(MotorTest::class.java)
@@ -274,6 +277,72 @@ class MotorTest {
             }
         }
         assertThat(verdier).isEqualTo(verdier.distinct()).withFailMessage("Skal ikke ha duplikate verdier i test_table-tabellen - da har samme jobb blitt plukket og kjørt flere ganger")
+        motor.stop()
+    }
+
+    @Test
+    @Timeout(value = 20, unit = TimeUnit.SECONDS)
+    fun `metric viser tidspunkt for plukk mens jobb kjøres, og nullstilles til nå når kammeret er ledig`() {
+        val jobbStartet = CountDownLatch(1)
+        val jobbKanAvslutte = CountDownLatch(1)
+
+        val langJobb = object : Jobb {
+            override fun konstruer(connection: DBConnection) = object : JobbUtfører {
+                override fun utfør(input: JobbInput) {
+                    jobbStartet.countDown()
+                    jobbKanAvslutte.await(10, TimeUnit.SECONDS)
+                }
+            }
+            override fun type() = "test.lang.jobb"
+            override fun navn() = "lang jobb"
+            override fun beskrivelse() = "en lang jobb for test"
+        }
+
+        val prometheus = SimpleMeterRegistry()
+        val motor = Motor(
+            dataSource = dataSource,
+            antallKammer = 1,
+            jobber = listOf(langJobb),
+            prometheus = prometheus,
+        )
+
+        dataSource.transaction {
+            JobbRepository(it).leggTil(JobbInput(langJobb))
+        }
+        motor.start()
+
+        assertThat(jobbStartet.await(10, TimeUnit.SECONDS)).isTrue()
+
+        // Mens jobben kjøres: gauge er satt til tidspunktet jobben ble plukket (≤ nå)
+        val gaugeUnderKjøring = prometheus.get("motor_siste_plukk_timestamp_seconds")
+            .tag("jobb_type", "test.lang.jobb")
+            .gauge()
+            .value()
+        assertThat(gaugeUnderKjøring).isGreaterThan(0.0)
+        assertThat(gaugeUnderKjøring).isLessThanOrEqualTo(Instant.now().epochSecond.toDouble())
+
+        // Slipp jobben og vent til kammeret er ledig igjen
+        jobbKanAvslutte.countDown()
+
+        val deadline = Instant.now().plusSeconds(10)
+        while (Instant.now().isBefore(deadline)) {
+            val diff = Instant.now().epochSecond - prometheus.get("motor_siste_plukk_timestamp_seconds")
+                .tag("jobb_type", "test.lang.jobb")
+                .gauge()
+                .value()
+                .toLong()
+            if (diff <= 2) break
+            Thread.sleep(100)
+        }
+
+        // Etter at kammeret er ledig: gauge er nullstilt til nå, så differansen er ≈ 0
+        val gaugeEtterIdle = prometheus.get("motor_siste_plukk_timestamp_seconds")
+            .tag("jobb_type", "test.lang.jobb")
+            .gauge()
+            .value()
+        assertThat(Instant.now().epochSecond - gaugeEtterIdle.toLong())
+            .isLessThanOrEqualTo(2)
+
         motor.stop()
     }
 
