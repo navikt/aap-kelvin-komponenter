@@ -3,7 +3,7 @@ ktor = "3.5.1"
 jackson = "2.22.0"
 jackson-annotations = "2.22"
 testcontainers = "2.0.5"
-junit-jupiter = "6.1.0"
+junit-jupiter = "6.1.1"
 
 [libraries]
 ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
