@@ -54,11 +54,12 @@ class JobbRepositoryTest {
 
         dataSource.transaction { connection ->
             val jobbRepository = JobbRepository(connection)
-            var plukket = jobbRepository.plukkJobb()
+            jobbRepository.skjedulerJobber()
+            var plukket = jobbRepository.plukkJobbV2()
             while (plukket != null) {
                 plukketIRekkefølge.add(plukket)
                 jobbRepository.markerSomFerdig(plukket)
-                plukket = jobbRepository.plukkJobb()
+                plukket = jobbRepository.plukkJobbV2()
             }
         }
 
@@ -97,7 +98,8 @@ class JobbRepositoryTest {
 
         dataSource.transaction { connection ->
             val jobbRepository = JobbRepository(connection)
-            var plukket = jobbRepository.plukkJobb()
+            jobbRepository.skjedulerJobber()
+            var plukket = jobbRepository.plukkJobbV2()
             while (plukket != null) {
                 plukketIRekkefølge.add(plukket)
                 if (plukket.type() == TullTestJobbUtfører.type()) {
@@ -105,7 +107,7 @@ class JobbRepositoryTest {
                 } else {
                     jobbRepository.markerSomFerdig(plukket)
                 }
-                plukket = jobbRepository.plukkJobb()
+                plukket = jobbRepository.plukkJobbV2()
             }
         }
 
@@ -129,10 +131,12 @@ class JobbRepositoryTest {
 
         dataSource.transaction { connection ->
             val jobbRepository = JobbRepository(connection)
-            jobbRepository.plukkJobb()?.let {
+            jobbRepository.skjedulerJobber()
+            jobbRepository.plukkJobbV2()?.let {
                 jobbRepository.markerSomFeilet(it, IllegalStateException())
             }
-            jobbRepository.plukkJobb()?.let {
+            jobbRepository.skjedulerJobber()
+            jobbRepository.plukkJobbV2()?.let {
                 jobbRepository.markerSomFeilet(it, IllegalStateException())
             }
         }
