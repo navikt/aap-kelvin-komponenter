@@ -6,6 +6,7 @@ import no.nav.aap.komponenter.httpklient.httpclient.error.IkkeFunnetException
 import no.nav.aap.komponenter.httpklient.httpclient.error.InternalServerErrorHttpResponsException
 import no.nav.aap.komponenter.httpklient.httpclient.error.LockedHttpResponsException
 import no.nav.aap.komponenter.httpklient.httpclient.error.ManglerTilgangException
+import no.nav.aap.komponenter.httpklient.httpclient.error.RequestTimeoutHttpResponseException
 import no.nav.aap.komponenter.httpklient.httpclient.error.UhåndtertHttpResponsException
 import java.net.HttpURLConnection
 import java.net.http.HttpResponse
@@ -41,6 +42,10 @@ internal fun <E, R> håndterStatus(response: HttpResponse<E>, errorBlock: () -> 
 
     if (status == HttpURLConnection.HTTP_CONFLICT) {
         throw ConflictHttpResponseException("$response :: $responseBody", responseBody)
+    }
+
+    if (status == HttpURLConnection.HTTP_CLIENT_TIMEOUT) {
+        throw RequestTimeoutHttpResponseException("$response :: $responseBody", responseBody)
     }
 
     if (status == 423) { //423 = Locked (finnes ikke i HttpURLConnection klassen)
