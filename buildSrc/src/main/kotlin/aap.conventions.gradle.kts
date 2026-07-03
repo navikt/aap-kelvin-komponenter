@@ -16,6 +16,21 @@ repositories {
     maven("https://github-package-registry-mirror.gc.nav.no/cached/maven-release")
 }
 
+
+val jackson3Version = the<VersionCatalogsExtension>().named("libs").findVersion("jackson3").get().requiredVersion
+
+dependencies {
+    constraints {
+        // Sikkerhetspin – sårbarhet i tools.jackson.core 3.1.1
+        listOf("jackson-databind", "jackson-core").forEach { artifact ->
+            add("implementation", "tools.jackson.core:$artifact") {
+                version { strictly(jackson3Version) }
+                because("Sikkerhetsfiks – sårbarhet i 3.1.1")
+            }
+        }
+    }
+}
+
 // https://docs.gradle.org/8.12.1/userguide/jvm_test_suite_plugin.html
 testing {
     suites {

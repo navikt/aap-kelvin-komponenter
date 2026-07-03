@@ -311,39 +311,42 @@ class MotorTest {
         }
         motor.start()
 
-        assertThat(jobbStartet.await(10, TimeUnit.SECONDS)).isTrue()
+        try {
+            assertThat(jobbStartet.await(10, TimeUnit.SECONDS)).isTrue()
 
-        // Mens jobben kjøres: gauge er satt til tidspunktet jobben ble plukket (≤ nå)
-        val gaugeUnderKjøring = prometheus.get("motor_siste_plukk_timestamp_seconds")
-            .tag("jobb_type", "test.lang.jobb")
-            .gauge()
-            .value()
-        assertThat(gaugeUnderKjøring).isGreaterThan(0.0)
-        assertThat(gaugeUnderKjøring).isLessThanOrEqualTo(Instant.now().epochSecond.toDouble())
-
-        // Slipp jobben og vent til kammeret er ledig igjen
-        jobbKanAvslutte.countDown()
-
-        val deadline = Instant.now().plusSeconds(10)
-        while (Instant.now().isBefore(deadline)) {
-            val diff = Instant.now().epochSecond - prometheus.get("motor_siste_plukk_timestamp_seconds")
+            // Mens jobben kjøres: gauge er satt til tidspunktet jobben ble plukket (≤ nå)
+            val gaugeUnderKjøring = prometheus.get("motor_siste_plukk_timestamp_seconds")
                 .tag("jobb_type", "test.lang.jobb")
                 .gauge()
                 .value()
-                .toLong()
-            if (diff <= 2) break
-            Thread.sleep(100)
+            assertThat(gaugeUnderKjøring).isGreaterThan(0.0)
+            assertThat(gaugeUnderKjøring).isLessThanOrEqualTo(Instant.now().epochSecond.toDouble())
+
+            // Slipp jobben og vent til kammeret er ledig igjen
+            jobbKanAvslutte.countDown()
+
+            val deadline = Instant.now().plusSeconds(10)
+            while (Instant.now().isBefore(deadline)) {
+                val diff = Instant.now().epochSecond - prometheus.get("motor_siste_plukk_timestamp_seconds")
+                    .tag("jobb_type", "test.lang.jobb")
+                    .gauge()
+                    .value()
+                    .toLong()
+                if (diff <= 2) break
+                Thread.sleep(100)
+            }
+
+            // Etter at kammeret er ledig: gauge er nullstilt til nå, så differansen er ≈ 0
+            val gaugeEtterIdle = prometheus.get("motor_siste_plukk_timestamp_seconds")
+                .tag("jobb_type", "test.lang.jobb")
+                .gauge()
+                .value()
+            assertThat(Instant.now().epochSecond - gaugeEtterIdle.toLong())
+                .isLessThanOrEqualTo(2)
+        } finally {
+            jobbKanAvslutte.countDown()
+            motor.stop()
         }
-
-        // Etter at kammeret er ledig: gauge er nullstilt til nå, så differansen er ≈ 0
-        val gaugeEtterIdle = prometheus.get("motor_siste_plukk_timestamp_seconds")
-            .tag("jobb_type", "test.lang.jobb")
-            .gauge()
-            .value()
-        assertThat(Instant.now().epochSecond - gaugeEtterIdle.toLong())
-            .isLessThanOrEqualTo(2)
-
-        motor.stop()
     }
 
     private fun <E> ventPåSvarITestTabell(x: (conn: DBConnection) -> E?): E {
