@@ -27,7 +27,7 @@ ktor-server-test-host = { module = "io.ktor:ktor-server-test-host", version.ref 
 
 caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version = "3.2.4" }
 commons-codec = { module = "commons-codec:commons-codec", version = "1.22.0" }
-flyway-postgresql = { module = "org.flywaydb:flyway-database-postgresql", version = "12.9.0" }
+flyway-postgresql = { module = "org.flywaydb:flyway-database-postgresql", version = "12.10.0" }
 hikaricp = { module = "com.zaxxer:HikariCP", version = "7.1.0" }
 jackson-annotations = { module = "com.fasterxml.jackson.core:jackson-annotations", version.ref = "jackson-annotations" }
 jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
