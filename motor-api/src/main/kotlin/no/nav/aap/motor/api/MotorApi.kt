@@ -5,9 +5,14 @@ import com.papsign.ktor.openapigen.route.TagModule
 import com.papsign.ktor.openapigen.route.path.normal.NormalOpenAPIRoute
 import com.papsign.ktor.openapigen.route.path.normal.get
 import com.papsign.ktor.openapigen.route.path.normal.post
+import com.papsign.ktor.openapigen.route.response.OpenAPIPipelineResponseContext
 import com.papsign.ktor.openapigen.route.response.respond
+import com.papsign.ktor.openapigen.route.response.respondWithStatus
 import com.papsign.ktor.openapigen.route.route
 import io.ktor.http.HttpStatusCode
+import io.ktor.server.application.ApplicationCall
+import io.ktor.server.auth.jwt.JWTPrincipal
+import io.ktor.server.auth.principal
 import no.nav.aap.komponenter.dbconnect.DBConnection
 import no.nav.aap.komponenter.dbconnect.transaction
 import no.nav.aap.komponenter.miljo.Miljø
@@ -23,76 +28,90 @@ private enum class Tags(override val description: String) : APITag {
     ),
 }
 
-public fun NormalOpenAPIRoute.motorApi(dataSource: DataSource) {
+public fun NormalOpenAPIRoute.motorApi(dataSource: DataSource, godkjenteRoller: List<String> = emptyList()) {
     val modules = TagModule(listOf(Tags.MotorAPI))
     route("/drift/api/jobb") {
         route("/feilende") {
             get<Unit, List<JobbInfoDto>>(modules) { _ ->
-                val saker: List<JobbInfoDto> = dataSource.transaction(readOnly = true) { connection ->
-                    DriftJobbRepositoryExposed(connection).hentAlleFeilende()
-                        .map { (jobbInput, jobbStatus) ->
-                            jobbInfoDto(jobbInput, jobbStatus, connection)
-                        }
+                autoriser(godkjenteRoller) {
+                    val saker: List<JobbInfoDto> = dataSource.transaction(readOnly = true) { connection ->
+                        DriftJobbRepositoryExposed(connection).hentAlleFeilende()
+                            .map { (jobbInput, jobbStatus) ->
+                                jobbInfoDto(jobbInput, jobbStatus, connection)
+                            }
 
+                    }
+                    respond(saker)
                 }
-                respond(saker)
             }
         }
         route("/feilende/antall") {
+
             get<Unit, Int>(modules) { _ ->
-                val antallFeilendeJobber: Int = dataSource.transaction(readOnly = true) { connection ->
-                    DriftJobbRepositoryExposed(connection).hentAntallFeilende()
+                autoriser(godkjenteRoller) {
+                    val antallFeilendeJobber: Int = dataSource.transaction(readOnly = true) { connection ->
+                        DriftJobbRepositoryExposed(connection).hentAntallFeilende()
+                    }
+                    respond(antallFeilendeJobber)
                 }
-                respond(antallFeilendeJobber)
             }
         }
         route("/planlagte-jobber") {
             get<Unit, List<JobbInfoDto>>(modules) { _ ->
-                val saker: List<JobbInfoDto> = dataSource.transaction(readOnly = true) { connection ->
-                    DriftJobbRepositoryExposed(connection).hentInfoOmGjentagendeJobber().map { info ->
-                        JobbInfoDto(
-                            id = info.jobbId(),
-                            type = info.type(),
-                            status = info.status(),
-                            planlagtKjøretidspunkt = info.nesteKjøring(),
-                            metadata = mapOf(),
-                            antallFeilendeForsøk = 0,
-                            beskrivelse = info.beskrivelse(),
-                            navn = info.navn(),
-                            opprettetTidspunkt = info.opprettetTidspunkt()
-                        )
+                autoriser(godkjenteRoller) {
+                    val saker: List<JobbInfoDto> = dataSource.transaction(readOnly = true) { connection ->
+                        DriftJobbRepositoryExposed(connection).hentInfoOmGjentagendeJobber().map { info ->
+                            JobbInfoDto(
+                                id = info.jobbId(),
+                                type = info.type(),
+                                status = info.status(),
+                                planlagtKjøretidspunkt = info.nesteKjøring(),
+                                metadata = mapOf(),
+                                antallFeilendeForsøk = 0,
+                                beskrivelse = info.beskrivelse(),
+                                navn = info.navn(),
+                                opprettetTidspunkt = info.opprettetTidspunkt()
+                            )
+                        }
                     }
+                    respond(saker)
                 }
-                respond(saker)
             }
         }
         route("/{jobbId}/kjor") {
             post<JobbIdDTO, String, Unit>(modules) { jobbId, _ ->
-                val nå = LocalDateTime.now()
-                val oppdatert = dataSource.transaction { connection ->
-                    DriftJobbRepositoryExposed(connection).settNesteKjøring(jobbId.jobbId, nå)
-                }
-                if (oppdatert == 0) {
-                    respond("Kunne ikke oppdatere tidspunkt for neste kjøring for jobb med ID $jobbId")
-                } else {
-                    respond("Setter neste kjøring for jobb med ID $jobbId til $nå.")
+                autoriser(godkjenteRoller) {
+                    val nå = LocalDateTime.now()
+                    val oppdatert = dataSource.transaction { connection ->
+                        DriftJobbRepositoryExposed(connection).settNesteKjøring(jobbId.jobbId, nå)
+                    }
+                    if (oppdatert == 0) {
+                        respond("Kunne ikke oppdatere tidspunkt for neste kjøring for jobb med ID $jobbId")
+                    } else {
+                        respond("Setter neste kjøring for jobb med ID $jobbId til $nå.")
+                    }
                 }
             }
         }
         route("/rekjor/{jobbId}") {
             get<JobbIdDTO, String>(modules) { jobbId ->
-                val antallSchedulert = dataSource.transaction { connection ->
-                    DriftJobbRepositoryExposed(connection).markerFeilendeForKlar(jobbId.jobbId)
+                autoriser(godkjenteRoller) {
+
+                    val antallSchedulert = dataSource.transaction { connection ->
+                        DriftJobbRepositoryExposed(connection).markerFeilendeForKlar(jobbId.jobbId)
+                    }
+                    respond("Rekjøring av feilende jobb med ID $jobbId startet, startet $antallSchedulert jobber.")
                 }
-                respond("Rekjøring av feilende jobb med ID $jobbId startet, startet $antallSchedulert jobber.")
             }
         }
         route("/avbryt/{jobbId}") {
             get<JobbIdDTO, String>(modules) { jobbId ->
-                val antallSchedulert = dataSource.transaction { connection ->
-                    DriftJobbRepositoryExposed(connection).markerSomAvbrutt(jobbId.jobbId)
+                autoriser(godkjenteRoller) {
+                    val antallSchedulert = dataSource.transaction { connection ->
+                        DriftJobbRepositoryExposed(connection).markerSomAvbrutt(jobbId.jobbId)
+                    }
+                    respond("Avbryter videre kjøring av feilende jobb med ID $jobbId startet, antall jobber avbrutt $antallSchedulert.")
                 }
-                respond("Avbryter videre kjøring av feilende jobb med ID $jobbId startet, antall jobber avbrutt $antallSchedulert.")
             }
         }
         route("/avbrytAlleFeilede") {
@@ -109,22 +128,26 @@ public fun NormalOpenAPIRoute.motorApi(dataSource: DataSource) {
         }
         route("/rekjorAlleFeilede") {
             get<Unit, String>(modules) {
-                val antallSchedulert = dataSource.transaction { connection ->
-                    DriftJobbRepositoryExposed(connection).markerAlleFeiledeForKlare()
+                autoriser(godkjenteRoller) {
+                    val antallSchedulert = dataSource.transaction { connection ->
+                        DriftJobbRepositoryExposed(connection).markerAlleFeiledeForKlare()
+                    }
+                    respond("Rekjøring av feilede startet, startet $antallSchedulert jobber.")
                 }
-                respond("Rekjøring av feilede startet, startet $antallSchedulert jobber.")
             }
         }
         route("/sisteKjørte") {
             get<Unit, List<JobbInfoDto>>(modules) { _ ->
-                val saker: List<JobbInfoDto> = dataSource.transaction(readOnly = true) { connection ->
-                    DriftJobbRepositoryExposed(connection).hentSisteJobber(150)
-                        .map { (jobbInput, feilmelding) ->
-                            jobbInfoDto(jobbInput, feilmelding, connection)
-                        }
+                autoriser(godkjenteRoller) {
+                    val saker: List<JobbInfoDto> = dataSource.transaction(readOnly = true) { connection ->
+                        DriftJobbRepositoryExposed(connection).hentSisteJobber(150)
+                            .map { (jobbInput, feilmelding) ->
+                                jobbInfoDto(jobbInput, feilmelding, connection)
+                            }
 
+                    }
+                    respond(saker)
                 }
-                respond(saker)
             }
         }
     }
@@ -151,3 +174,18 @@ private fun jobbInfoDto(
     )
 }
 
+private fun ApplicationCall.groupsClaim(): List<String> {
+    return principal<JWTPrincipal>()?.getListClaim("groups", String::class) ?: emptyList()
+}
+
+private suspend inline fun <reified TResponse : Any> OpenAPIPipelineResponseContext<TResponse>.autoriser(
+    godkjenteRoller: List<String>,
+    crossinline block: suspend OpenAPIPipelineResponseContext<TResponse>.() -> Unit
+) {
+    if (godkjenteRoller.isNotEmpty() && pipeline.call.groupsClaim().none { it in godkjenteRoller }
+    ) {
+        respondWithStatus(HttpStatusCode.Forbidden)
+        return
+    }
+    block()
+}

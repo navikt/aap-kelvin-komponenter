@@ -6,6 +6,9 @@ dependencies {
     implementation(project(":dbconnect"))
     implementation(project(":infrastructure"))
     implementation(project(":motor"))
+    implementation(libs.ktor.server.core)
+    api(libs.ktor.server.auth)
+    api(libs.ktor.server.auth.jwt)
     implementation(libs.slf4j.api)
     // Skille ut disse til egen modul for motor-api
     implementation(project(":ktor-openapi-generator"))
