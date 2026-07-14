@@ -21,8 +21,11 @@ internal inline fun <T> span(
         }
         .startSpan()
     try {
-        return body()
+        outerSpan.makeCurrent().use {
+            return body()
+        }
     } catch (e: Throwable) {
+        outerSpan.recordException(e)
         outerSpan.setStatus(StatusCode.ERROR)
         outerSpan.setAttribute(AttributeKey.stringKey("error.type"), e.javaClass.getCanonicalName())
         throw e

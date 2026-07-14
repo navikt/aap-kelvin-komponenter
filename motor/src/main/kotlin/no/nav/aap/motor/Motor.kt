@@ -193,12 +193,12 @@ public class MotorImpl(
                                 val behandlingId = plukketJobb.behandlingIdOrNull()
                                 val sakId = plukketJobb.sakIdOrNull()
                                 OpentelemetryUtil.span(
-                                    "jobb + ${plukketJobb.type()}",
-                                    behandlingId,
-                                    sakId,
-                                    plukketJobb.id.toString(),
-                                    plukketJobb.status().toString(),
-                                    JobbInfoSpanBuilder.jobbAttributter(plukketJobb)
+                                    navn = "jobb + ${plukketJobb.type()}",
+                                    behandlingId = behandlingId,
+                                    sakId = sakId,
+                                    jobbStatus = plukketJobb.status().toString(),
+                                    jobbId = plukketJobb.id.toString(),
+                                    spanBuilderTransformer = JobbInfoSpanBuilder.jobbAttributter(plukketJobb)
                                 ) {
                                     utfør(plukketJobb, connection)
                                 }
