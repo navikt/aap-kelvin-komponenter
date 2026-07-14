@@ -5,7 +5,6 @@ import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.api.trace.SpanKind
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.api.trace.Tracer
-import java.lang.RuntimeException
 import java.util.function.UnaryOperator
 
 internal object OpentelemetryUtil {
@@ -41,7 +40,7 @@ internal object OpentelemetryUtil {
             span.makeCurrent().use { _ ->
                 return block()
             }
-        } catch (e: RuntimeException) {
+        } catch (e: Throwable) {
             span.recordException(e)
             span.setStatus(StatusCode.ERROR, e.javaClass.getSimpleName())
             throw e
