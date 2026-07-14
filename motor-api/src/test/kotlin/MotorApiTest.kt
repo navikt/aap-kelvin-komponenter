@@ -1,8 +1,16 @@
+import com.auth0.jwt.JWT
+import com.auth0.jwt.algorithms.Algorithm
+import com.papsign.ktor.openapigen.OpenAPIGen
 import com.papsign.ktor.openapigen.model.info.InfoModel
 import com.papsign.ktor.openapigen.route.apiRouting
 import io.ktor.client.request.*
 import io.ktor.client.statement.bodyAsText
+import io.ktor.http.ContentType
+import io.ktor.serialization.jackson.JacksonConverter
 import io.ktor.server.application.*
+import io.ktor.server.auth.*
+import io.ktor.server.auth.jwt.*
+import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.routing.*
 import io.ktor.server.testing.*
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry
@@ -24,6 +32,7 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.AutoClose
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import java.util.Date
 import javax.sql.DataSource
 
 class MotorApiTest {
@@ -56,6 +65,32 @@ class MotorApiTest {
         }
 
         motor.stop()
+    }
+
+    @Test
+    fun `skal gi 403 når bruker mangler påkrevd rolle`() {
+        testApplication {
+            application { moduleWithRoller(dataSource, godkjenteRoller = listOf(PÅKREVD_TESTROLLE)) }
+
+            val response = client.get("/drift/api/jobb/planlagte-jobber") {
+                bearerAuth(lagTestToken(grupper = listOf("annen-gruppe")))
+            }
+
+            assertThat(response.status.value).isEqualTo(403)
+        }
+    }
+
+    @Test
+    fun `skal gi 200 når bruker har påkrevd rolle`() {
+        testApplication {
+            application { moduleWithRoller(dataSource, godkjenteRoller = listOf(PÅKREVD_TESTROLLE)) }
+
+            val response = client.get("/drift/api/jobb/planlagte-jobber") {
+                bearerAuth(lagTestToken(grupper = listOf(PÅKREVD_TESTROLLE)))
+            }
+
+            assertThat(response.status.value).isEqualTo(200)
+        }
     }
 
     @Test
@@ -104,6 +139,46 @@ fun Application.module(dataSource: DataSource) {
     }
 }
 
+private const val PÅKREVD_TESTROLLE = "drift-gruppe"
+private const val TEST_JWT_SECRET = "test-hemmelighet-som-er-minst-32-tegn-lang"
+private const val TEST_JWT_AUDIENCE = "behandlingsflyt"
+private const val TEST_JWT_ISSUER = "behandlingsflyt"
+
+private fun lagTestToken(grupper: List<String>): String =
+    JWT.create()
+        .withClaim("groups", grupper)
+        .withAudience(TEST_JWT_AUDIENCE)
+        .withIssuer(TEST_JWT_ISSUER)
+        .withExpiresAt(Date(System.currentTimeMillis() + 3_600_000))
+        .sign(Algorithm.HMAC256(TEST_JWT_SECRET))
+
+fun Application.moduleWithRoller(dataSource: DataSource, godkjenteRoller: List<String>) {
+    install(ContentNegotiation) {
+        register(ContentType.Application.Json, JacksonConverter(DefaultJsonMapper.objectMapper(), true))
+    }
+    install(OpenAPIGen) {
+        serveOpenApiJson = false
+        serveSwaggerUi = false
+    }
+    install(Authentication) {
+        jwt("azure") {
+            verifier(
+                JWT.require(Algorithm.HMAC256(TEST_JWT_SECRET))
+                    .withAudience(TEST_JWT_AUDIENCE)
+                    .withIssuer(TEST_JWT_ISSUER)
+                    .build()
+            )
+            validate { cred -> JWTPrincipal(cred.payload) }
+        }
+    }
+    routing {
+        authenticate("azure") {
+            apiRouting {
+                motorApi(dataSource, godkjenteRoller)
+            }
+        }
+    }
+}
 
 class TøysTestJobbUtfører() : JobbUtfører {
 
