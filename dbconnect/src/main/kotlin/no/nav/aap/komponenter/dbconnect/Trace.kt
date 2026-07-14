@@ -25,7 +25,7 @@ internal inline fun <T> span(
             return body()
         }
     } catch (e: Throwable) {
-        outerSpan.recordException(e)
+        // Har ikke outerSpan.recordException(e) for å unngå SQL-params i logger.
         outerSpan.setStatus(StatusCode.ERROR)
         outerSpan.setAttribute(AttributeKey.stringKey("error.type"), e.javaClass.getCanonicalName())
         throw e
