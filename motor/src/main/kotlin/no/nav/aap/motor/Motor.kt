@@ -10,6 +10,7 @@ import no.nav.aap.komponenter.repository.RepositoryRegistry
 import no.nav.aap.motor.mdc.JobbLogInfoProvider
 import no.nav.aap.motor.mdc.JobbLogInfoProviderHolder
 import no.nav.aap.motor.mdc.NoExtraLogInfoProvider
+import io.opentelemetry.api.trace.Span
 import no.nav.aap.motor.trace.JobbInfoSpanBuilder
 import no.nav.aap.motor.trace.OpentelemetryUtil
 import org.slf4j.LoggerFactory
@@ -172,7 +173,7 @@ public class MotorImpl(
                 try {
                     var plukker = true
                     while (plukker && !stopped) {
-                        dataSource.transaction { connection ->
+                        dataSource.transaction(name = "jobbPlukkTransaction") { connection ->
                             val repository = JobbRepository(connection)
                             val plukketJobb = repository.plukkJobb()
 
@@ -187,8 +188,9 @@ public class MotorImpl(
                             * timestamp(motor_siste_plukk_timestamp_seconds) - motor_siste_plukk_timestamp_seconds
                             **/
 
-                            if (plukketJobb != null) {
-                                oppdaterSistePlukk(plukketJobb.type())
+if (plukketJobb != null) {
+    Span.current().updateName("jobbPlukk + ${plukketJobb.type()}")
+    oppdaterSistePlukk(plukketJobb.type())
                                 log.info("Plukket jobb $plukketJobb.")
                                 val behandlingId = plukketJobb.behandlingIdOrNull()
                                 val sakId = plukketJobb.sakIdOrNull()
@@ -202,10 +204,9 @@ public class MotorImpl(
                                 ) {
                                     utfør(plukketJobb, connection)
                                 }
-                            }
-
-                            if (plukker && plukketJobb == null) {
-                                plukker = false
+} else {
+    Span.current().updateName("jobbPlukk + ingenJobb")
+    plukker = false
                             }
                         }
                     }
