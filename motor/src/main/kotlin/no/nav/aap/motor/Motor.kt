@@ -188,9 +188,9 @@ public class MotorImpl(
                             * timestamp(motor_siste_plukk_timestamp_seconds) - motor_siste_plukk_timestamp_seconds
                             **/
 
-                            if (plukketJobb != null) {
-                                Span.current().updateName("jobb + ${plukketJobb.type()}")
-                                oppdaterSistePlukk(plukketJobb.type())
+if (plukketJobb != null) {
+    Span.current().updateName("jobbPlukk + ${plukketJobb.type()}")
+    oppdaterSistePlukk(plukketJobb.type())
                                 log.info("Plukket jobb $plukketJobb.")
                                 val behandlingId = plukketJobb.behandlingIdOrNull()
                                 val sakId = plukketJobb.sakIdOrNull()
