@@ -5,7 +5,6 @@ import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.api.trace.SpanKind
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.api.trace.Tracer
-import java.lang.RuntimeException
 import java.util.function.UnaryOperator
 
 internal object OpentelemetryUtil {
@@ -19,7 +18,7 @@ internal object OpentelemetryUtil {
         jobbId: String,
         spanBuilderTransformer: UnaryOperator<SpanBuilder>,
         block: () -> V
-    ): V? {
+    ): V {
         var spanBuilder: SpanBuilder =
             TRACER.spanBuilder(navn)
                 .setSpanKind(SpanKind.INTERNAL)
@@ -38,10 +37,10 @@ internal object OpentelemetryUtil {
         val span = spanBuilder.startSpan()
 
         try {
-            span.makeCurrent().use { unused ->
+            span.makeCurrent().use { _ ->
                 return block()
             }
-        } catch (e: RuntimeException) {
+        } catch (e: Throwable) {
             span.recordException(e)
             span.setStatus(StatusCode.ERROR, e.javaClass.getSimpleName())
             throw e
