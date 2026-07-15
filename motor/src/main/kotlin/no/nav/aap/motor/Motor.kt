@@ -204,9 +204,9 @@ if (plukketJobb != null) {
                                 ) {
                                     utfør(plukketJobb, connection)
                                 }
-                            } else {
-                                Span.current().updateName("jobb + ingenJobb")
-                                plukker = false
+} else {
+    Span.current().updateName("jobbPlukk + ingenJobb")
+    plukker = false
                             }
                         }
                     }
