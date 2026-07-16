@@ -754,8 +754,8 @@ public inline fun <T> Tidslinje<T>.ifEmpty(defaultValue: () -> Tidslinje<T>): Ti
     return if (isEmpty()) defaultValue() else this
 }
 
-public inline fun <T> Tidslinje<T>.ifNotEmpty(defaultValue: () -> Tidslinje<T>): Tidslinje<T> {
-    return if (isNotEmpty()) defaultValue() else this
+public inline fun <T> Tidslinje<T>.ifNotEmpty(defaultValue: (Tidslinje<T>) -> Tidslinje<T>): Tidslinje<T> {
+    return if (isNotEmpty()) defaultValue(this) else this
 }
 
 /** Lag tidslinje basert på verdiene ved å knytte dem til perioder. Verdier lenger ut
