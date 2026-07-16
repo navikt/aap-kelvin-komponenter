@@ -4,7 +4,6 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":dbconnect"))
     implementation(libs.jackson.annotations)
     testImplementation(project(":json"))
     testImplementation(libs.junit.jupiter.api)
