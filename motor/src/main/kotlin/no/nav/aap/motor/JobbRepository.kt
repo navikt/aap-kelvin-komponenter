@@ -1,7 +1,9 @@
 package no.nav.aap.motor
 
 import no.nav.aap.komponenter.dbconnect.DBConnection
+import no.nav.aap.komponenter.json.DefaultJsonMapper
 import org.slf4j.LoggerFactory
+import java.time.Instant
 import java.time.LocalDateTime
 
 public class JobbRepository(private val connection: DBConnection) {
@@ -211,6 +213,65 @@ public class JobbRepository(private val connection: DBConnection) {
                 setString(3, exception.stackTraceToString())
                 setLocalDateTime(4, LocalDateTime.now())
             }
+        }
+    }
+
+    public fun hentTilleggsinfo(jobbId: Long): JobbTilleggsinfo? {
+        return runCatching {
+            connection.queryFirstOrNull("SELECT payload FROM JOBB_TILLEGGSINFO WHERE JOBB_ID = ?") {
+                setParams {
+                    setLong(1, jobbId)
+                }
+                setRowMapper { row ->
+                    DefaultJsonMapper.fromJson<JobbTilleggsinfo>(row.getString("payload"))
+                }
+            }
+        }.getOrElse { e ->
+            log.warn("Kunne ikke hente tilleggsinfo for jobb $jobbId — migrering er muligens ikke kjørt ennå", e)
+            null
+        }
+    }
+
+    public fun opprettTilleggsinfo(jobbId: Long, tilleggsinfo: JobbTilleggsinfo): Int {
+        return runCatching {
+            connection.executeReturnUpdated(
+                """
+                    INSERT INTO jobb_tilleggsinfo (jobb_id, payload, opprettet_tid, oppdatert_tid) 
+                    VALUES (?, ?::jsonb, ?, ?)
+                """.trimIndent()
+            ) {
+                setParams {
+                    setLong(1, jobbId)
+                    setString(2, DefaultJsonMapper.toJson(tilleggsinfo))
+                    setInstant(3, Instant.now())
+                    setInstant(4, Instant.now())
+                }
+            }
+        }.getOrElse { e ->
+            log.warn("Kunne ikke oppdatere tilleggsinfo for jobb $jobbId — migrering er muligens ikke kjørt ennå", e)
+            0
+        }
+    }
+
+    public fun oppdaterTilleggsinfo(jobbId: Long, tilleggsinfo: JobbTilleggsinfo): Int {
+        return runCatching {
+            connection.executeReturnUpdated(
+                """
+                    UPDATE jobb_tilleggsinfo 
+                    SET payload = ?::jsonb,
+                        oppdatert_tid = ?
+                    WHERE jobb_id = ?
+                """.trimIndent()
+            ) {
+                setParams {
+                    setString(1, DefaultJsonMapper.toJson(tilleggsinfo))
+                    setInstant(2, Instant.now())
+                    setLong(3, jobbId)
+                }
+            }
+        }.getOrElse { e ->
+            log.warn("Kunne ikke oppdatere tilleggsinfo for jobb $jobbId — migrering er muligens ikke kjørt ennå", e)
+            0
         }
     }
 

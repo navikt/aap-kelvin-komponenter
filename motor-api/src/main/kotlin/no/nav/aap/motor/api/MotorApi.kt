@@ -9,14 +9,17 @@ import com.papsign.ktor.openapigen.route.response.OpenAPIPipelineResponseContext
 import com.papsign.ktor.openapigen.route.response.respond
 import com.papsign.ktor.openapigen.route.response.respondWithStatus
 import com.papsign.ktor.openapigen.route.route
-import io.ktor.http.HttpStatusCode
-import io.ktor.server.application.ApplicationCall
-import io.ktor.server.auth.jwt.JWTPrincipal
-import io.ktor.server.auth.principal
+import io.ktor.http.*
+import io.ktor.server.application.*
+import io.ktor.server.auth.*
+import io.ktor.server.auth.jwt.*
 import no.nav.aap.komponenter.dbconnect.DBConnection
 import no.nav.aap.komponenter.dbconnect.transaction
 import no.nav.aap.komponenter.miljo.Miljø
+import no.nav.aap.komponenter.server.auth.bruker
 import no.nav.aap.motor.JobbInput
+import no.nav.aap.motor.JobbTilleggsinfo
+import no.nav.aap.motor.Kommentar
 import no.nav.aap.motor.mdc.JobbLogInfoProviderHolder
 import no.nav.aap.motor.retry.DriftJobbRepositoryExposed
 import java.time.LocalDateTime
@@ -42,6 +45,7 @@ public fun NormalOpenAPIRoute.motorApi(dataSource: DataSource, godkjenteRoller: 
 
                     }
                     respond(saker)
+
                 }
             }
         }
@@ -93,6 +97,65 @@ public fun NormalOpenAPIRoute.motorApi(dataSource: DataSource, godkjenteRoller: 
                 }
             }
         }
+
+        route("/{jobbId}/settAnsvarlig") {
+            data class OppdaterAnsvarligRequest(val ansvarlig: String?)
+            post<JobbIdDTO, String, OppdaterAnsvarligRequest>(modules) { params, req ->
+                val oppdatert = dataSource.transaction { connection ->
+                    val repository = DriftJobbRepositoryExposed(connection)
+                    val tilleggsinfo = repository.hentTilleggsinfo(params.jobbId)
+
+                    if (tilleggsinfo == null) {
+                        repository.opprettTilleggsinfo(params.jobbId, JobbTilleggsinfo(ansvarlig = req.ansvarlig))
+                    } else {
+                        repository.oppdaterTilleggsinfo(
+                            params.jobbId,
+                            tilleggsinfo.settAnsvarlig(req.ansvarlig)
+                        )
+                    }
+                }
+
+                if (oppdatert == 0) {
+                    respond("Kunne ikke oppdatere ansvarlig for jobb med ID $params")
+                } else {
+                    respond("Ansvarlig oppdatert for jobb med ID $params.")
+                }
+            }
+        }
+
+        route("/{jobbId}/leggTilKommentar") {
+            data class LeggTilKommentarRequest(val kommentar: String)
+            post<JobbIdDTO, String, LeggTilKommentarRequest>(modules) { params, req ->
+                val oppdatert = dataSource.transaction { connection ->
+                    val repository = DriftJobbRepositoryExposed(connection)
+
+                    val tilleggsinfo = repository.hentTilleggsinfo(params.jobbId)
+
+                    if (tilleggsinfo == null) {
+                        repository.opprettTilleggsinfo(
+                            jobbId = params.jobbId,
+                            tilleggsinfo = JobbTilleggsinfo(
+                                kommentarer = listOf(Kommentar.ny(skrevetAv = bruker().ident, tekst = req.kommentar))
+                            )
+                        )
+                    } else {
+                        repository.oppdaterTilleggsinfo(
+                            jobbId = params.jobbId,
+                            tilleggsinfo = tilleggsinfo.leggTilKommentar(
+                                Kommentar.ny(skrevetAv = bruker().ident, tekst = req.kommentar)
+                            )
+                        )
+                    }
+                }
+
+                if (oppdatert == 0) {
+                    respond("Kunne ikke oppdatere tilleggsinfo for jobb med ID $params")
+                } else {
+                    respond("Tilleggsinfo oppdatert for jobb med ID $params.")
+                }
+            }
+        }
+
         route("/rekjor/{jobbId}") {
             get<JobbIdDTO, String>(modules) { jobbId ->
                 autoriser(godkjenteRoller) {
@@ -168,6 +231,7 @@ private fun jobbInfoDto(
         feilmelding = feilmelding,
         planlagtKjøretidspunkt = jobbInput.nesteKjøring(),
         opprettetTidspunkt = jobbInput.opprettetTidspunkt(),
+        tilleggsinfo = jobbInput.tilleggsinfo(),
         metadata = JobbLogInfoProviderHolder.get()
             .hentInformasjon(connection, jobbInput)?.felterMedVerdi
             ?: mapOf()

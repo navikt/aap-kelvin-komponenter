@@ -188,4 +188,21 @@ class JobbRepositoryTest {
 
     }
 
+    @Test
+    fun `Lagrer og henter tilleggsinfo riktig`() {
+        val tilleggsinfo = JobbTilleggsinfo(
+            ansvarlig = null,
+            kommentarer = emptyList(),
+        )
+
+        dataSource.transaction { connection ->
+            val jobbRepository = JobbRepository(connection)
+            val jobbInput = JobbInput(TøysTestJobbUtfører).medTilleggsinfo(tilleggsinfo)
+            val jobbId = jobbRepository.leggTil(jobbInput)
+
+            val hentetTilleggsinfo = jobbRepository.hentTilleggsinfo(jobbId)
+            assertThat(hentetTilleggsinfo).isEqualTo(tilleggsinfo)
+        }
+    }
+
 }

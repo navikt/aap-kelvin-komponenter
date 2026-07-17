@@ -13,7 +13,7 @@ private const val CALL_ID_KEY = "CallId"
 
 public class JobbInput(
     internal val jobb: JobbSpesifikasjon,
-)  {
+) {
 
     internal var id: Long? = null
     private var sakId: Long? = null
@@ -23,6 +23,7 @@ public class JobbInput(
     private var status: JobbStatus = JobbStatus.KLAR
     internal var properties = Properties()
     internal var payload: String? = null
+    internal var tilleggsinfo: JobbTilleggsinfo? = null
     internal var opprettetTidspunkt: LocalDateTime? = null
 
     internal fun medId(id: Long): JobbInput {
@@ -79,6 +80,11 @@ public class JobbInput(
         return this
     }
 
+    public fun medTilleggsinfo(tilleggsinfo: JobbTilleggsinfo?): JobbInput {
+        this.tilleggsinfo = tilleggsinfo
+        return this
+    }
+
     public fun <T> medPayload(payload: T?): JobbInput {
         this.payload = payload?.let { value -> DefaultJsonMapper.toJson(value) }
         return this
@@ -119,6 +125,10 @@ public class JobbInput(
 
     public fun type(): String {
         return jobb.type
+    }
+
+    public fun tilleggsinfo(): JobbTilleggsinfo? {
+        return tilleggsinfo
     }
 
     public fun medNesteKjøring(nesteKjøring: LocalDateTime): JobbInput {
@@ -208,7 +218,11 @@ public class JobbInput(
         return this
     }
 
-    public fun kjør(connection: DBConnection, repositoryRegistry: RepositoryRegistry?, gatewayProvider: GatewayProvider?) {
+    public fun kjør(
+        connection: DBConnection,
+        repositoryRegistry: RepositoryRegistry?,
+        gatewayProvider: GatewayProvider?
+    ) {
         konstruer(connection, repositoryRegistry, gatewayProvider).utfør(this)
     }
 
@@ -220,7 +234,10 @@ public class JobbInput(
         return when (jobb) {
             is ConnectionJobbSpesifikasjon -> jobb.konstruer(connection)
             is ProviderJobbSpesifikasjon -> jobb.konstruer(repositoryRegistry!!.provider(connection))
-            is ProvidersJobbSpesifikasjon -> jobb.konstruer(repositoryRegistry!!.provider(connection), gatewayProvider!!)
+            is ProvidersJobbSpesifikasjon -> jobb.konstruer(
+                repositoryRegistry!!.provider(connection),
+                gatewayProvider!!
+            )
         }
     }
 }
