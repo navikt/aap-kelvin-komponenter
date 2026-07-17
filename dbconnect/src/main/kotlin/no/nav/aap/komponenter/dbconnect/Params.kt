@@ -1,6 +1,7 @@
 package no.nav.aap.komponenter.dbconnect
 
 import no.nav.aap.komponenter.type.Periode
+import no.nav.aap.komponenter.verdityper.Tidspunkt
 import java.math.BigDecimal
 import java.sql.Connection
 import java.sql.Date
@@ -86,6 +87,10 @@ public class Params internal constructor(
 
     public fun setInstant(index: Int, instant: Instant?) {
         preparedStatement.setTimestamp(index, instant?.let(Timestamp::from))
+    }
+
+    public fun setTidspunkt(index: Int, tidspunkt: Tidspunkt?) {
+        preparedStatement.setTimestamp(index, tidspunkt?.let { Timestamp.from(it.asInstant) })
     }
 
     public fun setProperties(index: Int, properties: Properties?) {

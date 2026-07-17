@@ -4,6 +4,7 @@ plugins {
 
 dependencies {
     implementation(libs.slf4j.api)
+    implementation(project(":verdityper"))
 
     implementation(libs.opentelemetry.annotations)
     implementation(kotlin("reflect"))
