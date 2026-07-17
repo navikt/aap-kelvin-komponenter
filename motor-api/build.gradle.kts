@@ -6,7 +6,6 @@ dependencies {
     implementation(project(":dbconnect"))
     implementation(project(":infrastructure"))
     implementation(project(":motor"))
-    implementation(project(":server"))
     implementation(libs.ktor.server.core)
     api(libs.ktor.server.auth)
     api(libs.ktor.server.auth.jwt)

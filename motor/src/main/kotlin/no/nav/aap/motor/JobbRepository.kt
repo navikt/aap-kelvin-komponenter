@@ -248,7 +248,7 @@ public class JobbRepository(private val connection: DBConnection) {
                 }
             }
         }.getOrElse { e ->
-            log.warn("Kunne ikke oppdatere tilleggsinfo for jobb $jobbId — migrering er muligens ikke kjørt ennå", e)
+            log.warn("Kunne ikke opprette tilleggsinfo for jobb $jobbId — migrering er muligens ikke kjørt ennå", e)
             0
         }
     }

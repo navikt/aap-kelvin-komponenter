@@ -9,14 +9,13 @@ import com.papsign.ktor.openapigen.route.response.OpenAPIPipelineResponseContext
 import com.papsign.ktor.openapigen.route.response.respond
 import com.papsign.ktor.openapigen.route.response.respondWithStatus
 import com.papsign.ktor.openapigen.route.route
-import io.ktor.http.*
-import io.ktor.server.application.*
-import io.ktor.server.auth.*
-import io.ktor.server.auth.jwt.*
+import io.ktor.http.HttpStatusCode
+import io.ktor.server.application.ApplicationCall
+import io.ktor.server.auth.jwt.JWTPrincipal
+import io.ktor.server.auth.principal
 import no.nav.aap.komponenter.dbconnect.DBConnection
 import no.nav.aap.komponenter.dbconnect.transaction
 import no.nav.aap.komponenter.miljo.Miljø
-import no.nav.aap.komponenter.server.auth.bruker
 import no.nav.aap.motor.JobbInput
 import no.nav.aap.motor.JobbTilleggsinfo
 import no.nav.aap.motor.Kommentar
@@ -116,9 +115,12 @@ public fun NormalOpenAPIRoute.motorApi(dataSource: DataSource, godkjenteRoller: 
                 }
 
                 if (oppdatert == 0) {
-                    respond("Kunne ikke oppdatere ansvarlig for jobb med ID $params")
+                    respond(
+                        response = "Kunne ikke oppdatere ansvarlig for jobb med ID ${params.jobbId}",
+                        statusCode = HttpStatusCode.InternalServerError
+                    )
                 } else {
-                    respond("Ansvarlig oppdatert for jobb med ID $params.")
+                    respond("Ansvarlig oppdatert for jobb med ID ${params.jobbId}.")
                 }
             }
         }
@@ -135,23 +137,26 @@ public fun NormalOpenAPIRoute.motorApi(dataSource: DataSource, godkjenteRoller: 
                         repository.opprettTilleggsinfo(
                             jobbId = params.jobbId,
                             tilleggsinfo = JobbTilleggsinfo(
-                                kommentarer = listOf(Kommentar.ny(skrevetAv = bruker().ident, tekst = req.kommentar))
+                                kommentarer = listOf(Kommentar.ny(skrevetAv = bruker(), tekst = req.kommentar))
                             )
                         )
                     } else {
                         repository.oppdaterTilleggsinfo(
                             jobbId = params.jobbId,
                             tilleggsinfo = tilleggsinfo.leggTilKommentar(
-                                Kommentar.ny(skrevetAv = bruker().ident, tekst = req.kommentar)
+                                Kommentar.ny(skrevetAv = bruker(), tekst = req.kommentar)
                             )
                         )
                     }
                 }
 
                 if (oppdatert == 0) {
-                    respond("Kunne ikke oppdatere tilleggsinfo for jobb med ID $params")
+                    respond(
+                        response = "Kunne ikke oppdatere tilleggsinfo for jobb med ID ${params.jobbId}",
+                        statusCode = HttpStatusCode.InternalServerError
+                    )
                 } else {
-                    respond("Tilleggsinfo oppdatert for jobb med ID $params.")
+                    respond("Tilleggsinfo oppdatert for jobb med ID ${params.jobbId}.")
                 }
             }
         }
@@ -252,4 +257,10 @@ private suspend inline fun <reified TResponse : Any> OpenAPIPipelineResponseCont
         return
     }
     block()
+}
+
+private fun <TResponse> OpenAPIPipelineResponseContext<TResponse>.bruker(): String {
+    return requireNotNull(pipeline.call.principal<JWTPrincipal>()?.getClaim("NAVident", String::class)) {
+        "NAVident mangler"
+    }
 }

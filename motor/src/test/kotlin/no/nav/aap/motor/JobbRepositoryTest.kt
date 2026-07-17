@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
 import java.util.*
 
+
 class JobbRepositoryTest {
 
     @AutoClose
@@ -189,20 +190,94 @@ class JobbRepositoryTest {
     }
 
     @Test
-    fun `Lagrer og henter tilleggsinfo riktig`() {
-        val tilleggsinfo = JobbTilleggsinfo(
-            ansvarlig = null,
-            kommentarer = emptyList(),
-        )
-
+    fun `hentTilleggsinfo returnerer null for jobb uten tilleggsinfo`() {
         dataSource.transaction { connection ->
             val jobbRepository = JobbRepository(connection)
-            val jobbInput = JobbInput(TøysTestJobbUtfører).medTilleggsinfo(tilleggsinfo)
-            val jobbId = jobbRepository.leggTil(jobbInput)
+            val jobbId = jobbRepository.leggTil(JobbInput(TøysTestJobbUtfører))
 
-            val hentetTilleggsinfo = jobbRepository.hentTilleggsinfo(jobbId)
-            assertThat(hentetTilleggsinfo).isEqualTo(tilleggsinfo)
+            assertThat(jobbRepository.hentTilleggsinfo(jobbId)).isNull()
         }
     }
 
+    @Test
+    fun `opprettTilleggsinfo lagrer ansvarlig og kommentarer etter at jobb er feilet`() {
+        dataSource.transaction { connection ->
+            val jobbRepository = JobbRepository(connection)
+            val jobbId = jobbRepository.leggTil(JobbInput(TøysTestJobbUtfører))
+            assertThat(jobbRepository.hentTilleggsinfo(jobbId)).isNull()
+
+            val tilleggsinfo = JobbTilleggsinfo(
+                ansvarlig = "z123456",
+                kommentarer = listOf(Kommentar(skrevetAv = "z123456", tekst = "Ser på saken", tidspunkt = LocalDateTime.now()))
+            )
+            val antallOpprettet = jobbRepository.opprettTilleggsinfo(jobbId, tilleggsinfo)
+            assertThat(antallOpprettet).isEqualTo(1)
+
+            val hentet = jobbRepository.hentTilleggsinfo(jobbId)!!
+            assertThat(hentet.ansvarlig).isEqualTo("z123456")
+            assertThat(hentet.kommentarer).hasSize(1)
+            assertThat(hentet.kommentarer.first().tekst).isEqualTo("Ser på saken")
+        }
+    }
+
+    @Test
+    fun `oppdaterTilleggsinfo overskriver eksisterende rad`() {
+        dataSource.transaction { connection ->
+            val jobbRepository = JobbRepository(connection)
+            val jobbId = jobbRepository.leggTil(JobbInput(TøysTestJobbUtfører))
+
+            jobbRepository.opprettTilleggsinfo(jobbId, JobbTilleggsinfo(ansvarlig = "z111111"))
+
+            val antallOppdatert = jobbRepository.oppdaterTilleggsinfo(
+                jobbId,
+                JobbTilleggsinfo(
+                    ansvarlig = "z222222",
+                    kommentarer = listOf(Kommentar(skrevetAv = "z222222", tekst = "Tok over", tidspunkt = LocalDateTime.now()))
+                )
+            )
+            assertThat(antallOppdatert).isEqualTo(1)
+
+            val hentet = jobbRepository.hentTilleggsinfo(jobbId)!!
+            assertThat(hentet.ansvarlig).isEqualTo("z222222")
+            assertThat(hentet.kommentarer).hasSize(1)
+        }
+    }
+
+    @Test
+    fun `kommentarer akkumuleres ved å hente eksisterende og legge til ny`() {
+        dataSource.transaction { connection ->
+            val jobbRepository = JobbRepository(connection)
+            val jobbId = jobbRepository.leggTil(JobbInput(TøysTestJobbUtfører))
+
+            jobbRepository.opprettTilleggsinfo(
+                jobbId,
+                JobbTilleggsinfo(kommentarer = listOf(Kommentar(skrevetAv = "z111111", tekst = "Første kommentar", tidspunkt = LocalDateTime.now())))
+            )
+
+            val eksisterende = jobbRepository.hentTilleggsinfo(jobbId)!!
+            jobbRepository.oppdaterTilleggsinfo(
+                jobbId,
+                eksisterende.copy(kommentarer = eksisterende.kommentarer + Kommentar(skrevetAv = "z222222", tekst = "Andre kommentar", tidspunkt = LocalDateTime.now()))
+            )
+
+            val hentet = jobbRepository.hentTilleggsinfo(jobbId)!!
+            assertThat(hentet.kommentarer).hasSize(2)
+            assertThat(hentet.kommentarer.map { it.tekst }).containsExactly("Første kommentar", "Andre kommentar")
+        }
+    }
+
+    @Test
+    fun `ansvarlig kan settes til null for å fjerne tildeling`() {
+        dataSource.transaction { connection ->
+            val jobbRepository = JobbRepository(connection)
+            val jobbId = jobbRepository.leggTil(JobbInput(TøysTestJobbUtfører))
+
+            jobbRepository.opprettTilleggsinfo(jobbId, JobbTilleggsinfo(ansvarlig = "z123456"))
+            assertThat(jobbRepository.hentTilleggsinfo(jobbId)!!.ansvarlig).isEqualTo("z123456")
+
+            jobbRepository.oppdaterTilleggsinfo(jobbId, JobbTilleggsinfo(ansvarlig = null))
+
+            assertThat(jobbRepository.hentTilleggsinfo(jobbId)!!.ansvarlig).isNull()
+        }
+    }
 }
