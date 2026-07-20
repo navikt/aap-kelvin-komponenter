@@ -21,11 +21,13 @@ import io.ktor.server.routing.RoutingContext
 import io.ktor.server.routing.accept
 import io.ktor.server.routing.application
 import io.ktor.server.routing.contentType
+import io.ktor.utils.io.KtorDsl
 import kotlin.reflect.KType
 import kotlin.reflect.KTypeProjection
 import kotlin.reflect.KVariance
 import kotlin.reflect.full.createType
 
+@KtorDsl
 abstract class OpenAPIRoute<T : OpenAPIRoute<T>>(val ktorRoute: Route, val provider: CachingModuleProvider) {
     private val log = classLogger()
 

@@ -102,7 +102,8 @@ public class MotorImpl(
             .name("forbrenningskammer-", 1L)
             .factory()
     )
-    private val watchdogExecutor = Executors.newScheduledThreadPool(1, Thread.ofVirtual().name("motor-watchdog").factory())
+    private val watchdogExecutor =
+        Executors.newScheduledThreadPool(1, Thread.ofVirtual().name("motor-watchdog").factory())
     private val metricExecutor = Executors.newScheduledThreadPool(1, Thread.ofVirtual().name("motor-metrics").factory())
 
     @Volatile
@@ -188,9 +189,9 @@ public class MotorImpl(
                             * timestamp(motor_siste_plukk_timestamp_seconds) - motor_siste_plukk_timestamp_seconds
                             **/
 
-if (plukketJobb != null) {
-    Span.current().updateName("jobbPlukk + ${plukketJobb.type()}")
-    oppdaterSistePlukk(plukketJobb.type())
+                            if (plukketJobb != null) {
+                                Span.current().updateName("jobbPlukk + ${plukketJobb.type()}")
+                                oppdaterSistePlukk(plukketJobb.type())
                                 log.info("Plukket jobb $plukketJobb.")
                                 val behandlingId = plukketJobb.behandlingIdOrNull()
                                 val sakId = plukketJobb.sakIdOrNull()
@@ -204,9 +205,9 @@ if (plukketJobb != null) {
                                 ) {
                                     utfør(plukketJobb, connection)
                                 }
-} else {
-    Span.current().updateName("jobbPlukk + ingenJobb")
-    plukker = false
+                            } else {
+                                Span.current().updateName("jobbPlukk + ingenJobb")
+                                plukker = false
                             }
                         }
                     }
@@ -327,7 +328,7 @@ if (plukketJobb != null) {
         }
     }
 
-    private inner class MetricsUpdater: Runnable {
+    private inner class MetricsUpdater : Runnable {
         private val log = LoggerFactory.getLogger(javaClass)
         override fun run() {
             try {

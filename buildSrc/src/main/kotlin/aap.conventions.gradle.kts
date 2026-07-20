@@ -17,16 +17,18 @@ repositories {
 }
 
 
-val jackson3Version = the<VersionCatalogsExtension>().named("libs").findVersion("jackson3").get().requiredVersion
+val jacksonVersion = the<VersionCatalogsExtension>().named("libs").findVersion("jackson3").get().requiredVersion
 
 dependencies {
     constraints {
         // Sikkerhetspin – sårbarhet i tools.jackson.core 3.1.1
-        listOf("jackson-databind", "jackson-core").forEach { artifact ->
-            add("implementation", "tools.jackson.core:$artifact") {
-                version { strictly(jackson3Version) }
-                because("Sikkerhetsfiks – sårbarhet i 3.1.1")
-            }
+        add("implementation", "tools.jackson.core:jackson-databind") {
+            version { strictly(jacksonVersion) }
+            because("Sikkerhetsfiks – sårbarhet i 3.1.1")
+        }
+        add("implementation", "tools.jackson.core:jackson-core") {
+            version { strictly(jacksonVersion) }
+            because("Sikkerhetsfiks – sårbarhet i 3.1.1")
         }
     }
 }
