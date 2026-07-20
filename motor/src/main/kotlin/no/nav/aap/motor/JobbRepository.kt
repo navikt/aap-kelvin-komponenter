@@ -153,6 +153,120 @@ public class JobbRepository(private val connection: DBConnection) {
         return plukketJobb
     }
 
+    public fun plukkJobbV2(): JobbInput? {
+        val query = """
+            select jobb.id,
+                   jobb.type,
+                   jobb.status,
+                   jobb.sak_id,
+                   jobb.behandling_id,
+                   jobb.neste_kjoring,
+                   jobb.parameters,
+                   jobb.payload,
+                   jobb.opprettet_tid,
+                   (select count(1)
+                    from jobb_historikk
+                    where jobb_historikk.jobb_id = jobb.id
+                      and jobb_historikk.status = '${JobbStatus.FEILET.name}') as antall_feil
+            from jobb
+            where jobb.status = '${JobbStatus.KLAR.name}'
+            and jobb.kjorbar
+            order by jobb.neste_kjoring
+            for update skip locked
+            limit 1
+        """.trimIndent()
+
+        val plukketJobb = connection.queryFirstOrNull(query) {
+            setRowMapper { row ->
+                JobbInputParser.mapJobb(row)
+            }
+        }
+
+        if (plukketJobb == null) {
+            return null
+        }
+
+        connection.execute(
+            """
+            INSERT INTO JOBB_HISTORIKK 
+            (jobb_id, status, opprettet_tid) VALUES (?, ?, ?)
+            """.trimIndent()
+        ) {
+            setParams {
+                setLong(1, plukketJobb.id)
+                setEnumName(2, JobbStatus.PLUKKET)
+                setLocalDateTime(3, LocalDateTime.now())
+            }
+        }
+
+        return plukketJobb
+    }
+
+    public fun skjedulerJobber(): Int {
+        return skjedulerSelvstendigeJobber() + skjedulerEkskluderendeJobber()
+    }
+
+    private fun skjedulerEkskluderendeJobber(): Int {
+        /* Egnet index:
+            create index idx_jobb_sak_behandling_type_neste
+                (sak_id, behandling_id, type, neste_kjoring)
+                where status IN ('${JobbStatus.FEILET.name}', '${JobbStatus.KLAR.name}')
+                and (sak_id is not null or (sak_id is null and behandling_id is not null))
+                ;
+
+                Det er bare en mulig transisjon for `kjorbar`: fra false til true. Det betyr
+                at å sette kjorbar := true er en idempotent operasjon, og vi får ikke
+                feil hvis to transaksjoner gjør samme endring – uavhengig av hvor lang
+                tid det er mellom endringene.
+         */
+        val query = """
+            with neste_ekskluderende_jobb as (
+                select distinct on (sak_id, behandling_id, type) id, status
+                from jobb
+                where status IN ('${JobbStatus.FEILET.name}', '${JobbStatus.KLAR.name}')
+                  and (sak_id is not null or (sak_id is null and behandling_id is not null))
+                order by sak_id, behandling_id, type, neste_kjoring
+            )
+            update jobb
+            set kjorbar = true
+            from neste_ekskluderende_jobb
+            where jobb.id = neste_ekskluderende_jobb.id
+            and jobb.neste_kjoring <= ?
+            and not jobb.kjorbar
+        """.trimIndent()
+
+        return connection.executeReturnUpdated(query) {
+            setParams {
+                setLocalDateTime(1, LocalDateTime.now())
+            }
+        }
+    }
+
+    private fun skjedulerSelvstendigeJobber(): Int {
+        /* Egnet index:
+
+        create index idx_jobb_neste_kjoring (neste_kjoring)
+            where sak_id is null
+
+         */
+        val query = """
+            update jobb
+            set kjorbar = true
+            where
+                status = '${JobbStatus.KLAR.name}'
+                and sak_id is null
+                and behandling_id is null
+                and not kjorbar
+                and neste_kjoring <= ?
+        """.trimIndent()
+
+        return connection.executeReturnUpdated(query) {
+            setParams {
+                setLocalDateTime(1, LocalDateTime.now())
+            }
+        }
+    }
+
     public fun markerSomFerdig(jobbInput: JobbInput) {
         connection.execute("UPDATE JOBB SET status = ? WHERE id = ? AND status = ?") {
             setParams {

@@ -21,6 +21,7 @@ public class ManuellMotorImpl(
     jobber: List<JobbSpesifikasjon>,
     private val repositoryRegistry: RepositoryRegistry? = null,
     private val gatewayProvider: GatewayProvider? = null,
+    private val enableV2: () -> Boolean = { false },
 ) : Motor {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -65,7 +66,13 @@ public class ManuellMotorImpl(
             while (plukker) {
                 dataSource.transaction { connection ->
                     val repository = JobbRepository(connection)
-                    val plukketJobb = repository.plukkJobb()
+                    val plukketJobb = if (enableV2()) {
+                        repository.skjedulerJobber()
+                        repository.plukkJobbV2()
+                    } else {
+                        repository.plukkJobb()
+                    }
+
                     if (plukketJobb != null) {
                         utfør(plukketJobb, connection)
                     }
