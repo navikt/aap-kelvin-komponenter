@@ -78,13 +78,26 @@ public class Tidslinje<T>(initSegmenter: NavigableSet<Segment<T>> = TreeSet()) {
         )
 
         val nySammensetning: NavigableSet<Segment<V>> = TreeSet()
+
+        // Two-pointer cursors: both segmenter and periodeIterator are sorted by fom,
+        // so each cursor only ever moves forward — O(n+m) total instead of O(n*m).
+        val leftIterator = this.segmenter.iterator()
+        val rightIterator = other.segmenter.iterator()
+        var leftCurrent: Segment<T>? = if (leftIterator.hasNext()) leftIterator.next() else null
+        var rightCurrent: Segment<E>? = if (rightIterator.hasNext()) rightIterator.next() else null
+
         while (periodeIterator.hasNext()) {
             val periode = periodeIterator.next()
 
-            val left = this.segmenter.firstOrNull { segment -> segment.periode.overlapper(periode) }
-                ?.tilpassetPeriode(periode)
-            val right = other.segmenter.firstOrNull { segment -> segment.periode.overlapper(periode) }
-                ?.tilpassetPeriode(periode)
+            while (leftCurrent != null && leftCurrent.periode.tom < periode.fom) {
+                leftCurrent = if (leftIterator.hasNext()) leftIterator.next() else null
+            }
+            while (rightCurrent != null && rightCurrent.periode.tom < periode.fom) {
+                rightCurrent = if (rightIterator.hasNext()) rightIterator.next() else null
+            }
+
+            val left = leftCurrent?.takeIf { it.periode.overlapper(periode) }?.tilpassetPeriode(periode)
+            val right = rightCurrent?.takeIf { it.periode.overlapper(periode) }?.tilpassetPeriode(periode)
 
             val kombinert = body(periode, left, right)
             if (kombinert != null) {
@@ -490,7 +503,30 @@ public class Tidslinje<T>(initSegmenter: NavigableSet<Segment<T>> = TreeSet()) {
     }
 
     public fun mergePrioriterHøyre(other: Tidslinje<T>): Tidslinje<T> {
+        // Fast path: when other is a single segment, use TreeSet operations directly
+        // instead of going through PeriodeIterator — O(log n + k) vs O(n).
+        if (other.segmenter.size == 1) {
+            return mergePrioriterHøyreEttSegment(other)
+        }
         return this.outerJoin(other) { venstreVerdi, høyreVerdi -> høyreVerdi ?: venstreVerdi ?: error("ikke mulig") }
+    }
+
+    private fun mergePrioriterHøyreEttSegment(other: Tidslinje<T>): Tidslinje<T> {
+        val nytt = other.segmenter.first()
+        val result: NavigableSet<Segment<T>> = TreeSet()
+
+        for (eksisterende in this.segmenter) {
+            if (!eksisterende.periode.overlapper(nytt.periode)) {
+                result.add(eksisterende)
+            } else {
+                // Keep the parts of the existing segment that fall outside the new segment
+                eksisterende.periode.minus(nytt.periode).forEach { rest ->
+                    result.add(Segment(rest, eksisterende.verdi))
+                }
+            }
+        }
+        result.add(nytt)
+        return Tidslinje(result)
     }
 
     public fun mergePrioriterVenstre(other: Tidslinje<T>): Tidslinje<T> {
@@ -660,7 +696,15 @@ public class Tidslinje<T>(initSegmenter: NavigableSet<Segment<T>> = TreeSet()) {
             gTidslinje: Tidslinje<G>,
             body: (A?, B?, C?, D?, E?, F?, G?) -> R,
         ): Tidslinje<R> {
-            return map7(aTidslinje, bTidslinje, cTidslinje, dTidslinje, eTidslinje, fTidslinje, gTidslinje) { _, a, b, c, d, e, f, g ->
+            return map7(
+                aTidslinje,
+                bTidslinje,
+                cTidslinje,
+                dTidslinje,
+                eTidslinje,
+                fTidslinje,
+                gTidslinje
+            ) { _, a, b, c, d, e, f, g ->
                 body(a, b, c, d, e, f, g)
             }
         }
