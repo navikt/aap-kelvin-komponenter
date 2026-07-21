@@ -1,6 +1,7 @@
 package no.nav.aap.motor.api
 
 import no.nav.aap.motor.JobbStatus
+import no.nav.aap.motor.JobbTilleggsinfo
 import java.time.LocalDateTime
 
 /**
@@ -20,5 +21,6 @@ public data class JobbInfoDto(
     public val antallFeilendeForsøk: Int = 0,
     public val feilmelding: String? = null,
     public val beskrivelse: String,
-    public val navn: String
+    public val navn: String,
+    public val tilleggsinfo: JobbTilleggsinfo? = null,
 )

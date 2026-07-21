@@ -17,6 +17,7 @@ import no.nav.aap.komponenter.dbconnect.DBConnection
 import no.nav.aap.komponenter.dbconnect.transaction
 import no.nav.aap.komponenter.miljo.Miljø
 import no.nav.aap.motor.JobbInput
+import no.nav.aap.motor.Kommentar
 import no.nav.aap.motor.mdc.JobbLogInfoProviderHolder
 import no.nav.aap.motor.retry.DriftJobbRepositoryExposed
 import java.time.LocalDateTime
@@ -93,6 +94,23 @@ public fun NormalOpenAPIRoute.motorApi(dataSource: DataSource, godkjenteRoller: 
                 }
             }
         }
+
+        route("/{jobbId}/leggTilKommentar") {
+            data class LeggTilKommentarRequest(val kommentar: String)
+            post<JobbIdDTO, Kommentar, LeggTilKommentarRequest>(modules) { params, req ->
+                autoriser(godkjenteRoller) {
+                    val kommentar = dataSource.transaction { connection ->
+                        DriftJobbRepositoryExposed(connection)
+                            .leggTilKommentar(
+                                jobbId = params.jobbId,
+                                kommentar = Kommentar.ny(skrevetAv = bruker(), tekst = req.kommentar)
+                            )
+                    }
+                    respond(kommentar)
+                }
+            }
+        }
+
         route("/rekjor/{jobbId}") {
             get<JobbIdDTO, String>(modules) { jobbId ->
                 autoriser(godkjenteRoller) {
@@ -168,6 +186,7 @@ private fun jobbInfoDto(
         feilmelding = feilmelding,
         planlagtKjøretidspunkt = jobbInput.nesteKjøring(),
         opprettetTidspunkt = jobbInput.opprettetTidspunkt(),
+        tilleggsinfo = jobbInput.tilleggsinfo(),
         metadata = JobbLogInfoProviderHolder.get()
             .hentInformasjon(connection, jobbInput)?.felterMedVerdi
             ?: mapOf()
@@ -188,4 +207,10 @@ private suspend inline fun <reified TResponse : Any> OpenAPIPipelineResponseCont
         return
     }
     block()
+}
+
+private fun <TResponse> OpenAPIPipelineResponseContext<TResponse>.bruker(): String {
+    return requireNotNull(pipeline.call.principal<JWTPrincipal>()?.getClaim("NAVident", String::class)) {
+        "NAVident mangler"
+    }
 }

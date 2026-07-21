@@ -328,6 +328,61 @@ public class JobbRepository(private val connection: DBConnection) {
         }
     }
 
+    public fun hentTilleggsinfo(jobbId: Long): JobbTilleggsinfo {
+        /* Midlertidig for å unngå PSQLException */
+        val tabellFinnes = connection.queryFirst(
+            "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'jobb_kommentar')"
+        ) {
+            setRowMapper { it.getBoolean("exists") }
+        }
+
+        if (!tabellFinnes) return JobbTilleggsinfo()
+
+        val kommentarer = connection.queryList(
+            "SELECT skrevet_av, tekst, opprettet_tid FROM JOBB_KOMMENTAR WHERE jobb_id = ? ORDER BY opprettet_tid"
+        ) {
+            setParams { setLong(1, jobbId) }
+            setRowMapper { row ->
+                Kommentar(
+                    skrevetAv = row.getString("skrevet_av"),
+                    tekst = row.getString("tekst"),
+                    tidspunkt = row.getLocalDateTime("opprettet_tid"),
+                )
+            }
+        }
+
+        return JobbTilleggsinfo(kommentarer = kommentarer)
+    }
+
+    public fun leggTilKommentar(jobbId: Long, kommentar: Kommentar): Kommentar {
+        /* Midlertidig for å unngå PSQLException */
+        val tabellFinnes = connection.queryFirst(
+            "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'jobb_kommentar')"
+        ) {
+            setRowMapper { it.getBoolean("exists") }
+        }
+
+        require(tabellFinnes) {
+            "Tabellen jobb_kommentar finnes ikke. Kan ikke lagre kommentar."
+        }
+
+        connection.execute(
+            """
+            INSERT INTO JOBB_KOMMENTAR (jobb_id, skrevet_av, tekst, opprettet_tid)
+            VALUES (?, ?, ?, ?)
+            """.trimIndent()
+        ) {
+            setParams {
+                setLong(1, jobbId)
+                setString(2, kommentar.skrevetAv)
+                setString(3, kommentar.tekst)
+                setLocalDateTime(4, kommentar.tidspunkt)
+            }
+        }
+
+        return kommentar
+    }
+
     internal fun settNesteKjøring(jobbId: Long, tidspunkt: LocalDateTime): Int {
         return connection.executeReturnUpdated("UPDATE JOBB SET neste_kjoring = ? WHERE id = ? AND status = ?") {
             setParams {

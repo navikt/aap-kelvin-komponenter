@@ -61,6 +61,7 @@ internal class RetryFeiledeJobberRepository(private val connection: DBConnection
 
         return antallRader
     }
+
     internal fun markerSomAvbrutt(jobbId: Long): Int {
         val historikk = """
             INSERT INTO JOBB_HISTORIKK (jobb_id, status)
@@ -88,6 +89,7 @@ internal class RetryFeiledeJobberRepository(private val connection: DBConnection
 
         return antallRader
     }
+
     internal fun markerAlleFeiledeSomAvbrutt(): Int {
         val historikk = """
             INSERT INTO JOBB_HISTORIKK (jobb_id, status)
@@ -175,6 +177,9 @@ internal class RetryFeiledeJobberRepository(private val connection: DBConnection
             setRowMapper { row ->
                 mapJobbInklusivFeilmelding(row)
             }
+        }.map { (jobbInput, feilmelding) ->
+            val tilleggsinfo = runCatching { oppgaverRepository.hentTilleggsinfo(jobbInput.jobbId()) }.getOrNull()
+            jobbInput.medTilleggsinfo(tilleggsinfo) to feilmelding
         }
     }
 

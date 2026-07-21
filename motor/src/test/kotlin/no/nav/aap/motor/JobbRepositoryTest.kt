@@ -192,4 +192,45 @@ class JobbRepositoryTest {
 
     }
 
+    @Test
+    fun `hentTilleggsinfo returnerer tom tilleggsinfo hvis ingen finnes`() {
+        dataSource.transaction { connection ->
+            val jobbRepository = JobbRepository(connection)
+            val jobbId = jobbRepository.leggTil(JobbInput(TøysTestJobbUtfører))
+
+            val tilleggsinfo = jobbRepository.hentTilleggsinfo(jobbId)
+            assertThat(tilleggsinfo).isNotNull()
+            assertThat(tilleggsinfo.kommentarer).isEmpty()
+        }
+    }
+
+    @Test
+    fun `leggTilKommentar lagrer kommentar og hentTilleggsinfo returnerer den`() {
+        dataSource.transaction { connection ->
+            val jobbRepository = JobbRepository(connection)
+            val jobbId = jobbRepository.leggTil(JobbInput(TøysTestJobbUtfører))
+
+            jobbRepository.leggTilKommentar(jobbId, Kommentar.ny(skrevetAv = "z123456", tekst = "Ser på saken"))
+
+            val hentet = jobbRepository.hentTilleggsinfo(jobbId)
+            assertThat(hentet.kommentarer).hasSize(1)
+            assertThat(hentet.kommentarer.first().skrevetAv).isEqualTo("z123456")
+            assertThat(hentet.kommentarer.first().tekst).isEqualTo("Ser på saken")
+        }
+    }
+
+    @Test
+    fun `kommentarer akkumuleres ved flere kall til leggTilKommentar`() {
+        dataSource.transaction { connection ->
+            val jobbRepository = JobbRepository(connection)
+            val jobbId = jobbRepository.leggTil(JobbInput(TøysTestJobbUtfører))
+
+            jobbRepository.leggTilKommentar(jobbId, Kommentar.ny(skrevetAv = "z111111", tekst = "Første kommentar"))
+            jobbRepository.leggTilKommentar(jobbId, Kommentar.ny(skrevetAv = "z222222", tekst = "Andre kommentar"))
+
+            val hentet = jobbRepository.hentTilleggsinfo(jobbId)
+            assertThat(hentet.kommentarer).hasSize(2)
+            assertThat(hentet.kommentarer.map { it.tekst }).containsExactly("Første kommentar", "Andre kommentar")
+        }
+    }
 }

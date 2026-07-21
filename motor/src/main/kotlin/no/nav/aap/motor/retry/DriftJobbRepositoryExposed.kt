@@ -4,6 +4,7 @@ import no.nav.aap.komponenter.dbconnect.DBConnection
 import no.nav.aap.motor.JobbInput
 import no.nav.aap.motor.JobbRepository
 import no.nav.aap.motor.JobbType
+import no.nav.aap.motor.Kommentar
 import org.slf4j.LoggerFactory
 import java.time.LocalDateTime
 
@@ -15,6 +16,10 @@ public class DriftJobbRepositoryExposed(connection: DBConnection) {
 
     public fun settNesteKjøring(jobbId: Long, nesteKjøring: LocalDateTime): Int {
         return jobbRepository.settNesteKjøring(jobbId, nesteKjøring)
+    }
+
+    public fun leggTilKommentar(jobbId: Long, kommentar: Kommentar): Kommentar {
+        return jobbRepository.leggTilKommentar(jobbId, kommentar)
     }
 
     public fun markerAlleFeiledeForKlare(): Int {
