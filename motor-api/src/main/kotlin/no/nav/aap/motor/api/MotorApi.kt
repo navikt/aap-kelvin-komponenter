@@ -17,7 +17,6 @@ import no.nav.aap.komponenter.dbconnect.DBConnection
 import no.nav.aap.komponenter.dbconnect.transaction
 import no.nav.aap.komponenter.miljo.Miljø
 import no.nav.aap.motor.JobbInput
-import no.nav.aap.motor.JobbTilleggsinfo
 import no.nav.aap.motor.Kommentar
 import no.nav.aap.motor.mdc.JobbLogInfoProviderHolder
 import no.nav.aap.motor.retry.DriftJobbRepositoryExposed
@@ -97,66 +96,18 @@ public fun NormalOpenAPIRoute.motorApi(dataSource: DataSource, godkjenteRoller: 
             }
         }
 
-        route("/{jobbId}/settAnsvarlig") {
-            data class OppdaterAnsvarligRequest(val ansvarlig: String?)
-            post<JobbIdDTO, String, OppdaterAnsvarligRequest>(modules) { params, req ->
-                val oppdatert = dataSource.transaction { connection ->
-                    val repository = DriftJobbRepositoryExposed(connection)
-                    val tilleggsinfo = repository.hentTilleggsinfo(params.jobbId)
-
-                    if (tilleggsinfo == null) {
-                        repository.opprettTilleggsinfo(params.jobbId, JobbTilleggsinfo(ansvarlig = req.ansvarlig))
-                    } else {
-                        repository.oppdaterTilleggsinfo(
-                            params.jobbId,
-                            tilleggsinfo.settAnsvarlig(req.ansvarlig)
-                        )
-                    }
-                }
-
-                if (oppdatert == 0) {
-                    respond(
-                        response = "Kunne ikke oppdatere ansvarlig for jobb med ID ${params.jobbId}",
-                        statusCode = HttpStatusCode.InternalServerError
-                    )
-                } else {
-                    respond("Ansvarlig oppdatert for jobb med ID ${params.jobbId}.")
-                }
-            }
-        }
-
         route("/{jobbId}/leggTilKommentar") {
             data class LeggTilKommentarRequest(val kommentar: String)
-            post<JobbIdDTO, String, LeggTilKommentarRequest>(modules) { params, req ->
-                val oppdatert = dataSource.transaction { connection ->
-                    val repository = DriftJobbRepositoryExposed(connection)
-
-                    val tilleggsinfo = repository.hentTilleggsinfo(params.jobbId)
-
-                    if (tilleggsinfo == null) {
-                        repository.opprettTilleggsinfo(
-                            jobbId = params.jobbId,
-                            tilleggsinfo = JobbTilleggsinfo(
-                                kommentarer = listOf(Kommentar.ny(skrevetAv = bruker(), tekst = req.kommentar))
+            post<JobbIdDTO, Kommentar, LeggTilKommentarRequest>(modules) { params, req ->
+                autoriser(godkjenteRoller) {
+                    val kommentar = dataSource.transaction { connection ->
+                        DriftJobbRepositoryExposed(connection)
+                            .leggTilKommentar(
+                                jobbId = params.jobbId,
+                                kommentar = Kommentar.ny(skrevetAv = bruker(), tekst = req.kommentar)
                             )
-                        )
-                    } else {
-                        repository.oppdaterTilleggsinfo(
-                            jobbId = params.jobbId,
-                            tilleggsinfo = tilleggsinfo.leggTilKommentar(
-                                Kommentar.ny(skrevetAv = bruker(), tekst = req.kommentar)
-                            )
-                        )
                     }
-                }
-
-                if (oppdatert == 0) {
-                    respond(
-                        response = "Kunne ikke oppdatere tilleggsinfo for jobb med ID ${params.jobbId}",
-                        statusCode = HttpStatusCode.InternalServerError
-                    )
-                } else {
-                    respond("Tilleggsinfo oppdatert for jobb med ID ${params.jobbId}.")
+                    respond(kommentar)
                 }
             }
         }

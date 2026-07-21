@@ -3,8 +3,8 @@ package no.nav.aap.motor.retry
 import no.nav.aap.komponenter.dbconnect.DBConnection
 import no.nav.aap.motor.JobbInput
 import no.nav.aap.motor.JobbRepository
-import no.nav.aap.motor.JobbTilleggsinfo
 import no.nav.aap.motor.JobbType
+import no.nav.aap.motor.Kommentar
 import org.slf4j.LoggerFactory
 import java.time.LocalDateTime
 
@@ -18,16 +18,8 @@ public class DriftJobbRepositoryExposed(connection: DBConnection) {
         return jobbRepository.settNesteKjøring(jobbId, nesteKjøring)
     }
 
-    public fun hentTilleggsinfo(jobbId: Long): JobbTilleggsinfo? {
-        return runCatching { jobbRepository.hentTilleggsinfo(jobbId) }.getOrNull()
-    }
-
-    public fun opprettTilleggsinfo(jobbId: Long, tilleggsinfo: JobbTilleggsinfo): Int {
-        return runCatching { jobbRepository.opprettTilleggsinfo(jobbId, tilleggsinfo) }.getOrDefault(0)
-    }
-
-    public fun oppdaterTilleggsinfo(jobbId: Long, tilleggsinfo: JobbTilleggsinfo): Int {
-        return runCatching { jobbRepository.oppdaterTilleggsinfo(jobbId, tilleggsinfo) }.getOrDefault(0)
+    public fun leggTilKommentar(jobbId: Long, kommentar: Kommentar): Kommentar {
+        return jobbRepository.leggTilKommentar(jobbId, kommentar)
     }
 
     public fun markerAlleFeiledeForKlare(): Int {

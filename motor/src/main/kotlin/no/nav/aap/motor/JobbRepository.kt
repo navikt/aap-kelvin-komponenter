@@ -1,9 +1,7 @@
 package no.nav.aap.motor
 
 import no.nav.aap.komponenter.dbconnect.DBConnection
-import no.nav.aap.komponenter.json.DefaultJsonMapper
 import org.slf4j.LoggerFactory
-import java.time.Instant
 import java.time.LocalDateTime
 
 public class JobbRepository(private val connection: DBConnection) {
@@ -216,63 +214,59 @@ public class JobbRepository(private val connection: DBConnection) {
         }
     }
 
-    public fun hentTilleggsinfo(jobbId: Long): JobbTilleggsinfo? {
-        return runCatching {
-            connection.queryFirstOrNull("SELECT payload FROM JOBB_TILLEGGSINFO WHERE JOBB_ID = ?") {
-                setParams {
-                    setLong(1, jobbId)
-                }
-                setRowMapper { row ->
-                    DefaultJsonMapper.fromJson<JobbTilleggsinfo>(row.getString("payload"))
-                }
-            }
-        }.getOrElse { e ->
-            log.warn("Kunne ikke hente tilleggsinfo for jobb $jobbId — migrering er muligens ikke kjørt ennå", e)
-            null
+    public fun hentTilleggsinfo(jobbId: Long): JobbTilleggsinfo {
+        /* Midlertidig for å unngå PSQLException */
+        val tabellFinnes = connection.queryFirst(
+            "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'jobb_kommentar')"
+        ) {
+            setRowMapper { it.getBoolean("exists") }
         }
+
+        if (!tabellFinnes) return JobbTilleggsinfo()
+
+        val kommentarer = connection.queryList(
+            "SELECT skrevet_av, tekst, opprettet_tid FROM JOBB_KOMMENTAR WHERE jobb_id = ? ORDER BY opprettet_tid"
+        ) {
+            setParams { setLong(1, jobbId) }
+            setRowMapper { row ->
+                Kommentar(
+                    skrevetAv = row.getString("skrevet_av"),
+                    tekst = row.getString("tekst"),
+                    tidspunkt = row.getLocalDateTime("opprettet_tid"),
+                )
+            }
+        }
+
+        return JobbTilleggsinfo(kommentarer = kommentarer)
     }
 
-    public fun opprettTilleggsinfo(jobbId: Long, tilleggsinfo: JobbTilleggsinfo): Int {
-        return runCatching {
-            connection.executeReturnUpdated(
-                """
-                    INSERT INTO jobb_tilleggsinfo (jobb_id, payload, opprettet_tid, oppdatert_tid) 
-                    VALUES (?, ?::jsonb, ?, ?)
-                """.trimIndent()
-            ) {
-                setParams {
-                    setLong(1, jobbId)
-                    setString(2, DefaultJsonMapper.toJson(tilleggsinfo))
-                    setInstant(3, Instant.now())
-                    setInstant(4, Instant.now())
-                }
-            }
-        }.getOrElse { e ->
-            log.warn("Kunne ikke opprette tilleggsinfo for jobb $jobbId — migrering er muligens ikke kjørt ennå", e)
-            0
+    public fun leggTilKommentar(jobbId: Long, kommentar: Kommentar): Kommentar {
+        /* Midlertidig for å unngå PSQLException */
+        val tabellFinnes = connection.queryFirst(
+            "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'jobb_kommentar')"
+        ) {
+            setRowMapper { it.getBoolean("exists") }
         }
-    }
 
-    public fun oppdaterTilleggsinfo(jobbId: Long, tilleggsinfo: JobbTilleggsinfo): Int {
-        return runCatching {
-            connection.executeReturnUpdated(
-                """
-                    UPDATE jobb_tilleggsinfo 
-                    SET payload = ?::jsonb,
-                        oppdatert_tid = ?
-                    WHERE jobb_id = ?
-                """.trimIndent()
-            ) {
-                setParams {
-                    setString(1, DefaultJsonMapper.toJson(tilleggsinfo))
-                    setInstant(2, Instant.now())
-                    setLong(3, jobbId)
-                }
-            }
-        }.getOrElse { e ->
-            log.warn("Kunne ikke oppdatere tilleggsinfo for jobb $jobbId — migrering er muligens ikke kjørt ennå", e)
-            0
+        require(tabellFinnes) {
+            "Tabellen jobb_kommentar finnes ikke. Kan ikke lagre kommentar."
         }
+
+        connection.execute(
+            """
+            INSERT INTO JOBB_KOMMENTAR (jobb_id, skrevet_av, tekst, opprettet_tid)
+            VALUES (?, ?, ?, ?)
+            """.trimIndent()
+        ) {
+            setParams {
+                setLong(1, jobbId)
+                setString(2, kommentar.skrevetAv)
+                setString(3, kommentar.tekst)
+                setLocalDateTime(4, kommentar.tidspunkt)
+            }
+        }
+
+        return kommentar
     }
 
     internal fun settNesteKjøring(jobbId: Long, tidspunkt: LocalDateTime): Int {
