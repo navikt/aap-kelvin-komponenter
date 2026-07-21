@@ -1,6 +1,8 @@
 package no.nav.aap.komponenter.dbconnect
 
 import no.nav.aap.komponenter.type.Periode
+import no.nav.aap.komponenter.verdityper.Tidspunkt
+import no.nav.aap.komponenter.verdityper.Bruker
 import java.math.BigDecimal
 import java.sql.Connection
 import java.sql.Date
@@ -88,8 +90,16 @@ public class Params internal constructor(
         preparedStatement.setTimestamp(index, instant?.let(Timestamp::from))
     }
 
+    public fun setTidspunkt(index: Int, tidspunkt: Tidspunkt?) {
+        preparedStatement.setTimestamp(index, tidspunkt?.let { Timestamp.from(it.asInstant) })
+    }
+
     public fun setProperties(index: Int, properties: Properties?) {
         preparedStatement.setString(index, PropertiesParser.toSql(properties))
+    }
+
+    public fun setBruker(index: Int, bruker: Bruker?) {
+        setString(index, bruker?.ident)
     }
 
     /**

@@ -2,6 +2,8 @@ package no.nav.aap.komponenter.dbconnect
 
 import no.nav.aap.komponenter.dbtest.TestDataSource
 import no.nav.aap.komponenter.type.Periode
+import no.nav.aap.komponenter.verdityper.Bruker
+import no.nav.aap.komponenter.verdityper.Tidspunkt
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.data.TemporalUnitWithinOffset
 import org.junit.jupiter.api.AutoClose
@@ -74,6 +76,31 @@ internal class ParamsOgRowTest {
                     assertThat(row.getString("TEST")).isEqualTo("test")
                     assertThat(row.getStringOrNull("TEST_NULL")).isNull()
                     assertThrows<IllegalArgumentException> { row.getString("TEST_NULL") }
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `Skriver og leser Bruker og null-verdi riktig`() {
+        dataSource.transaction { connection ->
+            connection.execute(
+                """
+                    INSERT INTO TEST_STRING (TEST, TEST_NULL)
+                    VALUES (?, ?)
+                """.trimMargin()
+            ) {
+                setParams {
+                    setBruker(1, Bruker("Z00000"))
+                    setBruker(2, null)
+                }
+            }
+            connection.queryFirst("SELECT * FROM TEST_STRING") {
+                setRowMapper { row ->
+                    assertThat(row.getBrukerOrNull("TEST")).isEqualTo(Bruker("Z00000"))
+                    assertThat(row.getBruker("TEST")).isEqualTo(Bruker("Z00000"))
+                    assertThat(row.getBrukerOrNull("TEST_NULL")).isNull()
+                    assertThrows<IllegalArgumentException> { row.getBruker("TEST_NULL") }
                 }
             }
         }
@@ -378,6 +405,33 @@ internal class ParamsOgRowTest {
             }
         }
     }
+
+    @Test
+    fun `Skriver og leser Tidspunkt og null-verdi riktig`() {
+        val tidspunkt = Tidspunkt.parse("2016-08-12T09:38:14.123456Z")
+        dataSource.transaction { connection ->
+            connection.execute(
+                """
+                    INSERT INTO TEST_INSTANT (TEST, TEST_NULL)
+                    VALUES (?, ?)
+                """.trimMargin()
+            ) {
+                setParams {
+                    setTidspunkt(1, tidspunkt)
+                    setTidspunkt(2, null)
+                }
+            }
+            connection.queryFirst("SELECT * FROM TEST_INSTANT") {
+                setRowMapper { row ->
+                    assertThat(row.getTidspunktOrNull("TEST")).isEqualTo(tidspunkt)
+                    assertThat(row.getTidspunkt("TEST")).isEqualTo(tidspunkt)
+                    assertThat(row.getTidspunktOrNull("TEST_NULL")).isNull()
+                    assertThrows<IllegalArgumentException> { row.getInstant("TEST_NULL") }
+                }
+            }
+        }
+    }
+
 
     @Test
     fun `Skriver og leser med listeparametre`() {

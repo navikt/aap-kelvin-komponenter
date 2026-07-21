@@ -1,6 +1,8 @@
 package no.nav.aap.komponenter.dbconnect
 
 import no.nav.aap.komponenter.type.Periode
+import no.nav.aap.komponenter.verdityper.Bruker
+import no.nav.aap.komponenter.verdityper.Tidspunkt
 import java.math.BigDecimal
 import java.sql.Date
 import java.sql.ResultSet
@@ -30,6 +32,16 @@ public class Row internal constructor(private val resultSet: ResultSet) {
 
     public fun getStringOrNull(columnLabel: String): String? {
         return resultSet.getString(columnLabel)
+    }
+
+    public fun getBrukerOrNull(columnLabel: String): Bruker? {
+        return getStringOrNull(columnLabel)?.let(::Bruker)
+    }
+
+    public fun getBruker(columnLabel: String): Bruker {
+        return requireNotNull(getBrukerOrNull(columnLabel)) {
+            "Null-verdi ved henting av Bruker fra kolonne '$columnLabel'"
+        }
     }
 
     public inline fun <reified T : Enum<T>> getEnum(columnLabel: String): T {
@@ -218,6 +230,15 @@ public class Row internal constructor(private val resultSet: ResultSet) {
 
     public fun getInstant(columnLabel: String): Instant {
         return requireNotNull(getInstantOrNull(columnLabel)) { "Null-value for column label $columnLabel." }
+    }
+
+    public fun getTidspunktOrNull(columnLabel: String): Tidspunkt? {
+        val timestamp = resultSet.getTimestamp(columnLabel) ?: return null
+        return Tidspunkt.ofInstant(timestamp.toInstant())
+    }
+
+    public fun getTidspunkt(columnLabel: String): Tidspunkt {
+        return requireNotNull(getTidspunktOrNull(columnLabel)) { "Null-value for column label $columnLabel." }
     }
 
     public fun getPropertiesOrNull(columnLabel: String): Properties? {
