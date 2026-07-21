@@ -218,11 +218,7 @@ public class JobbInput(
         return this
     }
 
-    public fun kjør(
-        connection: DBConnection,
-        repositoryRegistry: RepositoryRegistry?,
-        gatewayProvider: GatewayProvider?
-    ) {
+    public fun kjør(connection: DBConnection, repositoryRegistry: RepositoryRegistry?, gatewayProvider: GatewayProvider?) {
         konstruer(connection, repositoryRegistry, gatewayProvider).utfør(this)
     }
 
@@ -234,10 +230,7 @@ public class JobbInput(
         return when (jobb) {
             is ConnectionJobbSpesifikasjon -> jobb.konstruer(connection)
             is ProviderJobbSpesifikasjon -> jobb.konstruer(repositoryRegistry!!.provider(connection))
-            is ProvidersJobbSpesifikasjon -> jobb.konstruer(
-                repositoryRegistry!!.provider(connection),
-                gatewayProvider!!
-            )
+            is ProvidersJobbSpesifikasjon -> jobb.konstruer(repositoryRegistry!!.provider(connection), gatewayProvider!!)
         }
     }
 }

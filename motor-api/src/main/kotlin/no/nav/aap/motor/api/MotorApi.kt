@@ -43,7 +43,6 @@ public fun NormalOpenAPIRoute.motorApi(dataSource: DataSource, godkjenteRoller: 
 
                     }
                     respond(saker)
-
                 }
             }
         }

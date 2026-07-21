@@ -178,7 +178,6 @@ internal class RetryFeiledeJobberRepository(private val connection: DBConnection
                 mapJobbInklusivFeilmelding(row)
             }
         }.map { (jobbInput, feilmelding) ->
-            /* TODO: Bruke join i stedet når alle apper har kjørt flywayscript som oppretter den nye tabellen */
             val tilleggsinfo = runCatching { oppgaverRepository.hentTilleggsinfo(jobbInput.jobbId()) }.getOrNull()
             jobbInput.medTilleggsinfo(tilleggsinfo) to feilmelding
         }
