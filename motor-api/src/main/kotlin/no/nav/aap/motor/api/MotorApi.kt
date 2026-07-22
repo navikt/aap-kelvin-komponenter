@@ -123,6 +123,7 @@ public fun NormalOpenAPIRoute.motorApi(dataSource: DataSource, godkjenteRoller: 
             }
         }
         route("/avbryt/{jobbId}") {
+            // Deprecated – Skal fjernes så fort alle har bumpet til ny versjon og Paw Patrol har koblet til nytt endepunkt
             get<JobbIdDTO, String>(modules) { jobbId ->
                 autoriser(godkjenteRoller) {
                     val antallSchedulert = dataSource.transaction { connection ->
@@ -131,7 +132,24 @@ public fun NormalOpenAPIRoute.motorApi(dataSource: DataSource, godkjenteRoller: 
                     respond("Avbryter videre kjøring av feilende jobb med ID $jobbId startet, antall jobber avbrutt $antallSchedulert.")
                 }
             }
+
+            data class AvbrytJobbRequest(val begrunnelse: String)
+            post<JobbIdDTO, String, AvbrytJobbRequest>(modules) { jobbId, req ->
+                autoriser(godkjenteRoller) {
+                    val antallSchedulert = dataSource.transaction { connection ->
+                        val jobbRepository = DriftJobbRepositoryExposed(connection)
+
+                        jobbRepository.leggTilKommentar(
+                            jobbId = jobbId.jobbId,
+                            kommentar = Kommentar.ny(skrevetAv = bruker(), tekst = "Avbrutt: ${req.begrunnelse}")
+                        )
+                        jobbRepository.markerSomAvbrutt(jobbId.jobbId)
+                    }
+                    respond("Avbryter videre kjøring av feilende jobb med ID $jobbId startet, antall jobber avbrutt $antallSchedulert.")
+                }
+            }
         }
+
         route("/avbrytAlleFeilede") {
             get<Unit, String>(modules) {
                 if (Miljø.erDev() || Miljø.erLokal()) {
