@@ -298,7 +298,7 @@ public class MotorImpl(
             if (enableV2()) {
                 dataSource.transaction {
                     val antallSkjedulert = JobbRepository(it).skjedulerJobber()
-                    logger.info("markerte $antallSkjedulert jobber som klare for å kjøre")
+                    logger.debug("markerte $antallSkjedulert jobber som klare for å kjøre")
                 }
             }
         }
