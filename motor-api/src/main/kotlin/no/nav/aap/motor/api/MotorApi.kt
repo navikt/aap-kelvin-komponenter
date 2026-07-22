@@ -136,7 +136,7 @@ public fun NormalOpenAPIRoute.motorApi(dataSource: DataSource, godkjenteRoller: 
             data class AvbrytJobbRequest(val begrunnelse: String)
             post<JobbIdDTO, String, AvbrytJobbRequest>(modules) { jobbId, req ->
                 autoriser(godkjenteRoller) {
-                    val antallSchedulert = dataSource.transaction { connection ->
+                    dataSource.transaction { connection ->
                         val jobbRepository = DriftJobbRepositoryExposed(connection)
 
                         jobbRepository.leggTilKommentar(
@@ -145,7 +145,7 @@ public fun NormalOpenAPIRoute.motorApi(dataSource: DataSource, godkjenteRoller: 
                         )
                         jobbRepository.markerSomAvbrutt(jobbId.jobbId)
                     }
-                    respond("Avbryter videre kjøring av feilende jobb med ID $jobbId startet, antall jobber avbrutt $antallSchedulert.")
+                    respond("Avbryter feilende jobb med ID $jobbId.")
                 }
             }
         }
