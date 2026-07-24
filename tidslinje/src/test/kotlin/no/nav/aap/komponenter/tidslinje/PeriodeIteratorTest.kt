@@ -7,6 +7,11 @@ import java.time.LocalDate
 import java.util.*
 
 class PeriodeIteratorTest {
+    private fun PeriodeIterator(venstre: TreeSet<Periode>, høyre: TreeSet<Periode> ): Iterator<Periode> {
+        val t1 = Tidslinje(venstre.map { Segment(it, Unit) })
+        val t2 = Tidslinje(høyre.map { Segment(it, Unit) })
+        return t1.outerJoin(t2) { _, _ -> }.perioder().iterator()
+    }
 
     @Test
     fun `skal lage iterator for alle unike perioder`() {

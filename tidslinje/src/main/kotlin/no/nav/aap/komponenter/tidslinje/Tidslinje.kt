@@ -72,27 +72,66 @@ public class Tidslinje<T>(initSegmenter: NavigableSet<Segment<T>> = TreeSet()) {
             return Tidslinje(nyeSegmenter)
         }
 
-        val periodeIterator = PeriodeIterator(
-            perioder(),
-            other.perioder()
-        )
+        val venstreIterator = this.segmenter.iterator()
+        val høyreIterator = other.segmenter.iterator()
+        /* short circuit for size=0 above, so call to next is safe. */
+        val førsteVenstre = venstreIterator.next()
+        val førsteHøyre = høyreIterator.next()
 
-        val nySammensetning: NavigableSet<Segment<V>> = TreeSet()
-        while (periodeIterator.hasNext()) {
-            val periode = periodeIterator.next()
+        /** Neste [fom] vi skal produsere segment for. [fom] fungerer også som en
+         * form for watermark som stiger og stiger, og markerer hvor langt vi har
+         * kommet i produksjonen av ny tidslinje. */
+        var fom = minOf(førsteVenstre.periode.fom, førsteHøyre.periode.fom)
 
-            val left = this.segmenter.firstOrNull { segment -> segment.periode.overlapper(periode) }
-                ?.tilpassetPeriode(periode)
-            val right = other.segmenter.firstOrNull { segment -> segment.periode.overlapper(periode) }
-                ?.tilpassetPeriode(periode)
+        /* Aktivt segment fra venstre side som ikke er ferdig prosessert. */
+        var venstre: Segment<T>? = førsteVenstre
 
-            val kombinert = body(periode, left, right)
-            if (kombinert != null) {
-                nySammensetning.add(kombinert)
+        /* Aktivt segment fra høyre side som ikke er ferdig prosessert. */
+        var høyre: Segment<E>? = førsteHøyre
+
+        val resultat: NavigableSet<Segment<V>> = TreeSet()
+
+        /* Invariant: [fom] er satt til starten på neste segment som skal legges til. */
+        while (venstre != null || høyre != null) {
+            val tom = minOf(
+                /* hvis venstre segment ikke har startet enda, så skal vi lage et segment med kun høyre side, og det kan da maks
+                 * vare til dagen før venstre segment starter. */
+                venstre?.periode?.fom?.takeIf { fom < it }?.minusDays(1) ?: LocalDate.MAX,
+                /* hvis høyre segment ikke har startet enda, så skal vi lage et segment med kun venstre side, og det kan da maks
+                 * vare til dagen før høyre segment starter. */
+                høyre?.periode?.fom?.takeIf { fom < it }?.minusDays(1) ?: LocalDate.MAX,
+                /* segmentet kan ikke være lenger enn venstre segment */
+                venstre?.periode?.tom ?: LocalDate.MAX,
+                /* segmentet kan ikke være lenger enn høyre segment */
+                høyre?.periode?.tom ?: LocalDate.MAX,
+            )
+            val periode = Periode(fom, tom)
+            val segment = body(
+                periode,
+                venstre?.takeIf { it.periode.overlapper(periode) }?.tilpassetPeriode(periode),
+                høyre?.takeIf { it.periode.overlapper(periode) }?.tilpassetPeriode(periode)
+            )
+            if (segment != null) {
+                resultat.add(segment)
             }
+
+            /* Vi har prosessert alt opp til og med [tom]. Et segment er ferdig prosessert
+             * hvis det i sin helhet er i perioden som er ferdig prosessert. */
+            if (venstre != null && venstre.periode.tom <= tom) {
+                venstre = if (venstreIterator.hasNext()) venstreIterator.next() else null
+            }
+            if (høyre != null && høyre.periode.tom <= tom) {
+                høyre = if (høyreIterator.hasNext()) høyreIterator.next() else null
+            }
+
+            /* Ny [fom] er tidligste [fom] fra de aktive segmentene, men minst etter forrige [tom]. */
+            fom = minOf(
+                venstre?.periode?.fom ?: LocalDate.MAX,
+                høyre?.periode?.fom ?: LocalDate.MAX
+            ).coerceAtLeast(if (tom != LocalDate.MAX) tom.plusDays(1) else tom)
         }
 
-        return Tidslinje(nySammensetning)
+        return Tidslinje(resultat)
     }
 
     /**
@@ -490,7 +529,29 @@ public class Tidslinje<T>(initSegmenter: NavigableSet<Segment<T>> = TreeSet()) {
     }
 
     public fun mergePrioriterHøyre(other: Tidslinje<T>): Tidslinje<T> {
+        // Fast path: when other is a single segment, use TreeSet operations directly
+        // instead of going through a full outer join — O(log n + k) vs O(n).
+        if (other.segmenter.size == 1) {
+            return mergePrioriterHøyreEttSegment(other.segmenter.single())
+        }
         return this.outerJoin(other) { venstreVerdi, høyreVerdi -> høyreVerdi ?: venstreVerdi ?: error("ikke mulig") }
+    }
+
+    private fun mergePrioriterHøyreEttSegment(segment: Segment<T>): Tidslinje<T> {
+        val result: NavigableSet<Segment<T>> = TreeSet()
+
+        for (eksisterende in this.segmenter) {
+            if (!eksisterende.periode.overlapper(segment.periode)) {
+                result.add(eksisterende)
+            } else {
+                // Keep the parts of the existing segment that fall outside the new segment
+                eksisterende.periode.minus(segment.periode).forEach { rest ->
+                    result.add(Segment(rest, eksisterende.verdi))
+                }
+            }
+        }
+        result.add(segment)
+        return Tidslinje(result)
     }
 
     public fun mergePrioriterVenstre(other: Tidslinje<T>): Tidslinje<T> {
@@ -660,7 +721,15 @@ public class Tidslinje<T>(initSegmenter: NavigableSet<Segment<T>> = TreeSet()) {
             gTidslinje: Tidslinje<G>,
             body: (A?, B?, C?, D?, E?, F?, G?) -> R,
         ): Tidslinje<R> {
-            return map7(aTidslinje, bTidslinje, cTidslinje, dTidslinje, eTidslinje, fTidslinje, gTidslinje) { _, a, b, c, d, e, f, g ->
+            return map7(
+                aTidslinje,
+                bTidslinje,
+                cTidslinje,
+                dTidslinje,
+                eTidslinje,
+                fTidslinje,
+                gTidslinje
+            ) { _, a, b, c, d, e, f, g ->
                 body(a, b, c, d, e, f, g)
             }
         }
