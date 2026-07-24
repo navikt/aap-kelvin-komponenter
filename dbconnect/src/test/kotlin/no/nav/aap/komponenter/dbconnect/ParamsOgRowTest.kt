@@ -126,9 +126,9 @@ internal class ParamsOgRowTest {
             }
             connection.queryFirst("SELECT * FROM TEST_ENUM") {
                 setRowMapper { row ->
-                    assertThat(row.getEnumOrNull<TestEnum?, TestEnum>("TEST")).isEqualTo(TestEnum.TEST)
+                    assertThat(row.getEnumOrNull<TestEnum>("TEST")).isEqualTo(TestEnum.TEST)
                     assertThat(row.getEnum<TestEnum>("TEST")).isEqualTo(TestEnum.TEST)
-                    assertThat(row.getEnumOrNull<TestEnum?, TestEnum>("TEST_NULL")).isNull()
+                    assertThat(row.getEnumOrNull<TestEnum>("TEST_NULL")).isNull()
                     assertThrows<IllegalArgumentException> { row.getEnum<TestEnum>("TEST_NULL") }
                 }
             }

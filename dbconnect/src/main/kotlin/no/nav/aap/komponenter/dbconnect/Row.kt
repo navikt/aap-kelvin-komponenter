@@ -48,15 +48,9 @@ public class Row internal constructor(private val resultSet: ResultSet) {
         return enumValueOf(getString(columnLabel))
     }
 
-    /**
-     * Siden enumValueOf ikke kan forholde seg til nullable typer,
-     * og compileren ikke kan forstå at typen ikke er null når databaseverdien er null,
-     * så innføres [T] for å gi compileren hint om at returtypen kan være null
-     */
-    public inline fun <reified T, reified E> getEnumOrNull(columnLabel: String): E?
-            where T : E?,
-                  E : Enum<E> {
-        return getStringOrNull(columnLabel)?.let<String, E>(::enumValueOf)
+    public inline fun <reified T: Enum<T>> getEnumOrNull(columnLabel: String): T? {
+        val valueAsString = getStringOrNull(columnLabel) ?: return null
+        return enumValueOf<T>(valueAsString)
     }
 
     public fun getInt(columnLabel: String): Int {
