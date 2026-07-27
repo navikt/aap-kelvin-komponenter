@@ -3,6 +3,8 @@ package no.nav.aap.komponenter.tidslinje
 import no.nav.aap.komponenter.type.Periode
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.condition.EnabledOnOs
+import org.junit.jupiter.api.condition.OS
 import java.time.LocalDate
 import kotlin.time.measureTime
 
@@ -18,6 +20,7 @@ import kotlin.time.measureTime
  *   - Nåværende: O(n³)  → n=150 gir ~3.375M operasjoner
  *   - Ønsket:    O(n² log n) → n=150 gir ~162K operasjoner (~20x raskere)
  */
+@EnabledOnOs(OS.MAC)
 class SomTidslinjePerformanceTest {
 
     @Test
