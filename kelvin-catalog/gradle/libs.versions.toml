@@ -1,0 +1,70 @@
+[versions]
+ktor = "3.5.1"
+jackson = "2.22.1"
+junit-jupiter = "6.1.2"
+testcontainers = "2.0.5"
+tilgang = "1.0.234"
+behandlingsflyt-kontrakt = "0.0.640"
+
+[libraries]
+ktor-server-core = { module = "io.ktor:ktor-server-core", version.ref = "ktor" }
+ktor-server-netty = { module = "io.ktor:ktor-server-netty", version.ref = "ktor" }
+ktor-server-content-negotiation = { module = "io.ktor:ktor-server-content-negotiation", version.ref = "ktor" }
+ktor-server-call-logging = { module = "io.ktor:ktor-server-call-logging", version.ref = "ktor" }
+ktor-server-call-id = { module = "io.ktor:ktor-server-call-id", version.ref = "ktor" }
+ktor-serialization-jackson = { module = "io.ktor:ktor-serialization-jackson", version.ref = "ktor" }
+
+jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
+jackson-datatype-jsr310 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310", version.ref = "jackson" }
+
+logback-classic = { module = "ch.qos.logback:logback-classic", version = "1.5.38" }
+logstash-logback-encoder = { module = "net.logstash.logback:logstash-logback-encoder", version = "9.0" }
+micrometer-prometheus = { module = "io.micrometer:micrometer-registry-prometheus", version = "1.17.0" }
+
+junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junit-jupiter" }
+junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junit-jupiter" }
+assertj-core = { module = "org.assertj:assertj-core", version = "3.27.7" }
+testcontainers = { module = "org.testcontainers:testcontainers", version.ref = "testcontainers" }
+testcontainers-postgresql = { module = "org.testcontainers:testcontainers-postgresql", version.ref = "testcontainers" }
+
+json = { module = "no.nav.aap.kelvin:json", version.ref = "komponenter" }
+infrastructure = { module = "no.nav.aap.kelvin:infrastructure", version.ref = "komponenter" }
+dbconnect = { module = "no.nav.aap.kelvin:dbconnect", version.ref = "komponenter" }
+dbmigrering = { module = "no.nav.aap.kelvin:dbmigrering", version.ref = "komponenter" }
+httpklient = { module = "no.nav.aap.kelvin:httpklient", version.ref = "komponenter" }
+server = { module = "no.nav.aap.kelvin:server", version.ref = "komponenter" }
+
+tilgang-plugin = { module = "no.nav.aap.tilgang:plugin", version.ref = "tilgang" }
+behandlingsflyt-kontrakt = { module = "no.nav.aap.behandlingsflyt:kontrakt", version.ref = "behandlingsflyt-kontrakt" }
+
+[bundles]
+core-runtime = [
+    "ktor-server-core",
+    "ktor-server-netty",
+    "ktor-server-content-negotiation",
+    "ktor-server-call-logging",
+    "ktor-server-call-id",
+    "ktor-serialization-jackson",
+    "jackson-databind",
+    "jackson-datatype-jsr310",
+    "logback-classic",
+    "logstash-logback-encoder",
+    "micrometer-prometheus",
+]
+core-test = [
+    "junit-jupiter-api",
+    "junit-jupiter-engine",
+    "assertj-core",
+    "testcontainers",
+    "testcontainers-postgresql",
+]
+kelvin-core = [
+    "json",
+    "infrastructure",
+    "dbconnect",
+    "dbmigrering",
+    "httpklient",
+    "server",
+]
+domain-tilgang = ["tilgang-plugin"]
+domain-behandlingsflyt = ["behandlingsflyt-kontrakt"]
