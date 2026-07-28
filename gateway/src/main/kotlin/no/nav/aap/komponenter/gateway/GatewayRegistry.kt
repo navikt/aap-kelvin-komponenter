@@ -70,9 +70,6 @@ public open class GatewayRegistry {
             registry.size,
             registry.map { kclass -> kclass.starProjectedType })
     }
-
-    @Deprecated("Ikke bruk global GatewayRegistry, men inject egen instans.")
-    public companion object: GatewayRegistry()
 }
 
 private val KClass<*>.markerInterfaces: Set<KClass<*>>

@@ -9,4 +9,7 @@ dependencies {
     api(libs.junit.jupiter.api)
 
     implementation(libs.testcontainers.postgresql)
+
+    testRuntimeOnly(libs.junit.jupiter.engine)
+    testImplementation(libs.assertj.core)
 }
