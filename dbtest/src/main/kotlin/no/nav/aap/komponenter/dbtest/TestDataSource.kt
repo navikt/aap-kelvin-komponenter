@@ -284,7 +284,7 @@ public class DatabaseSnapshot(private val snapshotDbName: String) : AutoCloseabl
      * Creates a fresh independent copy of the snapshot database.
      * Each call returns a distinct [HikariDataSource] backed by its own database.
      */
-    public fun newDataSource(): HikariDataSource {
+    public fun newDataSource(): DataSource {
         val databaseName = "test${TestDataSource.currentDatabaseNumber.getAndIncrement()}"
         TestDataSource.clerkDatasource.connection.use { conn ->
             conn.prepareStatement("SELECT pg_advisory_lock(12345)").execute()

@@ -1,5 +1,6 @@
 package no.nav.aap.komponenter.dbtest
 
+import com.zaxxer.hikari.HikariDataSource
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
@@ -45,8 +46,8 @@ class DatabaseSnapshotTest {
                 assertThat(countRows(ds1)).isEqualTo(2)
                 assertThat(countRows(ds2)).isEqualTo(1)
             } finally {
-                ds1.close()
-                ds2.close()
+                (ds1 as HikariDataSource).close()
+                (ds2 as HikariDataSource).close()
             }
         } finally {
             snapshot.close()
@@ -78,7 +79,7 @@ class DatabaseSnapshotTest {
             assertThat(names).containsExactly("before-snapshot", "after-snapshot")
 
             // Snapshot copies should only contain the pre-snapshot row
-            val snapshotNames = snapshot.newDataSource().use { ds ->
+            val snapshotNames = snapshot.newDataSource().let { ds ->
                 ds.connection.use { conn ->
                     conn.prepareStatement("SELECT name FROM entries ORDER BY id").executeQuery().use { rs ->
                         generateSequence { if (rs.next()) rs.getString(1) else null }.toList()
