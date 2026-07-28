@@ -2,6 +2,7 @@ package no.nav.aap.komponenter.server
 
 import com.auth0.jwk.JwkProvider
 import com.auth0.jwk.JwkProviderBuilder
+import io.ktor.client.HttpClient
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -22,6 +23,7 @@ private val SECURE_LOGGER: Logger = LoggerFactory.getLogger("secureLog")
 public const val AZURE: String = "azure"
 public const val TOKENX: String = "tokenx"
 
+@Deprecated("Skal fjernes når alt er over på Texas")
 internal fun Application.authentication(azureConfig: AzureConfig?, tokenxConfig: TokenxConfig?) {
     val configs = listOfNotNull(azureConfig?.let { AZURE to it }, tokenxConfig?.let { TOKENX to it })
 
@@ -66,12 +68,19 @@ internal fun Application.authentication(azureConfig: AzureConfig?, tokenxConfig:
     }
 }
 
+// FIXME: Når det er laget en variant av [commonKtorModule] som støtter nav.no-apper, kan denne gjøres intern igjen
 /**
  * Installerer Authentication med TexasAuthenticationProvider for validering av token.
  * [Texas](https://docs.nais.io/auth/explanations/#texas)
  **/
-internal fun Application.authentication(identityProvider: IdentityProvider) {
+public fun Application.authentication(identityProviders: List<IdentityProvider>, texasHttpClient: HttpClient? = null) {
     install(Authentication) {
-        register(TexasAuthenticationProvider.Config(identityProvider).build())
+        require(identityProviders.isNotEmpty()) {
+            "Må ha minst en identityProvider for å kunne installere TexasAuthenticationProvider"
+        }
+
+        identityProviders.forEach { provider ->
+            register(TexasAuthenticationProvider.Config(provider, texasHttpClient).build())
+        }
     }
 }

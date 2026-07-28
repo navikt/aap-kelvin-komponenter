@@ -1,6 +1,7 @@
 package no.nav.aap.komponenter.server
 
 import com.papsign.ktor.openapigen.model.info.InfoModel
+import io.ktor.client.HttpClient
 import io.ktor.http.*
 import io.ktor.serialization.jackson.*
 import io.ktor.server.application.*
@@ -30,19 +31,35 @@ public fun Application.commonKtorModule(
     azureConfig = azureConfig,
     infoModel = infoModel,
     tokenxConfig = tokenxConfig,
-    identityProvider = null
+    identityProviders = null,
 )
 
 public fun Application.commonKtorModule(
     prometheus: MeterRegistry,
     infoModel: InfoModel,
-    identityProvider: IdentityProvider
+    identityProvider: IdentityProvider,
+    texasHttpClient: HttpClient? = null,
 ): CommonResponse = commonKtorModule(
     prometheus = prometheus,
     azureConfig = null,
     infoModel = infoModel,
     tokenxConfig = null,
-    identityProvider = identityProvider
+    identityProviders = listOf(identityProvider),
+    texasHttpClient = texasHttpClient
+)
+
+public fun Application.commonKtorModule(
+    prometheus: MeterRegistry,
+    infoModel: InfoModel,
+    identityProviders: List<IdentityProvider>,
+    texasHttpClient: HttpClient? = null,
+): CommonResponse = commonKtorModule(
+    prometheus = prometheus,
+    azureConfig = null,
+    infoModel = infoModel,
+    tokenxConfig = null,
+    identityProviders = identityProviders,
+    texasHttpClient = texasHttpClient
 )
 
 /**
@@ -58,7 +75,8 @@ private fun Application.commonKtorModule(
     azureConfig: AzureConfig? = null,
     infoModel: InfoModel,
     tokenxConfig: TokenxConfig? = null,
-    identityProvider: IdentityProvider? = null,
+    identityProviders: List<IdentityProvider>? = null,
+    texasHttpClient: HttpClient? = null,
 ): CommonResponse {
     install(MicrometerMetrics) {
         registry = prometheus
@@ -83,10 +101,10 @@ private fun Application.commonKtorModule(
         generate { UUID.randomUUID().toString() }
     }
 
-    if (identityProvider != null) {
-        authentication(identityProvider)
-    } else {
+    if (identityProviders.isNullOrEmpty()) {
         authentication(azureConfig, tokenxConfig)
+    } else {
+        authentication(identityProviders, texasHttpClient)
     }
 
     val openApiGen = generateOpenAPI(
