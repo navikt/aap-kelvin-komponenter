@@ -57,13 +57,13 @@ public class TestDataSource : AutoCloseable, DataSource {
     // en ny db for hver instans av TestDataSource.
     public companion object {
         private const val templateDb = "template1"
-        private val currentDatabaseNumber = AtomicInteger(1)
+        internal val currentDatabaseNumber = AtomicInteger(1)
         private val logger = LoggerFactory.getLogger(TestDataSource::class.java)
         private const val MAX_CONNECTIONS_COUNT = 256 // for å støtte mange connections i parallelle tester
 
         // Hver TestDataSource får sin egen Hikari-pool. Hvis vi setter den poolen til MAX_CONNECTIONS_COUNT,
         // kan vi få for mange åpne connections for postgres-serveren totalt når mange tester kjører parallelt.
-        private const val PER_DB_POOL_SIZE = 32
+        internal const val PER_DB_POOL_SIZE = 32
 
         // Postgres 16 korresponderer til versjon i nais.yaml
         private val postgres: PostgreSQLContainer = PostgreSQLContainer("postgres:18")
@@ -83,7 +83,7 @@ public class TestDataSource : AutoCloseable, DataSource {
 
         // clerkDatasource brukes bare til CREATE DATABASE
         // Den opprettes lazy slik at vi unngår å starte postgres-containeren under initializing av TestDataSource
-        private val clerkDatasource by lazy {
+        internal val clerkDatasource by lazy {
             postgres.start()
             logger.info("Bruker Postgres-testcontainer med dockerId=${postgres.containerId}")
 
@@ -120,7 +120,7 @@ public class TestDataSource : AutoCloseable, DataSource {
                 .migrate()
         }
 
-        private fun newDatasource(dbName: String, poolSize: Int = PER_DB_POOL_SIZE): HikariDataSource {
+        internal fun newDatasource(dbName: String, poolSize: Int = PER_DB_POOL_SIZE): HikariDataSource {
             val ds = HikariDataSource(HikariConfig().apply {
                 jdbcUrl = postgres.jdbcUrl.replace(templateDb, dbName)
                 username = postgres.username
@@ -193,6 +193,46 @@ public class TestDataSource : AutoCloseable, DataSource {
 
     override fun isWrapperFor(iface: Class<*>): Boolean = delegate.isWrapperFor(iface)
 
+    /**
+     * Freezes the current database state as a PostgreSQL TEMPLATE database and returns a
+     * [DatabaseSnapshot] that can vend independent fresh copies via [DatabaseSnapshot.newDataSource].
+     *
+     * The original [TestDataSource] remains open and usable after this call. HikariCP's idle
+     * connections are evicted (so the pool reconnects cleanly after the snapshot), and any remaining
+     * PostgreSQL backends are terminated via `pg_terminate_backend` to satisfy PostgreSQL's
+     * zero-connections requirement for TEMPLATE databases.
+     *
+     * Safe to call on a shared (companion-object) datasource — only idle connections are evicted
+     * and only active backends at the moment of the call are terminated.  No transactions should
+     * be in flight during a `@BeforeAll` setup phase.
+     */
+    public fun createSnapshot(): DatabaseSnapshot {
+        val currentDbName = delegate.jdbcUrl
+            .substringAfterLast("/")
+            .substringBefore("?")
+
+        // Immediately close all idle connections in the pool so the pool is empty.
+        // In-use connections are marked for eviction on return.
+        // The pool will reconnect transparently on the next request (minimumIdle=0).
+        delegate.hikariPoolMXBean?.softEvictConnections()
+
+        val snapshotName = "snapshot${currentDatabaseNumber.getAndIncrement()}"
+        clerkDatasource.connection.use { conn ->
+            // Belt-and-suspenders: terminate any backends still active in PostgreSQL
+            conn.prepareStatement(
+                "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = ? AND pid <> pg_backend_pid()"
+            ).apply { setString(1, currentDbName) }.execute()
+
+            conn.prepareStatement("SELECT pg_advisory_lock(12345)").execute()
+            try {
+                conn.createStatement().execute("CREATE DATABASE $snapshotName TEMPLATE $currentDbName")
+            } finally {
+                conn.prepareStatement("SELECT pg_advisory_unlock(12345)").execute()
+            }
+        }
+        return DatabaseSnapshot(snapshotName)
+    }
+
 }
 
 public fun TestDataSource.clear() {
@@ -211,5 +251,56 @@ public fun TestDataSource.clear() {
                 $$;
             """.trimIndent()
         ).use { it.execute() }
+    }
+}
+
+/**
+ * A frozen copy of a test database that can be used as a [PostgreSQL TEMPLATE](https://www.postgresql.org/docs/current/manage-ag-templatedbs.html).
+ *
+ * Obtain an instance via [TestDataSource.createSnapshot].
+ *
+ * Typical usage:
+ * ```kotlin
+ * @BeforeAll
+ * fun setupOnce() {
+ *     runExpensiveSetup(dataSource)
+ *     snapshot = dataSource.createSnapshot()  // dataSource is now closed
+ * }
+ *
+ * @BeforeEach
+ * override fun resetDatabase() {
+ *     dataSource = snapshot.newDataSource()
+ * }
+ *
+ * @AfterAll
+ * fun teardownSnapshot() {
+ *     snapshot.close()
+ * }
+ * ```
+ */
+public class DatabaseSnapshot(private val snapshotDbName: String) : AutoCloseable {
+
+    /**
+     * Creates a fresh independent copy of the snapshot database.
+     * Each call returns a distinct [HikariDataSource] backed by its own database.
+     */
+    public fun newDataSource(): HikariDataSource {
+        val databaseName = "test${TestDataSource.currentDatabaseNumber.getAndIncrement()}"
+        TestDataSource.clerkDatasource.connection.use { conn ->
+            conn.prepareStatement("SELECT pg_advisory_lock(12345)").execute()
+            try {
+                conn.createStatement().execute("CREATE DATABASE $databaseName TEMPLATE $snapshotDbName")
+            } finally {
+                conn.prepareStatement("SELECT pg_advisory_unlock(12345)").execute()
+            }
+        }
+        return TestDataSource.newDatasource(databaseName, TestDataSource.PER_DB_POOL_SIZE)
+    }
+
+    /** Drops the underlying snapshot database. */
+    public override fun close() {
+        TestDataSource.clerkDatasource.connection.use { conn ->
+            conn.createStatement().execute("DROP DATABASE IF EXISTS $snapshotDbName")
+        }
     }
 }

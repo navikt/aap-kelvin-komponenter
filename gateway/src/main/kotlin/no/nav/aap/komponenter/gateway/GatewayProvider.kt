@@ -39,7 +39,4 @@ public open class GatewayProvider(
         }
         throw IllegalStateException("Gateway må ha et companion object som implementerer Factory<T> interfacet.")
     }
-
-    @Deprecated("Ikke bruk global GatewayProvider, men inject egen instans.")
-    public companion object: GatewayProvider(GatewayRegistry)
 }
