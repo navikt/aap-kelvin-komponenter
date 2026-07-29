@@ -82,7 +82,19 @@ internal class ArkiverFerdigstilteJobberRepository(private val connection: DBCon
             }
         }
 
-        // 4. Slett fra JOBB
+        // 4. Slett fra JOBB_KOMMENTAR
+        connection.execute(
+            """
+                DELETE FROM JOBB_KOMMENTAR
+            WHERE jobb_id = ANY(?::bigint[])
+            """.trimIndent()
+        ) {
+            setParams {
+                setLongArray(1, jobberSomSkalArkiveres)
+            }
+        }
+
+        // 5. Slett fra JOBB
         connection.execute(
             """
             DELETE FROM JOBB
