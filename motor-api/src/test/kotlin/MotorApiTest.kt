@@ -17,8 +17,8 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import no.nav.aap.komponenter.dbconnect.DBConnection
 import no.nav.aap.komponenter.dbconnect.transaction
 import no.nav.aap.komponenter.dbtest.TestDataSource
-import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.azurecc.AzureConfig
 import no.nav.aap.komponenter.json.DefaultJsonMapper
+import no.nav.aap.komponenter.server.auth.IdentityProvider
 import no.nav.aap.komponenter.server.commonKtorModule
 import no.nav.aap.motor.FlytJobbRepositoryImpl
 import no.nav.aap.motor.Jobb
@@ -110,7 +110,7 @@ class MotorApiTest {
 
             assertThat(response.status.value).isEqualTo(200)
             val body = response.bodyAsText()
-            val jobbInfoDto = DefaultJsonMapper.fromJson< List<JobbInfoDto>>(body)
+            val jobbInfoDto = DefaultJsonMapper.fromJson<List<JobbInfoDto>>(body)
             assertThat(jobbInfoDto).hasSize(1)
             assertThat(jobbInfoDto.first().navn).isEqualTo("tøys")
             assertThat(jobbInfoDto.first().opprettetTidspunkt).isNotNull()
@@ -121,16 +121,15 @@ class MotorApiTest {
 }
 
 fun Application.module(dataSource: DataSource) {
-    System.setProperty("azure.openid.config.token.endpoint", "http://localhost:1234/token")
-    System.setProperty("azure.app.client.id", "behandlingsflyt")
-    System.setProperty("azure.app.client.secret", "")
-    System.setProperty("azure.openid.config.jwks.uri", "http://localhost:1234/jwks")
-    System.setProperty("azure.openid.config.issuer", "behandlingsflyt")
+    // Texas
+    System.setProperty("nais.token.endpoint", "http://localhost:1234/token")
+    System.setProperty("nais.token.exchange.endpoint", "http://localhost:1234/token/exchange")
+    System.setProperty("nais.token.introspection.endpoint", "http://localhost:1234/introspect")
 
     commonKtorModule(
         prometheus = SimpleMeterRegistry(),
-        azureConfig = AzureConfig(),
-        infoModel = InfoModel()
+        infoModel = InfoModel(),
+        identityProvider = IdentityProvider.ENTRA_ID
     )
     routing {
         apiRouting {

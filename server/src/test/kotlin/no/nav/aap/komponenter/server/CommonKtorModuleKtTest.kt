@@ -10,8 +10,8 @@ import io.ktor.serialization.jackson.*
 import io.ktor.server.testing.*
 import io.micrometer.prometheusmetrics.PrometheusConfig
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
-import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.azurecc.AzureConfig
 import no.nav.aap.komponenter.json.DefaultJsonMapper
+import no.nav.aap.komponenter.server.auth.IdentityProvider
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -19,11 +19,10 @@ class CommonKtorModuleKtTest {
 
     @Test
     fun `adding title to openapi spec`() {
-        System.setProperty("azure.openid.config.token.endpoint", "http://localhost:1234/token")
-        System.setProperty("azure.app.client.id", "behandlingsflyt")
-        System.setProperty("azure.app.client.secret", "")
-        System.setProperty("azure.openid.config.jwks.uri", "http://localhost:1234/jwks")
-        System.setProperty("azure.openid.config.issuer", "behandlingsflyt")
+        // Texas
+        System.setProperty("nais.token.endpoint", "http://localhost:1234/token")
+        System.setProperty("nais.token.exchange.endpoint", "http://localhost:1234/token/exchange")
+        System.setProperty("nais.token.introspection.endpoint", "http://localhost:1234/introspect")
 
         var openApiJSON: String? = null
 
@@ -31,8 +30,8 @@ class CommonKtorModuleKtTest {
             application {
                 val answ = commonKtorModule(
                     prometheus = PrometheusMeterRegistry(PrometheusConfig.DEFAULT),
-                    azureConfig = AzureConfig(),
-                    infoModel = InfoModel(title = "My cute title")
+                    infoModel = InfoModel(title = "My cute title"),
+                    identityProvider = IdentityProvider.ENTRA_ID
                 )
 
                 openApiJSON = answ.getOpenApiJSON()
