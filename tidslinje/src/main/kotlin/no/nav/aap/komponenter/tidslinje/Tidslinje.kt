@@ -9,8 +9,6 @@ import java.util.*
 
 
 public class Tidslinje<T>(initSegmenter: NavigableSet<Segment<T>> = TreeSet()) {
-
-
     public constructor(initSegmenter: Collection<Segment<T>>) : this(TreeSet(initSegmenter))
 
     @JsonCreator
@@ -426,6 +424,10 @@ public class Tidslinje<T>(initSegmenter: NavigableSet<Segment<T>> = TreeSet()) {
         return Periode(minDato(), maxDato())
     }
 
+    public fun helePeriodenOrNull(): Periode? {
+        return if (isEmpty()) null else helePerioden()
+    }
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -571,6 +573,56 @@ public class Tidslinje<T>(initSegmenter: NavigableSet<Segment<T>> = TreeSet()) {
         }
             .filterNotNull()
             .map { it.value }
+    }
+
+    public fun any(
+        iPeriode: Periode? = null,
+        predikat: (Periode, T) -> Boolean,
+    ): Boolean {
+        return segmenter().any { (periode, verdi) ->
+            (iPeriode == null || iPeriode.overlapper(periode)) && predikat(periode, verdi)
+        }
+    }
+
+    public fun any(
+        iPeriode: Periode? = null,
+        predikat: (T) -> Boolean,
+    ): Boolean {
+        return any(iPeriode) { _, verdi -> predikat(verdi) }
+    }
+
+    /** Sjekk om [predikatet][predikat] er oppfylt for alle verdier i [iPeriode], eller i
+     * hele tidslinjen, om [iPeriode] er `null`.
+     *
+     * Hvis [sammenhengende] er `true`, så må også tidslinjen være sammenhengende
+     * [i perioden][iPeriode].
+     * */
+    public fun all(
+        iPeriode: Periode? = null,
+        sammenhengende: Boolean = false,
+        predikat: (Periode, T) -> Boolean,
+    ): Boolean {
+        val tidslinje = if (iPeriode == null) this else this.begrensetTil(iPeriode)
+
+        if (sammenhengende) {
+            if (iPeriode != null && tidslinje.helePeriodenOrNull() != iPeriode) {
+                return false
+            }
+
+            if (!tidslinje.erSammenhengende()) {
+                return false
+            }
+        }
+
+        return tidslinje.segmenter().all { predikat(it.periode, it.verdi) }
+    }
+
+    public fun all(
+        iPeriode: Periode? = null,
+        sammenhengende: Boolean = false,
+        predikat: (T) -> Boolean,
+    ): Boolean {
+        return all(iPeriode, sammenhengende) { _, verdi -> predikat(verdi) }
     }
 
     public companion object {
