@@ -18,4 +18,13 @@ public object JobbInputParser {
             .medOpprettetTidspunkt(row.getLocalDateTime("OPPRETTET_TID"))
             .medNesteKjøring(row.getLocalDateTime("neste_kjoring"))
     }
+    
+    public fun mapHistorikk(row: Row): JobbHistorikk {
+        return JobbHistorikk(
+            jobbId = row.getLong("jobb_id"),
+            status = row.getEnum("status"),
+            opprettet = row.getLocalDateTime("opprettet_tid"),
+            feilmelding = row.getStringOrNull("feilmelding")
+        )
+    }
 }
