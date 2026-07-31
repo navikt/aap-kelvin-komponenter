@@ -9,6 +9,7 @@ public interface FlytJobbRepository: Repository {
     public fun hentJobberForBehandling(id: Long): List<JobbInput>
     public fun hentJobberForSak(id: Long): List<JobbInput>
     public fun hentFeilmeldingForOppgave(id: Long): String
+    public fun hentJobberMedHistorikkForSak(sakid: Long): List<JobbInputMedHistorikk>
 
     public companion object {
         public operator fun invoke(connection: DBConnection): FlytJobbRepository {
@@ -60,6 +61,40 @@ public class FlytJobbRepositoryImpl(private val connection: DBConnection) : Flyt
         }
     }
 
+    override fun hentJobberMedHistorikkForSak(sakid: Long): List<JobbInputMedHistorikk> {
+        val jobbQuery = """
+            SELECT *, (SELECT count(1) FROM JOBB_HISTORIKK h WHERE h.jobb_id = op.id AND h.status = '${JobbStatus.FEILET.name}') as antall_feil
+                 FROM JOBB op
+                 WHERE op.status IN ('${JobbStatus.KLAR.name}','${JobbStatus.FEILET.name}')
+                   AND op.sak_id = ?
+        """.trimIndent()
+
+        val jobber = connection.queryList(jobbQuery) {
+            setParams {
+                setLong(1, sakid)
+            }
+            setRowMapper { row ->
+                JobbInputParser.mapJobb(row)
+            }
+        }
+        
+        val historikkQuery = """
+            select * from jobb_historikk where jobb_id = ANY(?::bigint[])
+        """.trimIndent()
+        val historikk = connection.queryList(historikkQuery) {
+            setParams {
+                setArray(1, jobber.map { "${it.id}" })
+            }
+            setRowMapper { row ->
+                JobbInputParser.mapHistorikk(row)
+            }
+        }
+        
+        return jobber.map { jobb ->
+            JobbInputMedHistorikk(jobb, historikk.filter { it.jobbId == jobb.id })
+        }
+    }
+    
     override fun hentFeilmeldingForOppgave(id: Long): String {
         val query = """
             SELECT * 
