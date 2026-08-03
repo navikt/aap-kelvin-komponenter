@@ -4,6 +4,7 @@ import no.nav.aap.komponenter.config.requiredConfigForKey
 import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.JwtConfig
 import java.net.URI
 
+@Deprecated("Fases ut siden all autentisering burde gå via Texas")
 public class AzureConfig(
     public override val tokenEndpoint: URI = URI.create(requiredConfigForKey("azure.openid.config.token.endpoint")),
     public override val clientId: String = requiredConfigForKey("azure.app.client.id"),

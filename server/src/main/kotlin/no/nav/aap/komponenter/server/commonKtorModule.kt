@@ -12,27 +12,11 @@ import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.request.*
 import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.binder.logging.LogbackMetrics
-import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.azurecc.AzureConfig
-import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.tokenx.TokenxConfig
 import no.nav.aap.komponenter.json.DefaultJsonMapper
 import no.nav.aap.komponenter.server.auth.IdentityProvider
 import no.nav.aap.komponenter.server.auth.bruker
 import no.nav.aap.komponenter.server.common.MdcKeys
 import java.util.*
-
-@Deprecated("Ta i bruk commonKtorModule med identityProvider (med Texas)")
-public fun Application.commonKtorModule(
-    prometheus: MeterRegistry,
-    azureConfig: AzureConfig? = null,
-    infoModel: InfoModel,
-    tokenxConfig: TokenxConfig? = null,
-): CommonResponse = commonKtorModule(
-    prometheus = prometheus,
-    azureConfig = azureConfig,
-    infoModel = infoModel,
-    tokenxConfig = tokenxConfig,
-    identityProviders = null,
-)
 
 public fun Application.commonKtorModule(
     prometheus: MeterRegistry,
@@ -41,24 +25,8 @@ public fun Application.commonKtorModule(
     texasHttpClient: HttpClient? = null,
 ): CommonResponse = commonKtorModule(
     prometheus = prometheus,
-    azureConfig = null,
     infoModel = infoModel,
-    tokenxConfig = null,
     identityProviders = listOf(identityProvider),
-    texasHttpClient = texasHttpClient
-)
-
-public fun Application.commonKtorModule(
-    prometheus: MeterRegistry,
-    infoModel: InfoModel,
-    identityProviders: List<IdentityProvider>,
-    texasHttpClient: HttpClient? = null,
-): CommonResponse = commonKtorModule(
-    prometheus = prometheus,
-    azureConfig = null,
-    infoModel = infoModel,
-    tokenxConfig = null,
-    identityProviders = identityProviders,
     texasHttpClient = texasHttpClient
 )
 
@@ -70,12 +38,10 @@ public fun Application.commonKtorModule(
  *  - Sets up JWT authentication against Azure or tokenx.
  *  - Genererer Swagger-dokumentasjon
  */
-private fun Application.commonKtorModule(
+public fun Application.commonKtorModule(
     prometheus: MeterRegistry,
-    azureConfig: AzureConfig? = null,
     infoModel: InfoModel,
-    tokenxConfig: TokenxConfig? = null,
-    identityProviders: List<IdentityProvider>? = null,
+    identityProviders: List<IdentityProvider>,
     texasHttpClient: HttpClient? = null,
 ): CommonResponse {
     install(MicrometerMetrics) {
@@ -101,11 +67,10 @@ private fun Application.commonKtorModule(
         generate { UUID.randomUUID().toString() }
     }
 
-    if (identityProviders.isNullOrEmpty()) {
-        authentication(azureConfig, tokenxConfig)
-    } else {
-        authentication(identityProviders, texasHttpClient)
+    require(identityProviders?.isNotEmpty() == true) {
+        "Må ha minst en identityProvider for å kunne installere autentisering"
     }
+    authentication(identityProviders, texasHttpClient)
 
     val openApiGen = generateOpenAPI(
         infoModel = infoModel
