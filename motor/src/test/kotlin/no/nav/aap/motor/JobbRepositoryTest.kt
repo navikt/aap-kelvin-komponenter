@@ -167,6 +167,32 @@ class JobbRepositoryTest {
     }
 
     @Test
+    fun `skal ikke plukke jobb igjen umiddelbart etter feil med retryBackoffTid`() {
+        val nå = LocalDateTime.now().minusMinutes(1)
+        dataSource.transaction { connection ->
+            val jobbRepository = JobbRepository(connection)
+            jobbRepository.leggTil(JobbInput(AsynkronTullJobbUtfører).medNesteKjøring(nå))
+        }
+
+        dataSource.transaction { connection ->
+            val jobbRepository = JobbRepository(connection)
+            jobbRepository.skjedulerJobber()
+
+            val plukket = jobbRepository.plukkJobbV2()
+            assertThat(plukket).isNotNull
+            jobbRepository.markerSomFeilet(plukket!!, IllegalStateException())
+
+            // Umiddelbart etter backoff-feil: kjorbar skal ha blitt nullstilt,
+            // og skjeduler skal ikke re-aktivere jobben før backoff-tid har gått.
+            jobbRepository.skjedulerJobber()
+            val plukketIgjen = jobbRepository.plukkJobbV2()
+            assertThat(plukketIgjen)
+                .`as`("Jobben skal ikke plukkes igjen umiddelbart etter feil med retryBackoffTid")
+                .isNull()
+        }
+    }
+
+    @Test
     fun `kan telle riktig antall jobber`() {
         val typer = listOf(TøysOgTullTestJobbUtfører, TullTestJobbUtfører, TøysTestJobbUtfører)
 

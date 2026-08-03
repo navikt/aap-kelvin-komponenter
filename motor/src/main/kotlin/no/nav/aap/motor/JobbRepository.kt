@@ -384,7 +384,10 @@ public class JobbRepository(private val connection: DBConnection) {
     }
 
     internal fun settNesteKjøring(jobbId: Long, tidspunkt: LocalDateTime): Int {
-        return connection.executeReturnUpdated("UPDATE JOBB SET neste_kjoring = ? WHERE id = ? AND status = ?") {
+        // Nullstill kjorbar slik at skjeduler re-aktiverer jobben tidligst etter backoff-tidspunktet.
+        // plukkJobbV2 sjekker ikke neste_kjoring, så uten denne nullstillingen ville jobben kunne
+        // plukkes igjen umiddelbart til tross for retry-backoff.
+        return connection.executeReturnUpdated("UPDATE JOBB SET neste_kjoring = ?, kjorbar = false WHERE id = ? AND status = ?") {
             setParams {
                 setLocalDateTime(1, tidspunkt)
                 setLong(2, jobbId)
