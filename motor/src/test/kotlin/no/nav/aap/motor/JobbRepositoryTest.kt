@@ -167,6 +167,102 @@ class JobbRepositoryTest {
     }
 
     @Test
+    fun `skal ikke gjøre søsken-jobb i samme eksklusivitetsgruppe kjørbar mens en jobb venter på retryBackoffTid`() {
+        val sakId = 42L
+        val tidligst = LocalDateTime.now().minusDays(1)
+        val senest = LocalDateTime.now().minusHours(1)
+
+        dataSource.transaction { connection ->
+            val jobbRepository = JobbRepository(connection)
+            jobbRepository.leggTil(
+                JobbInput(AsynkronTullJobbUtfører).forSak(sakId).medNesteKjøring(tidligst)
+            )
+            jobbRepository.leggTil(
+                JobbInput(AsynkronTullJobbUtfører).forSak(sakId).medNesteKjøring(senest)
+            )
+        }
+
+        val ider = mutableListOf<Long>()
+        dataSource.transaction { connection ->
+            val testJobbRepository = TestJobbRepository(connection)
+            val jobber = testJobbRepository
+                .hentJobberAvTypeMedAttributter(AsynkronTullJobbUtfører.type, sakId, null)
+                .sortedBy { it.nesteKjøring() }
+            ider.addAll(jobber.map { it.jobbId() })
+        }
+        val xId = ider[0]
+        val yId = ider[1]
+
+        dataSource.transaction { connection ->
+            val jobbRepository = JobbRepository(connection)
+
+            // App1: skjedulerer og plukker X (den med tidligst neste_kjoring)
+            jobbRepository.skjedulerJobber()
+            val plukketX = jobbRepository.plukkJobbV2()
+            assertThat(plukketX).isNotNull
+            assertThat(plukketX!!.jobbId()).isEqualTo(xId)
+
+            // X feiler og settes i backoff - neste_kjoring flyttes forbi Y sin neste_kjoring
+            jobbRepository.markerSomFeilet(plukketX, IllegalStateException("simulert feil"))
+
+            // App2 (simulert): skjedulerer på nytt. Y skal IKKE bli forfremmet selv om
+            // X sin neste_kjoring nå er senere enn Y sin.
+            jobbRepository.skjedulerJobber()
+        }
+
+        dataSource.transaction { connection ->
+            val kjørbareRader = connection.queryList(
+                "select id, kjorbar from jobb where sak_id = ? order by id"
+            ) {
+                setParams { setLong(1, sakId) }
+                setRowMapper { row -> row.getLong("id") to row.getBoolean("kjorbar") }
+            }
+
+            val aktive = kjørbareRader.filter { it.second }
+            // Kun X skal fortsatt eie eksklusivitets-slotten, aldri begge samtidig.
+            assertThat(aktive).hasSize(1)
+            assertThat(aktive.single().first).isEqualTo(xId)
+
+            // Y skal fortsatt være blokkert (ikke kjørbar)
+            assertThat(kjørbareRader.first { it.first == yId }.second).isFalse()
+        }
+
+        dataSource.transaction { connection ->
+            val jobbRepository = JobbRepository(connection)
+            // Ingen jobb skal kunne plukkes nå: X er ikke forfalt (backoff), Y er ikke kjørbar
+            assertThat(jobbRepository.plukkJobbV2()).isNull()
+        }
+    }
+
+    @Test
+    fun `selvstendige jobber av samme type skal kunne være kjørbare samtidig`() {
+        val nå = LocalDateTime.now().minusMinutes(1)
+
+        dataSource.transaction { connection ->
+            val jobbRepository = JobbRepository(connection)
+            // To selvstendige jobber (uten sak_id/behandling_id) av samme type - skal IKKE
+            // behandles som en eksklusivitetsgruppe. Sikkerhetsnett-indeksen (UX_JOBB_EKSKLUSIV_AKTIV)
+            // må derfor ekskludere disse, ellers ville denne transaksjonen feilet med
+            // unique constraint violation.
+            jobbRepository.leggTil(JobbInput(AsynkronTullJobbUtfører).medNesteKjøring(nå))
+            jobbRepository.leggTil(JobbInput(AsynkronTullJobbUtfører).medNesteKjøring(nå))
+            jobbRepository.skjedulerJobber()
+        }
+
+        dataSource.transaction { connection ->
+            val kjørbareRader = connection.queryList(
+                "select id, kjorbar from jobb where type = ? and sak_id is null and behandling_id is null"
+            ) {
+                setParams { setString(1, AsynkronTullJobbUtfører.type) }
+                setRowMapper { row -> row.getBoolean("kjorbar") }
+            }
+
+            assertThat(kjørbareRader).hasSize(2)
+            assertThat(kjørbareRader).allMatch { it }
+        }
+    }
+
+    @Test
     fun `kan telle riktig antall jobber`() {
         val typer = listOf(TøysOgTullTestJobbUtfører, TullTestJobbUtfører, TøysTestJobbUtfører)
 

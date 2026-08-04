@@ -22,6 +22,18 @@ CREATE INDEX IDX_JOBB_STATUS_NESTE_KJORING ON JOBB (STATUS, NESTE_KJORING);
 CREATE INDEX IDX_JOBB_NESTE_KJORING ON JOBB (NESTE_KJORING);
 CREATE INDEX IDX_JOBB_NESTE_KJORING_SAK_BEHANDLING ON JOBB (SAK_ID, BEHANDLING_ID, NESTE_KJORING);
 
+-- Sikkerhetsnett: maks én aktiv (kjørbar) jobb per eksklusivitetsgruppe (sak_id, behandling_id, type).
+-- Bruker COALESCE til sentinelverdi (-1) fordi NULL != NULL i unike indekser i Postgres.
+-- VIKTIG: må begrenses til rader som faktisk inngår i en eksklusivitetsgruppe, altså der
+-- sak_id og/eller behandling_id er satt (samme betingelse som skjedulerEkskluderendeJobber).
+-- Selvstendige jobber (sak_id OG behandling_id er NULL) er ikke en eksklusivitetsgruppe -
+-- flere av samme type SKAL kunne være kjørbar=true samtidig. Uten denne begrensningen ville
+-- COALESCE(sak_id,-1), COALESCE(behandling_id,-1) kollapse alle selvstendige jobber av samme
+-- type til samme nøkkel (-1, -1, type), og indeksen ville feilaktig blokkere dem.
+-- Denne indeksen skal også legges til av konsumenter av dette biblioteket i egne migrasjoner.
+CREATE UNIQUE INDEX UX_JOBB_EKSKLUSIV_AKTIV ON JOBB (COALESCE(SAK_ID, -1), COALESCE(BEHANDLING_ID, -1), TYPE)
+    WHERE KJORBAR AND STATUS = 'KLAR' AND (SAK_ID IS NOT NULL OR BEHANDLING_ID IS NOT NULL);
+
 CREATE TABLE JOBB_HISTORIKK
 (
     ID            BIGSERIAL                              NOT NULL PRIMARY KEY,

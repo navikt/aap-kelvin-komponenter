@@ -154,6 +154,12 @@ public class JobbRepository(private val connection: DBConnection) {
     }
 
     public fun plukkJobbV2(): JobbInput? {
+        /* `kjorbar` alene er IKKE nok til å avgjøre om jobben skal plukkes nå: en jobb som feiler
+         * med `retryBackoffTid` beholder `kjorbar = true` (den eier fortsatt eksklusivitets-slotten
+         * for sin (sak_id, behandling_id, type)-gruppe), men `neste_kjoring` flyttes frem i tid.
+         * Uten denne sjekken ville jobben blitt plukket på nytt umiddelbart, uten å respektere
+         * backoff-tiden. Se `skjedulerEkskluderendeJobber` for hvordan eksklusivitet håndteres.
+         */
         val query = """
             select jobb.id,
                    jobb.type,
@@ -171,12 +177,16 @@ public class JobbRepository(private val connection: DBConnection) {
             from jobb
             where jobb.status = '${JobbStatus.KLAR.name}'
             and jobb.kjorbar
+            and jobb.neste_kjoring <= ?
             order by jobb.neste_kjoring
             for update skip locked
             limit 1
         """.trimIndent()
 
         val plukketJobb = connection.queryFirstOrNull(query) {
+            setParams {
+                setLocalDateTime(1, LocalDateTime.now())
+            }
             setRowMapper { row ->
                 JobbInputParser.mapJobb(row)
             }
@@ -218,21 +228,58 @@ public class JobbRepository(private val connection: DBConnection) {
                 at å sette kjorbar := true er en idempotent operasjon, og vi får ikke
                 feil hvis to transaksjoner gjør samme endring – uavhengig av hvor lang
                 tid det er mellom endringene.
+
+                Designprinsipp: `kjorbar = true` betyr at raden eier eksklusivitets-slotten
+                for sin (sak_id, behandling_id, type)-gruppe helt til jobben når en terminal
+                tilstand (FERDIG, eller FEILET etter maks antall forsøk). En backoff-retry
+                (se `markerSomFeilet`) flytter kun `neste_kjoring` fremover i tid og
+                rører ALDRI `kjorbar` – jobben beholder altså slotten sin under hele
+                ventetiden. `plukkJobbV2` respekterer `neste_kjoring` før den plukker en
+                allerede-kjørbar rad på nytt.
+
+                Om en gruppe skal blokkeres for ny forfremmelse avgjøres derfor med en
+                RENDYRKET EKSISTENSSJEKK («finnes det en blokkerende rad i gruppen?»),
+                ikke ved å sammenligne `neste_kjoring` på tvers av gruppen slik den forrige
+                versjonen av denne spørringen gjorde. Det var nettopp den sammenligningen
+                som ga et race: når en jobb X sin `neste_kjoring` ble flyttet forbi et
+                søsken Y sin, "vant" Y `distinct on`-sorteringen og ble forfremmet selv om
+                X fortsatt var aktiv. Eksistenssjekken er uavhengig av X sin `neste_kjoring`,
+                så Y kan aldri forfremmes mens X (uansett tidspunkt) fortsatt er
+                status='KLAR' og kjorbar=true.
+
+                FEILET (terminal, maks forsøk nådd) skal fortsatt blokkere gruppen inntil
+                en saksbehandler/ops manuelt løser den (se RetryFeiledeJobberRepository),
+                for å bevare rekkefølge-garantien – men en FEILET-rad skal aldri selv bli
+                forfremmet (den kan uansett ikke plukkes av `plukkJobbV2`, som krever
+                status='KLAR').
          */
         val query = """
-            with neste_ekskluderende_jobb as (
-                select distinct on (sak_id, behandling_id, type) id, status
+            with grupper_blokkert as (
+                select distinct sak_id, behandling_id, type
                 from jobb
-                where status IN ('${JobbStatus.FEILET.name}', '${JobbStatus.KLAR.name}')
-                  and (sak_id is not null or (sak_id is null and behandling_id is not null))
-                order by sak_id, behandling_id, type, neste_kjoring
+                where status = '${JobbStatus.FEILET.name}'
+                   or (status = '${JobbStatus.KLAR.name}' and kjorbar)
+            ),
+            neste_ekskluderende_jobb as (
+                select distinct on (j.sak_id, j.behandling_id, j.type) j.id
+                from jobb j
+                where j.status = '${JobbStatus.KLAR.name}'
+                  and not j.kjorbar
+                  and (j.sak_id is not null or (j.sak_id is null and j.behandling_id is not null))
+                  and j.neste_kjoring <= ?
+                  and not exists (
+                      select 1
+                      from grupper_blokkert g
+                      where g.type = j.type
+                        and g.sak_id is not distinct from j.sak_id
+                        and g.behandling_id is not distinct from j.behandling_id
+                  )
+                order by j.sak_id, j.behandling_id, j.type, j.neste_kjoring
             )
             update jobb
             set kjorbar = true
             from neste_ekskluderende_jobb
             where jobb.id = neste_ekskluderende_jobb.id
-            and jobb.neste_kjoring <= ?
-            and not jobb.kjorbar
         """.trimIndent()
 
         return connection.executeReturnUpdated(query) {
@@ -309,7 +356,7 @@ public class JobbRepository(private val connection: DBConnection) {
                 }
             }
         } else if (jobbInput.jobb.retryBackoffTid != null && jobbId != null) {
-           val nesteKjøreTidspunkt = jobbInput.nesteKjøringTidspunkt().plus(jobbInput.jobb.retryBackoffTid)
+           val nesteKjøreTidspunkt = LocalDateTime.now().plus(jobbInput.jobb.retryBackoffTid)
             settNesteKjøring(jobbId, nesteKjøreTidspunkt)
         }
 
