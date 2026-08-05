@@ -12,5 +12,5 @@ dependencies {
 
     testImplementation(libs.assertj.core)
     testImplementation(project(":tidslinje"))
-    testImplementation(project(":dbconnect")) // her bor Periode :)
+    testImplementation(project(":verdityper"))
 }
