@@ -20,9 +20,12 @@ public sealed interface JobbSpesifikasjon {
         get() = 3
 
     /**
-     * Backoff-tid ved en feilet jobb - kan kun settes på selvstendige jobber som ikke må kjøres i sekvens med andre
-     * F.eks. skal ikke prosesserBehandlingJobb og lignende som er en del av innebygd orkestrering bruke denne.
-     * Iverksetting til utbetaling har behov da det er nyttig å kunne rekjøre senere.
+     * Backoff-tid ved en feilet jobb. Kan brukes både på selvstendige jobber og på jobber som
+     * inngår i en eksklusivitetsgruppe (samme sak_id/behandling_id/type).
+     *
+     * For jobber i en eksklusivitetsgruppe: jobben beholder sin plass i køen (kjorbar=true) mens
+     * den venter på backoff-tiden – ingen andre jobber i samme gruppe kan starte i mellomtiden.
+     * Se `JobbRepository.skjedulerEkskluderendeJobber` for detaljer om hvordan dette garanteres.
      */
     public val retryBackoffTid: Duration?
         get() = null
