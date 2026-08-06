@@ -231,7 +231,7 @@ public class JobbRepository(private val connection: DBConnection) {
 
                 Designprinsipp: `kjorbar = true` betyr at raden eier eksklusivitets-slotten
                 for sin (sak_id, behandling_id, type)-gruppe helt til jobben når en terminal
-                tilstand (FERDIG, eller FEILET etter maks antall forsøk). En backoff-retry
+                tilstand (FERDIG). En backoff-retry
                 (se `markerSomFeilet`) flytter kun `neste_kjoring` fremover i tid og
                 rører ALDRI `kjorbar` – jobben beholder altså slotten sin under hele
                 ventetiden. `plukkJobbV2` respekterer `neste_kjoring` før den plukker en
@@ -247,7 +247,7 @@ public class JobbRepository(private val connection: DBConnection) {
                 så Y kan aldri forfremmes mens X (uansett tidspunkt) fortsatt er
                 status='KLAR' og kjorbar=true.
 
-                FEILET (terminal, maks forsøk nådd) skal fortsatt blokkere gruppen inntil
+                FEILET (maks forsøk nådd) skal fortsatt blokkere gruppen inntil
                 en saksbehandler/ops manuelt løser den (se RetryFeiledeJobberRepository),
                 for å bevare rekkefølge-garantien – men en FEILET-rad skal aldri selv bli
                 forfremmet (den kan uansett ikke plukkes av `plukkJobbV2`, som krever
