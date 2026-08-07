@@ -13,6 +13,8 @@ rootProject.name = "kelvin-komponenter"
 
 
 include(
+    "kelvin-bom",
+    "kelvin-catalog",
     "infrastructure",
     "dbmigrering",
     "dbconnect",
