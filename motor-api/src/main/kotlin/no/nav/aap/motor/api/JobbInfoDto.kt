@@ -23,4 +23,6 @@ public data class JobbInfoDto(
     public val beskrivelse: String,
     public val navn: String,
     public val tilleggsinfo: JobbTilleggsinfo? = null,
+    /** Prioriteten jobben ble lagt inn med. Lavere verdi = høyere prioritet. Se [no.nav.aap.motor.Prioritet]. */
+    public val prioritet: Int? = null,
 )

@@ -205,6 +205,7 @@ private fun jobbInfoDto(
         planlagtKjøretidspunkt = jobbInput.nesteKjøring(),
         opprettetTidspunkt = jobbInput.opprettetTidspunkt(),
         tilleggsinfo = jobbInput.tilleggsinfo(),
+        prioritet = jobbInput.prioritet(),
         metadata = JobbLogInfoProviderHolder.get()
             .hentInformasjon(connection, jobbInput)?.felterMedVerdi
             ?: mapOf()

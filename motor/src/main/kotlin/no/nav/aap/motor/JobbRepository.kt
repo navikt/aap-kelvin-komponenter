@@ -11,7 +11,7 @@ public class JobbRepository(private val connection: DBConnection) {
         val jobbId = connection.executeReturnKey(
             """
             INSERT INTO JOBB 
-            (sak_id, behandling_id, type, neste_kjoring, parameters, payload) VALUES (?, ?, ?, ?, ?, ?)
+            (sak_id, behandling_id, type, neste_kjoring, parameters, payload, prioritet) VALUES (?, ?, ?, ?, ?, ?, ?)
             """.trimIndent()
         ) {
             setParams {
@@ -21,6 +21,7 @@ public class JobbRepository(private val connection: DBConnection) {
                 setLocalDateTime(4, jobbInput.nesteKjøringTidspunkt())
                 setProperties(5, jobbInput.properties)
                 setString(6, jobbInput.payload)
+                setInt(7, jobbInput.prioritet())
             }
         }
 
@@ -36,7 +37,7 @@ public class JobbRepository(private val connection: DBConnection) {
                 setLocalDateTime(3, LocalDateTime.now())
             }
         }
-        log.info("Planlagt kjøring av jobb[${jobbInput.type()}] med kjøring etter ${jobbInput.nesteKjøringTidspunkt()}. Jobb-ID: $jobbId")
+        log.info("Planlagt kjøring av jobb[${jobbInput.type()}] med kjøring etter ${jobbInput.nesteKjøringTidspunkt()} og prioritet ${jobbInput.prioritet()}. Jobb-ID: $jobbId")
         return jobbId
     }
 
@@ -108,6 +109,7 @@ public class JobbRepository(private val connection: DBConnection) {
                    jobb.sak_id,
                    jobb.behandling_id,
                    jobb.neste_kjoring,
+                   jobb.prioritet,
                    jobb.parameters,
                    jobb.payload,
                    jobb.opprettet_tid,
@@ -159,6 +161,23 @@ public class JobbRepository(private val connection: DBConnection) {
          * for sin (sak_id, behandling_id, type)-gruppe), men `neste_kjoring` flyttes frem i tid.
          * Uten denne sjekken ville jobben blitt plukket på nytt umiddelbart, uten å respektere
          * backoff-tiden. Se `skjedulerEkskluderendeJobber` for hvordan eksklusivitet håndteres.
+         *
+         * PRIORITET: `order by prioritet, neste_kjoring` – lavere prioritetsverdi vinner, og
+         * `neste_kjoring` avgjør innad i samme prioritetsnivå. Rekkefølgen på kolonnene og at
+         * begge er stigende er det som lar Postgres lese ferdig sortert fra indeksen
+         * IDX_JOBB_PLUKK (PRIORITET, NESTE_KJORING) og stoppe på første treff pga. `limit 1`.
+         *
+         * Dette er stedet – og det eneste stedet – prioritet påvirker rekkefølgen. Skjeduleringen
+         * forfremmer gruppehodene uten hensyn til prioritet; her velges det mellom de allerede
+         * forfremmede radene. Konsekvensen er at prioritet aldri kan bryte rekkefølgegarantien
+         * innad i en eksklusivitetsgruppe: en høyt prioritert jobb bak en lavt prioritert jobb i
+         * samme gruppe er ikke `kjorbar` ennå, og er derfor ikke engang med i utvalget her.
+         *
+         * MERK sult: med streng prioritet vil jobber på lavt nivå aldri kjøre så lenge det finnes
+         * en sammenhengende strøm av høyere prioriterte jobber. Det er akseptabelt så lenge køen
+         * normalt tømmes. Overvåk ventetid per prioritetsnivå; bygger lave nivåer seg opp over tid
+         * må det innføres aldring (effektiv prioritet som synker med ventetid), som til gjengjeld
+         * koster indeksbruken over.
          */
         val query = """
             select jobb.id,
@@ -167,6 +186,7 @@ public class JobbRepository(private val connection: DBConnection) {
                    jobb.sak_id,
                    jobb.behandling_id,
                    jobb.neste_kjoring,
+                   jobb.prioritet,
                    jobb.parameters,
                    jobb.payload,
                    jobb.opprettet_tid,
@@ -178,7 +198,7 @@ public class JobbRepository(private val connection: DBConnection) {
             where jobb.status = '${JobbStatus.KLAR.name}'
             and jobb.kjorbar
             and jobb.neste_kjoring <= ?
-            order by jobb.neste_kjoring
+            order by jobb.prioritet, jobb.neste_kjoring
             for update skip locked
             limit 1
         """.trimIndent()
@@ -217,12 +237,8 @@ public class JobbRepository(private val connection: DBConnection) {
     }
 
     private fun skjedulerEkskluderendeJobber(): Int {
-        /* Egnet index:
-            create index idx_jobb_sak_behandling_type_neste
-                (sak_id, behandling_id, type, neste_kjoring)
-                where status IN ('${JobbStatus.FEILET.name}', '${JobbStatus.KLAR.name}')
-                and (sak_id is not null or (sak_id is null and behandling_id is not null))
-                ;
+        /* Egnet index: IDX_JOBB_SKJEDULER_EKSKLUDERENDE og IDX_JOBB_GRUPPER_BLOKKERT,
+           se V0.1__modell.sql.
 
                 Det er bare en mulig transisjon for `kjorbar`: fra false til true. Det betyr
                 at å sette kjorbar := true er en idempotent operasjon, og vi får ikke
@@ -290,7 +306,7 @@ public class JobbRepository(private val connection: DBConnection) {
     }
 
     private fun skjedulerSelvstendigeJobber(): Int {
-        /* Egnet index:
+        /* Egnet index: IDX_JOBB_SKJEDULER_SELVSTENDIG, se V0.1__modell.sql.
 
         create index idx_jobb_neste_kjoring (neste_kjoring)
             where sak_id is null
