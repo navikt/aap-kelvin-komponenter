@@ -14,21 +14,6 @@ import java.util.*
 import kotlin.reflect.KClass
 
 public class Row internal constructor(private val resultSet: ResultSet) {
-    /**
-     * Om kolonnen finnes i resultatsettet.
-     *
-     * Nyttig for row-mappere som deles av flere spørringer, der en nyere kolonne ikke
-     * nødvendigvis er med i alle. Uten denne sjekken kaster [java.sql.ResultSet.getInt] og
-     * søsknene sine en `SQLException` når kolonnen mangler, og en `getXOrNull` hjelper ikke –
-     * de skiller bare på NULL-verdi, ikke på fraværende kolonne.
-     */
-    public fun harKolonne(columnLabel: String): Boolean {
-        val metaData = resultSet.metaData
-        return (1..metaData.columnCount).any {
-            metaData.getColumnLabel(it).equals(columnLabel, ignoreCase = true)
-        }
-    }
-
     public fun getBytes(columnLabel: String): ByteArray {
         val bytes: ByteArray? = getBytesOrNull(columnLabel)
         requireNotNull(bytes) { "Null value when retrieving column $columnLabel." }
