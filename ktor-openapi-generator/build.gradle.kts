@@ -42,7 +42,6 @@ dependencies {
     testImplementation(libs.ktor.client.content.negotiation)
 
     testImplementation(kotlin("test"))
-    testImplementation(kotlin("stdlib-jdk8"))
 
     testImplementation(libs.logback.classic) // logging framework for the tests
 

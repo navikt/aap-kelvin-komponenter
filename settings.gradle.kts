@@ -1,4 +1,5 @@
 pluginManagement {
+    includeBuild("build-logic")
     repositories {
         mavenCentral()
         gradlePluginPortal()
@@ -11,6 +12,12 @@ plugins {
 }
 rootProject.name = "kelvin-komponenter"
 
+dependencyResolutionManagement {
+    repositories {
+        mavenCentral()
+        maven("https://github-package-registry-mirror.gc.nav.no/cached/maven-release")
+    }
+}
 
 include(
     "infrastructure",
