@@ -145,8 +145,6 @@ public class TestDataSource : AutoCloseable, DataSource {
 
                 minimumIdle = 0
                 maximumPoolSize = poolSize
-
-                connectionInitSql = "SET TIMEZONE TO 'UTC'"
             })
             logger.debug(
                 "Skapte tom Postgres-db med URL ${ds.jdbcUrl}. Brukernavn: ${postgres.username}. Db-navn: $dbName"
