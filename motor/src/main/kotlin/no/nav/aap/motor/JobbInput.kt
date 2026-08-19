@@ -20,6 +20,7 @@ public class JobbInput(
     private var behandlingId: Long? = null
     private var nesteKjøring: LocalDateTime? = null
     private var antallFeil: Long = 0
+    private var prioritet: Int? = null
     private var status: JobbStatus = JobbStatus.KLAR
     internal var properties = Properties()
     internal var payload: String? = null
@@ -136,6 +137,21 @@ public class JobbInput(
         return this
     }
 
+    /**
+     * Overstyrer prioriteten for denne ene jobben. Lavere verdi = høyere prioritet.
+     *
+     * Merk at prioritet ikke påvirker rekkefølgen innad i en eksklusivitetsgruppe
+     * (samme sak_id/behandling_id/type). Se [Prioritet].
+     */
+    public fun medPrioritet(prioritet: Int): JobbInput {
+        this.prioritet = prioritet
+        return this
+    }
+
+    public fun prioritet(): Int {
+        return prioritet ?: jobb.prioritet
+    }
+
     public fun maksFeilNådd(): Boolean {
         return jobb.retries <= antallFeil + 1
     }
@@ -169,7 +185,7 @@ public class JobbInput(
     }
 
     override fun toString(): String {
-        return "[${jobb.type}] - ${nesteKjøringTidspunkt()} - id = $id, sakId = $sakId, behandlingId = $behandlingId"
+        return "[${jobb.type}] - ${nesteKjøringTidspunkt()} - id = $id, sakId = $sakId, behandlingId = $behandlingId, prioritet = ${prioritet()}"
     }
 
     public fun medProperties(properties: Properties?): JobbInput {

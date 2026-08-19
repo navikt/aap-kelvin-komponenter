@@ -20,6 +20,12 @@ public sealed interface JobbSpesifikasjon {
         get() = 3
 
     /**
+     * Standardprioritet for denne jobbtypen. Lavere verdi = høyere prioritet.
+     */
+    public val prioritet: Int
+        get() = Prioritet.NORMAL
+
+    /**
      * Backoff-tid ved en feilet jobb. Kan brukes både på selvstendige jobber og på jobber som
      * inngår i en eksklusivitetsgruppe (samme sak_id/behandling_id/type).
      *

@@ -27,9 +27,17 @@ public interface Jobb: ConnectionJobbSpesifikasjon {
         return null
     }
 
+    /**
+     * Standardprioritet for denne jobbtypen. Lavere verdi = høyere prioritet. Se [Prioritet].
+     */
+    public fun prioritet(): Int {
+        return Prioritet.NORMAL
+    }
+
     override val beskrivelse: String get() = beskrivelse()
     override val type: String get() = type()
     override val navn: String get() = navn()
     override val retries: Int get() = retries()
     override val cron: CronExpression? get() = cron()
+    override val prioritet: Int get() = prioritet()
 }

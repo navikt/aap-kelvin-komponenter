@@ -4,6 +4,7 @@ import no.nav.aap.komponenter.dbconnect.DBConnection
 import no.nav.aap.motor.ConnectionJobbSpesifikasjon
 import no.nav.aap.motor.JobbInput
 import no.nav.aap.motor.JobbUtfører
+import no.nav.aap.motor.Prioritet
 import no.nav.aap.motor.cron.CronExpression
 import org.slf4j.LoggerFactory
 
@@ -49,6 +50,12 @@ internal class ArkiverFerdigstilteJobb(private val repository: ArkiverFerdigstil
          * Hver dag kl 01:00 - Bør justeres til å kjøre oftere for å tømme initielt!
          */
         override val cron = CronExpression.create("0 0 1 * * *")
+
+        /**
+         * Ren vedlikeholdsjobb som kan kjøre i inntil ti runder à 50 000 rader. Den skal
+         * aldri stå foran faktisk saksbehandling i køen.
+         */
+        override val prioritet = Prioritet.BAKGRUNN
 
     }
 }
