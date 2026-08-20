@@ -1,6 +1,6 @@
 [versions]
 ktor = "3.5.2"
-jackson = "2.22.1"
+jackson = "2.22.2"
 jackson-annotations = "2.22"
 testcontainers = "2.0.5"
 junit-jupiter = "6.1.3"
