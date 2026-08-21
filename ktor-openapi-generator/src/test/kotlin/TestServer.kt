@@ -302,7 +302,7 @@ object TestServer {
                 disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
                 disable(DeserializationFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE)
 
-                setSerializationInclusion(JsonInclude.Include.NON_NULL)
+                setDefaultPropertyInclusion(JsonInclude.Include.NON_NULL)
 
                 setDefaultPrettyPrinter(DefaultPrettyPrinter().apply {
                     indentArraysWith(DefaultPrettyPrinter.FixedSpaceIndenter.instance)

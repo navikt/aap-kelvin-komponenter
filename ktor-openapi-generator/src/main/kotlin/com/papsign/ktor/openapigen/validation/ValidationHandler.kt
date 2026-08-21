@@ -29,7 +29,8 @@ class ValidationHandler private constructor(
         val type = annotatedType.type
         val validators = annotations.mapNotNull { annot ->
             annot.annotationClass.findAnnotation<ValidatorAnnotation>()
-                ?.let { (it.getHandlerInstance() as ValidatorBuilder<Annotation>).build(type, annot) }
+                // Safe: ValidatorAnnotation guarantees the handler's declared annotation type matches `annot`'s class.
+                ?.let { @Suppress("UNCHECKED_CAST") (it.getHandlerInstance() as ValidatorBuilder<Annotation>).build(type, annot) }
         }
         val shouldTransform = validators.isNotEmpty()
         val transform: (Any?) -> Any? = { source: Any? ->
@@ -271,10 +272,10 @@ class ValidationHandler private constructor(
                                             copyParams[param] = handler.handle(getter(t))
                                         } else {
                                             // TODO convert this to canAccess and only change status if false
-                                            val accessible = field.isAccessible
-                                            field.isAccessible = true
+                                            val accessible = field.canAccess(t)
+                                            field.setAccessible(true)
                                             field.set(t, handler.handle(field.get(t)))
-                                            field.isAccessible = accessible
+                                            field.setAccessible(accessible)
                                         }
                                     }
                                     if (copy != null && copyParams != null) {
@@ -302,6 +303,8 @@ class ValidationHandler private constructor(
     }
 
     fun <T> handle(t: T): T {
+        // Safe: transformFun is built from the same type T that this handler was constructed for.
+        @Suppress("UNCHECKED_CAST")
         return if (t != null) transformFun?.invoke(t) as T ?: t else t
     }
 

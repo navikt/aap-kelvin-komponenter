@@ -17,7 +17,6 @@ import com.papsign.ktor.openapigen.schema.builder.FinalSchemaBuilder
 import com.papsign.ktor.openapigen.schema.builder.SchemaBuilder
 import com.papsign.ktor.openapigen.schema.namer.DefaultSchemaNamer
 import com.papsign.ktor.openapigen.schema.namer.SchemaNamer
-import io.ktor.util.reflect.platformType
 import kotlin.collections.set
 import kotlin.reflect.KType
 import kotlin.reflect.KVisibility
@@ -26,6 +25,7 @@ import kotlin.reflect.full.hasAnnotation
 import kotlin.reflect.full.isSubtypeOf
 import kotlin.reflect.full.starProjectedType
 import kotlin.reflect.full.withNullability
+import kotlin.reflect.jvm.javaType
 import kotlin.reflect.jvm.jvmErasure
 
 object DefaultEnumObjectSchemaProvider : SchemaBuilderProviderModule, OpenAPIGenModuleExtension, DefaultOpenAPIModule {
@@ -96,7 +96,7 @@ object DefaultEnumObjectSchemaProvider : SchemaBuilderProviderModule, OpenAPIGen
 
         override fun checkType(type: KType) {
             if (type.isSubtypeOf(getKType<Enum<*>?>())) {
-                val jsonFormat = (type.platformType as Class<*>).getAnnotation(JsonFormat::class.java)
+                val jsonFormat = (type.javaType as Class<*>).getAnnotation(JsonFormat::class.java)
                 if (jsonFormat != null && jsonFormat.shape == JsonFormat.Shape.OBJECT) {
                     return
                 }

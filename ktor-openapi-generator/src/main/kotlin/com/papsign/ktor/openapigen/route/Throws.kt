@@ -6,10 +6,11 @@ import com.papsign.ktor.openapigen.modules.registerModule
 import com.papsign.ktor.openapigen.route.util.createConstantChild
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.ApplicationCallPipeline
+import io.ktor.server.application.Hook
 import io.ktor.server.application.PipelineCall
 import io.ktor.server.application.call
+import io.ktor.server.application.createRouteScopedPlugin
 import io.ktor.server.response.respond
-import io.ktor.server.routing.intercept
 import io.ktor.util.pipeline.PipelineContext
 import kotlinx.coroutines.coroutineScope
 import kotlin.reflect.KClass
@@ -39,11 +40,24 @@ inline fun <T: OpenAPIRoute<T>, reified EX : Throwable, reified B> T.throws(stat
     return throws(APIException.apiException(status, example, gen), fn = fn)
 }
 
-inline fun <T: OpenAPIRoute<T>> T.throws(vararg responses: APIException<*, *>, crossinline fn: T.() -> Unit = {}): T {
-    return child(ktorRoute.createConstantChild()).apply {
-        provider.registerModule(ThrowsInfo(responses.asList()))
+/**
+ * Route-scoped hook that runs on the [ApplicationCallPipeline.Monitoring] phase, replacing the
+ * deprecated `Route.intercept(phase, block)` extension.
+ */
+private object ThrowsMonitoringHook : Hook<suspend PipelineContext<Unit, PipelineCall>.(Unit) -> Unit> {
+    override fun install(
+        pipeline: ApplicationCallPipeline,
+        handler: suspend PipelineContext<Unit, PipelineCall>.(Unit) -> Unit
+    ) {
+        pipeline.intercept(ApplicationCallPipeline.Monitoring, handler)
+    }
+}
+
+@PublishedApi
+internal fun throwsPlugin(responses: Array<out APIException<*, *>>) =
+    createRouteScopedPlugin("ThrowsExceptionHandler") {
         val handler = makeExceptionHandler(responses)
-        ktorRoute.intercept(ApplicationCallPipeline.Monitoring) {
+        on(ThrowsMonitoringHook) {
             try {
                 coroutineScope {
                     proceed()
@@ -57,6 +71,12 @@ inline fun <T: OpenAPIRoute<T>> T.throws(vararg responses: APIException<*, *>, c
                 } else throw exception
             }
         }
+    }
+
+inline fun <T: OpenAPIRoute<T>> T.throws(vararg responses: APIException<*, *>, crossinline fn: T.() -> Unit = {}): T {
+    return child(ktorRoute.createConstantChild()).apply {
+        provider.registerModule(ThrowsInfo(responses.asList()))
+        ktorRoute.install(throwsPlugin(responses))
         fn()
     }
 }
@@ -72,6 +92,9 @@ fun makeExceptionHandler(info: Array<out APIException<*, *>>): suspend PipelineC
     }
     return { t: Throwable ->
         val handler: APIException<*, *> = findHandlerByType(t::class) ?: throw t
+        // Safe: findHandlerByType matched `handler` by t::class (or a superclass), so `handler`'s
+        // erased EX type is guaranteed compatible with `t` at runtime.
+        @Suppress("UNCHECKED_CAST")
         val gen = handler.contentGen as ((Throwable) -> Any?)?
         val ex = handler.example
         when {

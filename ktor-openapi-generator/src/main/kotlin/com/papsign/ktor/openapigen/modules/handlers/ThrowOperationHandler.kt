@@ -44,9 +44,9 @@ object ThrowOperationHandler : OperationModule {
                     second.example
                 }.withIndex().associate { (idx, value) -> "Example $idx" to ExampleModel<Any?>(value) }.toMutableMap()
                 if (examples.size <= 1) {
-                    MediaTypeModel(schema as SchemaModel<Any?>?, example = examples.values.firstOrNull()?.value)
+                    MediaTypeModel(schema, example = examples.values.firstOrNull()?.value)
                 } else {
-                    MediaTypeModel(schema as SchemaModel<Any?>?, examples = examples)
+                    MediaTypeModel(schema, examples = examples)
                 }
             }.toMutableMap()
             val statusCode = exceptions.key
