@@ -20,7 +20,7 @@ dependencies {
 
     api(libs.micrometer.prometheus)
 
-    api(libs.ktor.serialization.jackson)
+    api(libs.ktor.serialization.jackson3)
     api(libs.jackson.databind)
     api(project(":ktor-openapi-generator"))
 
@@ -34,7 +34,7 @@ dependencies {
     implementation(libs.ktor.client.content.negotiation)
 
     testImplementation(libs.ktor.client.content.negotiation)
-    testImplementation(libs.ktor.serialization.jackson)
+    testImplementation(libs.ktor.serialization.jackson3)
     testImplementation(libs.ktor.client.mock)
     testImplementation(libs.ktor.server.test.host)
     constraints {

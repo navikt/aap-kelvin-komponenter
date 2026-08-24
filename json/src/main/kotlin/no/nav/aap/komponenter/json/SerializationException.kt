@@ -1,5 +1,5 @@
 package no.nav.aap.komponenter.json
 
-import java.io.IOException
+import tools.jackson.core.JacksonException
 
-public class SerializationException(exception: IOException) : RuntimeException(exception)
+public class SerializationException(exception: JacksonException) : RuntimeException(exception)

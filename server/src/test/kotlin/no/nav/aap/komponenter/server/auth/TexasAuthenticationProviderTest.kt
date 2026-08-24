@@ -2,13 +2,12 @@ package no.nav.aap.komponenter.server.auth
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
-import com.fasterxml.jackson.databind.DeserializationFeature
 import io.ktor.client.*
 import io.ktor.client.engine.mock.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.http.*
-import io.ktor.serialization.jackson.*
+import io.ktor.serialization.jackson3.*
 import io.ktor.server.auth.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -16,6 +15,7 @@ import io.ktor.server.testing.*
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import tools.jackson.databind.DeserializationFeature
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -181,7 +181,7 @@ class TexasAuthenticationProviderTest {
         return HttpClient(engine) {
             install(ContentNegotiation) {
                 jackson {
-                    configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+                    disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
                 }
             }
         }

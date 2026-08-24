@@ -1,10 +1,10 @@
 import com.fasterxml.jackson.annotation.JsonInclude
-import com.fasterxml.jackson.core.util.DefaultIndenter
-import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.JsonMappingException
-import com.fasterxml.jackson.databind.SerializationFeature
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import tools.jackson.core.util.DefaultIndenter
+import tools.jackson.core.util.DefaultPrettyPrinter
+import tools.jackson.databind.DatabindException
+import tools.jackson.databind.DeserializationFeature
+import tools.jackson.databind.SerializationFeature
+import tools.jackson.databind.cfg.DateTimeFeature
 import com.papsign.ktor.openapigen.APITag
 import com.papsign.ktor.openapigen.OpenAPIGen
 import com.papsign.ktor.openapigen.annotations.Path
@@ -43,7 +43,7 @@ import com.papsign.ktor.openapigen.route.throws
 import com.papsign.ktor.openapigen.schema.namer.DefaultSchemaNamer
 import com.papsign.ktor.openapigen.schema.namer.SchemaNamer
 import io.ktor.http.HttpStatusCode
-import io.ktor.serialization.jackson.jackson
+import io.ktor.serialization.jackson3.jackson
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.engine.embeddedServer
@@ -299,24 +299,24 @@ object TestServer {
 
                 enable(SerializationFeature.WRAP_EXCEPTIONS, SerializationFeature.INDENT_OUTPUT)
 
-                disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-                disable(DeserializationFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE)
+                disable(DateTimeFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE)
 
-                setSerializationInclusion(JsonInclude.Include.NON_NULL)
+                changeDefaultPropertyInclusion { it.withValueInclusion(JsonInclude.Include.NON_NULL) }
+                changeDefaultPropertyInclusion { it.withContentInclusion(JsonInclude.Include.NON_NULL) }
 
-                setDefaultPrettyPrinter(DefaultPrettyPrinter().apply {
-                    indentArraysWith(DefaultPrettyPrinter.FixedSpaceIndenter.instance)
+                defaultPrettyPrinter(DefaultPrettyPrinter().apply {
+                    indentArraysWith(DefaultPrettyPrinter.FixedSpaceIndenter.instance())
                     indentObjectsWith(DefaultIndenter("  ", "\n"))
                 })
 
-                registerModule(JavaTimeModule())
+                // java.time (de)serialization support is built into jackson-databind in Jackson 3
             }
         }
 
         // StatusPage interop, can also define exceptions per-route
         install(StatusPages) {
             withAPI(api) {
-                exception<JsonMappingException, Error>(HttpStatusCode.BadRequest) {
+                exception<DatabindException, Error>(HttpStatusCode.BadRequest) {
                     it.printStackTrace()
                     Error("mapping.json", it.localizedMessage)
                 }

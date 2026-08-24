@@ -40,9 +40,9 @@ class TidslinjeSerdeTest {
         assertThat(jsonObj.isArray).isTrue()
 
         jsonObj[0].also { førsteSegment ->
-            assertThat(førsteSegment.fieldNames().asSequence().toSet())
+            assertThat(førsteSegment.propertyNames().toSet())
                 .isEqualTo(setOf("periode", "verdi"))
-            assertThat(førsteSegment["periode"].fieldNames().asSequence().toSet())
+            assertThat(førsteSegment["periode"].propertyNames().toSet())
                 .isEqualTo(setOf("fom", "tom"))
             assertThat(førsteSegment["periode"]["fom"].asText()).isEqualTo("2020-01-01")
             assertThat(førsteSegment["periode"]["tom"].asText()).isEqualTo("2021-01-01")
@@ -50,9 +50,9 @@ class TidslinjeSerdeTest {
         }
 
         jsonObj[1].also { andreSegment ->
-            assertThat(andreSegment.fieldNames().asSequence().toSet())
+            assertThat(andreSegment.propertyNames().toSet())
                 .isEqualTo(setOf("periode", "verdi"))
-            assertThat(andreSegment["periode"].fieldNames().asSequence().toSet())
+            assertThat(andreSegment["periode"].propertyNames().toSet())
                 .isEqualTo(setOf("fom", "tom"))
             assertThat(andreSegment["periode"]["fom"].asText()).isEqualTo("2021-03-01")
             assertThat(andreSegment["periode"]["tom"].asText()).isEqualTo("2022-01-01")

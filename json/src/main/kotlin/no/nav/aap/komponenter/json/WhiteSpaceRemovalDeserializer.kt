@@ -1,12 +1,12 @@
 package no.nav.aap.komponenter.json
 
-import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.databind.DeserializationContext
-import com.fasterxml.jackson.databind.JsonDeserializer
+import tools.jackson.core.JsonParser
+import tools.jackson.databind.DeserializationContext
+import tools.jackson.databind.ValueDeserializer
 
 
-public class WhiteSpaceRemovalDeserializer : JsonDeserializer<String?>() {
+public class WhiteSpaceRemovalDeserializer : ValueDeserializer<String?>() {
     override fun deserialize(jp: JsonParser, ctxt: DeserializationContext?): String? {
-        return jp.text?.trim()
+        return jp.string?.trim()
     }
 }

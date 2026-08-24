@@ -1,7 +1,6 @@
 package no.nav.aap.komponenter.httpklient.httpclient
 
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import io.ktor.serialization.jackson.*
+import io.ktor.serialization.jackson3.*
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
@@ -10,9 +9,8 @@ import kotlinx.coroutines.runBlocking
 
 fun createFakeServer(block: Application.() -> Unit) = embeddedServer(Netty, port = 0) {
     install(ContentNegotiation) {
-        jackson {
-            registerModule(JavaTimeModule())
-        }
+        // java.time (de)serialization support is built into jackson-databind in Jackson 3
+        jackson()
     }
 
     this.let(block)
