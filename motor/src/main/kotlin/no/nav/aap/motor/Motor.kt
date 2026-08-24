@@ -155,6 +155,7 @@ public class MotorImpl(
 
     private inner class Forbrenningskammer(private val dataSource: DataSource) : Runnable {
         private val log = LoggerFactory.getLogger(Forbrenningskammer::class.java)
+        private val SECURE_LOGGER = LoggerFactory.getLogger("secureLog")
         private val kammerId = forbrenningskammerId.getAndIncrement().toString()
 
         // Én AtomicLong per jobb-type, registrert én gang i prometheus for å unngå DuplicateLabelsException
@@ -249,7 +250,8 @@ public class MotorImpl(
                 JobbRepository(connection).markerSomFerdig(jobbInput)
             } catch (exception: Throwable) {
                 // Feil under kjøring av jobb, eller under oppdatering av status til 'kjørt', eller scheduling av neste
-                log.warn("Feil under prosessering av jobb :: $jobbInput", exception)
+                log.warn("Feil under prosessering av jobb :: $jobbInput {}. Se secure logs.", exception.javaClass.simpleName)
+                SECURE_LOGGER.warn("Feil under prosessering av jobb :: $jobbInput", exception)
 
                 if (jobbInput.maksFeilNådd()) {
                     prometheus.motorFeiletTeller(jobbInput).increment()
