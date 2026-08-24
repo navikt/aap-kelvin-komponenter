@@ -1,7 +1,7 @@
 package com.papsign.ktor.openapigen
 
 import TestServer.setupBaseTestServer
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.json.JsonMapper
 import com.papsign.ktor.openapigen.annotations.Response
 import com.papsign.ktor.openapigen.annotations.properties.description.Description
 import com.papsign.ktor.openapigen.annotations.type.number.floating.clamp.FClamp
@@ -190,7 +190,7 @@ internal class FieldAnnotationTest {
         }
         client.get("/openapi.json").apply {
             val json = bodyAsText()
-            val tree = ObjectMapper().readTree(json)
+            val tree = JsonMapper().readTree(json)
             val deltTypeSchema = tree.path("components").path("schemas").path("DeltType")
 
             assertThat(deltTypeSchema.isMissingNode)
@@ -235,7 +235,7 @@ internal class FieldAnnotationTest {
         }
         client.get("/openapi.json").apply {
             val json = bodyAsText()
-            val tree = ObjectMapper().readTree(json)
+            val tree = JsonMapper().readTree(json)
             val schemas = tree.path("components").path("schemas")
 
             val arenaKilde = schemas.path("ArenaSak").path("properties").path("kilde")
@@ -264,7 +264,7 @@ internal class FieldAnnotationTest {
         }
         client.get("/openapi.json").apply {
             val json = bodyAsText()
-            val tree = ObjectMapper().readTree(json)
+            val tree = JsonMapper().readTree(json)
             val schemas = tree.path("components").path("schemas")
 
             val arenaKilde = schemas.path("ArenaSak").path("properties").path("kilde")

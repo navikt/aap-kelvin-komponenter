@@ -1,4 +1,4 @@
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize
+import tools.jackson.databind.annotation.JsonDeserialize
 import no.nav.aap.komponenter.json.DefaultJsonMapper
 import no.nav.aap.komponenter.json.WhiteSpaceRemovalDeserializer
 import org.assertj.core.api.Assertions.assertThat

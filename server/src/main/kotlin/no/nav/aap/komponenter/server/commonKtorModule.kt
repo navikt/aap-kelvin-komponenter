@@ -3,7 +3,7 @@ package no.nav.aap.komponenter.server
 import com.papsign.ktor.openapigen.model.info.InfoModel
 import io.ktor.client.HttpClient
 import io.ktor.http.*
-import io.ktor.serialization.jackson.*
+import io.ktor.serialization.jackson3.*
 import io.ktor.server.application.*
 import io.ktor.server.metrics.micrometer.*
 import io.ktor.server.plugins.callid.*

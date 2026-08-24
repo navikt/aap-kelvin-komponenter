@@ -2,7 +2,6 @@ package no.nav.aap.komponenter.server.auth
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.interfaces.DecodedJWT
-import com.fasterxml.jackson.databind.DeserializationFeature
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.Expiry
@@ -13,13 +12,14 @@ import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.forms.*
 import io.ktor.http.*
 import io.ktor.http.auth.*
-import io.ktor.serialization.jackson.*
+import io.ktor.serialization.jackson3.*
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
 import io.ktor.server.response.*
 import no.nav.aap.komponenter.config.requiredConfigForKey
 import no.nav.aap.komponenter.server.auth.TexasAuthenticationProvider.Companion.MAX_CACHE_TTL
 import org.slf4j.LoggerFactory
+import tools.jackson.databind.DeserializationFeature
 import java.security.MessageDigest
 import java.time.Duration
 import java.time.Instant
@@ -71,7 +71,7 @@ internal class TexasAuthenticationProvider(
             expectSuccess = true
             install(ContentNegotiation) {
                 jackson {
-                    configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+                    disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
                 }
             }
         }

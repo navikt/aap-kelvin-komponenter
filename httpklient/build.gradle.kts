@@ -14,7 +14,6 @@ dependencies {
     implementation(libs.caffeine)
     implementation(libs.ktor.server.auth.jwt)
     implementation(libs.jackson.module.kotlin)
-    implementation(libs.jackson.datatype.jsr310)
     implementation(libs.logback.classic)
     implementation((project(":ktor-openapi-generator")))
     api(libs.micrometer.prometheus)
@@ -24,8 +23,7 @@ dependencies {
     testRuntimeOnly(libs.junit.jupiter.engine)
     testImplementation(libs.assertj.core)
     testImplementation(libs.ktor.server.netty)
-    testImplementation(libs.ktor.serialization.jackson)
+    testImplementation(libs.ktor.serialization.jackson3)
     testImplementation(libs.jackson.databind)
-    testImplementation(libs.jackson.datatype.jsr310)
     testImplementation(libs.ktor.server.content.negotiation)
 }

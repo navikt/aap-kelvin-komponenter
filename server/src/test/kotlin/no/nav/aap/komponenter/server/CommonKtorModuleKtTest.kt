@@ -1,12 +1,11 @@
 package no.nav.aap.komponenter.server
 
-import com.fasterxml.jackson.databind.JsonNode
 import com.papsign.ktor.openapigen.model.info.InfoModel
 import io.ktor.client.call.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.http.*
-import io.ktor.serialization.jackson.*
+import io.ktor.serialization.jackson3.*
 import io.ktor.server.testing.*
 import io.micrometer.prometheusmetrics.PrometheusConfig
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
@@ -14,6 +13,7 @@ import no.nav.aap.komponenter.json.DefaultJsonMapper
 import no.nav.aap.komponenter.server.auth.IdentityProvider
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import tools.jackson.databind.JsonNode
 
 class CommonKtorModuleKtTest {
 
