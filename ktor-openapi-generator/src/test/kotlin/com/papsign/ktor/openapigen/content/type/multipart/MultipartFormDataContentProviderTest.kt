@@ -15,7 +15,6 @@ import io.ktor.http.*
 import io.ktor.http.content.PartData
 import io.ktor.server.testing.testApplication
 import org.junit.jupiter.api.Test
-import kotlin.reflect.KProperty1
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.test.assertEquals
 
@@ -32,8 +31,7 @@ class MultipartFormDataContentProviderTest {
                              val bln: Boolean?) {
         fun toParts(): List<PartData> {
             return this::class.declaredMemberProperties.mapNotNull {
-                val prop = it as KProperty1<SimpleRequest, Any?>
-                val res = prop.get(this) ?: return@mapNotNull null
+                val res = it.call(this) ?: return@mapNotNull null
                 PartData.FormItem(
                     res.toString(), { }, headersOf(
                         HttpHeaders.ContentDisposition,

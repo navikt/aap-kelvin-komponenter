@@ -43,7 +43,7 @@ public class FlytJobbRepositoryImpl(private val connection: DBConnection) : Flyt
         }
     }
 
-    override fun hentJobberForSak(sakid: Long): List<JobbInput> {
+    override fun hentJobberForSak(id: Long): List<JobbInput> {
         val query = """
             SELECT *, (SELECT count(1) FROM JOBB_HISTORIKK h WHERE h.jobb_id = op.id AND h.status = '${JobbStatus.FEILET.name}') as antall_feil
                  FROM JOBB op
@@ -53,7 +53,7 @@ public class FlytJobbRepositoryImpl(private val connection: DBConnection) : Flyt
 
         return connection.queryList(query) {
             setParams {
-                setLong(1, sakid)
+                setLong(1, id)
             }
             setRowMapper { row ->
                 JobbInputParser.mapJobb(row)

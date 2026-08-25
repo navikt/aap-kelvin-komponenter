@@ -11,6 +11,9 @@ interface ModuleProvider<THIS: ModuleProvider<THIS>> {
 }
 
 inline fun <reified T: OpenAPIModule> ModuleProvider<*>.ofType(): Collection<T> {
+    // Safe: ofType(KType) implementations (e.g. CachingModuleProvider) filter modules by
+    // KType.isSubtypeOf(getKType<T>()), guaranteeing every element is actually a T at runtime.
+    @Suppress("UNCHECKED_CAST")
     return ofType(getKType<T>()) as Collection<T>
 }
 

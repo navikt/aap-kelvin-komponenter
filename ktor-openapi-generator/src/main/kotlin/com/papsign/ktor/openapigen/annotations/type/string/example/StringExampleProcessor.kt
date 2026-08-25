@@ -6,6 +6,9 @@ import kotlin.reflect.KType
 
 object StringExampleProcessor: SchemaProcessor<StringExample> {
     override fun process(model: SchemaModel<*>, type: KType, annotation: StringExample): SchemaModel<*> {
+        // Safe: StringExample is only applied to properties of type String, so `model` is guaranteed
+        // to be a SchemaModel<String?> at runtime, even though that isn't statically known here.
+        @Suppress("UNCHECKED_CAST")
         (model as SchemaModel<String?>).apply {
             if (annotation.examples.size > 1) {
                 examples = examples?.plus(annotation.examples) ?: annotation.examples.asList()

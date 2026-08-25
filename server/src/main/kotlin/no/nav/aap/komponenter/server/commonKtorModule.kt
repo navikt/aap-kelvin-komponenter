@@ -67,7 +67,7 @@ public fun Application.commonKtorModule(
         generate { UUID.randomUUID().toString() }
     }
 
-    require(identityProviders?.isNotEmpty() == true) {
+    require(identityProviders.isNotEmpty()) {
         "Må ha minst en identityProvider for å kunne installere autentisering"
     }
     authentication(identityProviders, texasHttpClient)
