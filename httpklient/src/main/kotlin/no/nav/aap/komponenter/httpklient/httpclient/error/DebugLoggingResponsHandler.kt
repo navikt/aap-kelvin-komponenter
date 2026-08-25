@@ -1,6 +1,7 @@
 package no.nav.aap.komponenter.httpklient.httpclient.error
 
 import no.nav.aap.komponenter.httpklient.httpclient.håndterStatus
+import no.nav.aap.komponenter.log.SECURE_LOGGER
 import no.nav.aap.komponenter.miljo.Miljø
 import no.nav.aap.komponenter.miljo.MiljøKode
 import org.slf4j.LoggerFactory
@@ -8,7 +9,6 @@ import java.net.http.HttpHeaders
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 
-private val SECURE_LOGGER = LoggerFactory.getLogger("secureLog")
 
 public class DebugLoggingResponsHandler : RestResponseHandler<String> {
     private val log = LoggerFactory.getLogger(DebugLoggingResponsHandler::class.java)
