@@ -180,6 +180,41 @@ class JobbPrioritetTest {
     }
 
     @Test
+    fun `lav-prioritet-jobb med ulik jobbtype og samme behandling sperrer ikke for høy-prioritets-jobb`() {
+        val eldst = LocalDateTime.now().minusDays(1)
+        val nyest = LocalDateTime.now().minusMinutes(1)
+
+        dataSource.transaction { connection ->
+            val jobbRepository = JobbRepository(connection)
+            // Samme sak og samme type => samme eksklusivitetsgruppe. Rekkefølgegarantien er
+            // sterkere enn prioritet, så den eldste jobben skal kjøre først selv om den yngre
+            // har langt høyere prioritet.
+            jobbRepository.leggTil(
+                JobbInput(TøysTestJobbUtfører)
+                    .forBehandling(1L, 1L)
+                    .medNesteKjøring(eldst)
+                    .medPrioritet(Prioritet.BAKGRUNN)
+                    .medParameter(TAG, "eldst-lav-prioritet-jobbX")
+            )
+            jobbRepository.leggTil(
+                JobbInput(TøysOgTullTestJobbUtfører)
+                    .forBehandling(1L, 1L)
+                    .medNesteKjøring(nyest)
+                    .medPrioritet(Prioritet.KRITISK)
+                    .medParameter(TAG, "nyest-høy-prioritet-jobbY")
+            )
+        }
+
+        dataSource.transaction { connection ->
+            val jobbRepository = JobbRepository(connection)
+            jobbRepository.skjedulerJobber()
+            val plukket = jobbRepository.plukkJobbV2()
+            assertThat(plukket).isNotNull
+            assertThat(plukket!!.parameter(TAG)).isEqualTo("nyest-høy-prioritet-jobbY")
+        }
+    }
+
+    @Test
     fun `prioritet avgjør rekkefølgen på tvers av eksklusivitetsgrupper`() {
         val eldst = LocalDateTime.now().minusDays(1)
         val nyest = LocalDateTime.now().minusMinutes(1)
