@@ -7,6 +7,7 @@ import io.opentelemetry.api.trace.Span
 import no.nav.aap.komponenter.dbconnect.DBConnection
 import no.nav.aap.komponenter.dbconnect.transaction
 import no.nav.aap.komponenter.gateway.GatewayProvider
+import no.nav.aap.komponenter.log.SECURE_LOGGER
 import no.nav.aap.komponenter.repository.RepositoryRegistry
 import no.nav.aap.motor.mdc.JobbLogInfoProvider
 import no.nav.aap.motor.mdc.JobbLogInfoProviderHolder
@@ -155,7 +156,6 @@ public class MotorImpl(
 
     private inner class Forbrenningskammer(private val dataSource: DataSource) : Runnable {
         private val log = LoggerFactory.getLogger(Forbrenningskammer::class.java)
-        private val SECURE_LOGGER = LoggerFactory.getLogger("secureLog")
         private val kammerId = forbrenningskammerId.getAndIncrement().toString()
 
         // Én AtomicLong per jobb-type, registrert én gang i prometheus for å unngå DuplicateLabelsException

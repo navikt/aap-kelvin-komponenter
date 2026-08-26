@@ -6,6 +6,7 @@ dependencies {
     api(project(":dbconnect"))
     api(project(":json"))
     api(project(":gateway"))
+    api(project(":infrastructure"))
     api(libs.opentelemetry.api)
     implementation(libs.slf4j.api)
     api(libs.micrometer.prometheus)
