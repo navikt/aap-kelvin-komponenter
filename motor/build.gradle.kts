@@ -13,6 +13,7 @@ dependencies {
 
 
     testImplementation(project(":dbtest"))
+    testImplementation(testFixtures(project(":infrastructure")))
 
     testImplementation(libs.micrometer.prometheus)
     testImplementation(libs.logback.classic)
