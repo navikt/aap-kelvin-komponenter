@@ -29,6 +29,7 @@ import java.util.concurrent.atomic.AtomicLong
 import javax.sql.DataSource
 import kotlin.system.measureTimeMillis
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 public interface Motor : Closeable {
@@ -296,13 +297,22 @@ public class MotorImpl(
 
     private inner class Scheduler: Runnable {
         private val logger = LoggerFactory.getLogger(Scheduler::class.java)
+        private var lastErrorLog = Instant.MIN
         override fun run() {
-            if (enableV2()) {
-                dataSource.transaction {
-                    val antallSkjedulert = JobbRepository(it).skjedulerJobber()
-                    if (antallSkjedulert > 0) {
-                        logger.info("markerte $antallSkjedulert jobber som klare for å kjøre")
+            try {
+                if (enableV2()) {
+                    dataSource.transaction {
+                        val antallSkjedulert = JobbRepository(it).skjedulerJobber()
+                        if (antallSkjedulert > 0) {
+                            logger.info("markerte $antallSkjedulert jobber som klare for å kjøre")
+                        }
                     }
+                }
+            } catch (e: Exception) {
+                val now = Instant.now()
+                if (lastErrorLog.plusSeconds(60) < now) {
+                    logger.error("Scheduler feilet: {}", e.message, e)
+                    lastErrorLog = now
                 }
             }
         }
