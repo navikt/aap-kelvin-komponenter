@@ -376,8 +376,17 @@ public class MotorImpl(
                 sjekkScheduler()
             } catch (exception: Throwable) {
                 logger.warn("Ukjent feil under watchdog-aktivitet.", exception)
+            } finally {
+                // Reschedulering må skje uansett, ellers stopper watchdogen permanent.
+                // Unngå RejectedExecutionException når executor er avsluttet under stop().
+                if (!stopped) {
+                    try {
+                        watchdogExecutor.schedule(Watchdog(), 1, TimeUnit.MINUTES)
+                    } catch (e: java.util.concurrent.RejectedExecutionException) {
+                        logger.debug("Watchdog ikke reschedulert, executor er avsluttet.", e)
+                    }
+                }
             }
-            watchdogExecutor.schedule(Watchdog(), 1, TimeUnit.MINUTES)
         }
 
         private fun sjekkScheduler() {
