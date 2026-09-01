@@ -20,6 +20,8 @@ dependencyResolutionManagement {
 }
 
 include(
+    "kelvin-bom",
+    "kelvin-catalog",
     "infrastructure",
     "dbmigrering",
     "dbconnect",
