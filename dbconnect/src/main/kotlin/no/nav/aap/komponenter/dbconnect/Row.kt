@@ -10,6 +10,7 @@ import java.sql.Timestamp
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.OffsetDateTime
 import java.util.*
 import kotlin.reflect.KClass
 
@@ -227,8 +228,8 @@ public class Row internal constructor(private val resultSet: ResultSet) {
     }
 
     public fun getTidspunktOrNull(columnLabel: String): Tidspunkt? {
-        val timestamp = resultSet.getTimestamp(columnLabel) ?: return null
-        return Tidspunkt.ofInstant(timestamp.toInstant())
+        val offsetDateTime = resultSet.getObject(columnLabel, OffsetDateTime::class.java) ?: return null
+        return Tidspunkt.ofInstant(offsetDateTime.toInstant())
     }
 
     public fun getTidspunkt(columnLabel: String): Tidspunkt {
