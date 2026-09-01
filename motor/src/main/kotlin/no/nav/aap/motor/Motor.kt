@@ -139,6 +139,7 @@ public class MotorImpl(
         stopped = true
         watchdogExecutor.shutdownNow()
         metricExecutor.shutdownNow()
+        schedulerExecutor.shutdownNow()
         executor.shutdown()
         val res = executor.awaitTermination(timeout.inWholeSeconds, TimeUnit.SECONDS)
         if (!res) {
@@ -308,7 +309,10 @@ public class MotorImpl(
                         }
                     }
                 }
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
+                // MÅ fange Throwable, ikke bare Exception: scheduleWithFixedDelay avbryter
+                // periodisk kjøring permanent (uten logg) dersom jobben kaster noe som
+                // slipper ut. Da ville ingen jobber bli markert kjørbare igjen før restart.
                 val now = Instant.now()
                 if (lastErrorLog.plusSeconds(60) < now) {
                     logger.error("Scheduler feilet: {}", e.message, e)
@@ -354,8 +358,17 @@ public class MotorImpl(
                 }
             } catch (exception: Throwable) {
                 logger.warn("Ukjent feil under watchdog-aktivitet.", exception)
+            } finally {
+                // Reschedulering må skje uansett, ellers stopper watchdogen permanent.
+                // Unngå RejectedExecutionException når executor er avsluttet under stop().
+                if (!stopped) {
+                    try {
+                        watchdogExecutor.schedule(Watchdog(), 1, TimeUnit.MINUTES)
+                    } catch (e: java.util.concurrent.RejectedExecutionException) {
+                        logger.debug("Watchdog ikke reschedulert, executor er avsluttet.", e)
+                    }
+                }
             }
-            watchdogExecutor.schedule(Watchdog(), 1, TimeUnit.MINUTES)
         }
     }
 
@@ -368,7 +381,10 @@ public class MotorImpl(
                     antallJobberKlar.set(repository.antallJobber(JobbStatus.KLAR))
                     antallJobberFeilet.set(repository.antallJobber(JobbStatus.FEILET))
                 }
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
+                // Throwable, ikke bare Exception: ellers kan scheduleWithFixedDelay avbryte
+                // metrikk-oppdateringen permanent, og gaugene ville fryse på siste verdi og
+                // skjule en voksende jobb-backlog.
                 log.warn("Ukjent feil ved oppdatering av motor-metrics: {}", e.javaClass.name, e)
             }
         }
