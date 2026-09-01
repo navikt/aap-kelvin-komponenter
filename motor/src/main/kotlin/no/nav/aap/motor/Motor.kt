@@ -303,27 +303,28 @@ public class MotorImpl(
         private val logger = LoggerFactory.getLogger(Scheduler::class.java)
         private var lastErrorLog = Instant.MIN
 
+        /**
+         * Ved låst advisory lock, er det ingen vits i å prøve igjen hvert 100. ms.
+         */
+        private var nesteForsøkTidligst = Instant.MIN
+
         override fun run() {
             if (stopped) {
                 logger.info("Stopper skjedulering av jobber")
                 return
             }
+            if (Instant.now() < nesteForsøkTidligst) {
+                return
+            }
             try {
                 if (enableV2()) {
+                    var resultat: SkjeduleringResultat = SkjeduleringResultat.HoppetOver
                     val millis = measureTimeMillis {
-                        dataSource.transaction {
-                            val antallSkjedulert = JobbRepository(it).skjedulerJobber()
-                            if (antallSkjedulert > 0) {
-                                logger.info("markerte $antallSkjedulert jobber som klare for å kjøre")
-                            }
+                        resultat = dataSource.transaction {
+                            JobbRepository(it).skjedulerJobber()
                         }
                     }
-                    prometheus.motorSchedulerTimer().record(millis, TimeUnit.MILLISECONDS)
-                    if (millis > TREG_SKJEDULERING_TERSKEL.inWholeMilliseconds) {
-                        logger.warn(
-                            "Skjedulering tok $millis ms. Sjekk radlåser og indekser på JOBB (pg_stat_activity)."
-                        )
-                    }
+                    håndterResultat(resultat, millis)
                 }
             } catch (e: Throwable) {
                 prometheus.motorSchedulerFeiletTeller().increment()
@@ -334,6 +335,29 @@ public class MotorImpl(
                 }
             } finally {
                 schedulerSistFullført.set(Instant.now().epochSecond)
+            }
+        }
+
+        private fun håndterResultat(resultat: SkjeduleringResultat, millis: Long) {
+            when (resultat) {
+                is SkjeduleringResultat.HoppetOver -> {
+                    prometheus.motorSchedulerHoppetOverTeller().increment()
+                    nesteForsøkTidligst =
+                        Instant.now().plusMillis(LÅS_OPPTATT_BACKOFF.inWholeMilliseconds)
+                }
+
+                is SkjeduleringResultat.Utført -> {
+                    nesteForsøkTidligst = Instant.MIN
+                    prometheus.motorSchedulerTimer().record(millis, TimeUnit.MILLISECONDS)
+                    if (resultat.antallSkjedulert > 0) {
+                        logger.info("markerte ${resultat.antallSkjedulert} jobber som klare for å kjøre")
+                    }
+                    if (millis > TREG_SKJEDULERING_TERSKEL.inWholeMilliseconds) {
+                        logger.warn(
+                            "Skjedulering tok $millis ms. Sjekk radlåser og indekser på JOBB (pg_stat_activity)."
+                        )
+                    }
+                }
             }
         }
     }
@@ -431,5 +455,10 @@ public class MotorImpl(
 
         /** Minste tid mellom to feillogger fra Scheduler, slik at et vedvarende problem ikke spammer loggen. */
         private val FEILLOGG_INTERVALL = 1.minutes
+
+        /**
+         * Hvor lenge en pod venter før den prøver på advisory locken igjen etter å ha fått avslag mot advisory lock.
+         */
+        private val LÅS_OPPTATT_BACKOFF = 1.seconds
     }
 }
