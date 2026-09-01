@@ -14,3 +14,11 @@ public fun MeterRegistry.timer(jobbInput: JobbInput): Timer {
         .publishPercentileHistogram()
         .register(this)
 }
+
+internal fun MeterRegistry.motorSchedulerTimer(): Timer =
+    Timer.builder("motor_scheduler_timer")
+        .publishPercentileHistogram()
+        .register(this)
+
+internal fun MeterRegistry.motorSchedulerFeiletTeller(): Counter =
+    this.counter("motor_scheduler_feilet")
