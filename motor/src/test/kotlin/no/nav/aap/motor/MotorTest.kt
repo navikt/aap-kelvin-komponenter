@@ -21,6 +21,7 @@ import java.time.LocalDateTime
 import java.util.*
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.system.measureTimeMillis
 
 private val logger = LoggerFactory.getLogger(MotorTest::class.java)
@@ -166,6 +167,49 @@ class MotorTest {
         //assertThat(resultat.map { it.trådNavn }.toSet().size).isGreaterThan(1)
         assertThat(resultat.map { it.opprettet }).isSorted()
         assertThat(resultat.map { it.value }.map { it.toInt() }).isSorted()
+
+        motor.stop()
+    }
+
+    @Test
+    @Timeout(120)
+    fun `scheduler skal fortsette å kjøre selv om en kjøring kaster`() {
+        /* scheduleWithFixedDelay kansellerer oppgaven permanent - og helt stille - hvis run()
+           lar en Throwable propagere ut. Uten try/catch i Scheduler betyr det at all
+           skjedulering stopper for godt etter én feil, jobben blir aldri kjorbar, og
+           plukkJobbV2 finner den aldri. Denne testen feiler med timeout uten den håndteringen. */
+        val harFeiletEnGang = AtomicBoolean(false)
+        val motor = Motor(
+            dataSource = dataSource,
+            antallKammer = 2,
+            logInfoProvider = NoExtraLogInfoProvider,
+            jobber = listOf(TullTestJobbUtfører),
+            enableV2 = {
+                // Må treffe scheduler-tråden spesifikt. Forbrenningskammerne kaller enableV2()
+                // først, og de overlever en exception uansett - det er bare Scheduler som blir
+                // permanent kansellert av scheduleWithFixedDelay.
+                val erSchedulerTråden = Thread.currentThread().name == "motor-scheduler"
+                if (erSchedulerTråden && harFeiletEnGang.compareAndSet(false, true)) {
+                    throw IllegalStateException("simulert feil i første scheduler-kjøring")
+                }
+                true
+            }
+        )
+
+        motor.start()
+
+        val randomString = UUID.randomUUID().toString()
+        dataSource.transaction {
+            JobbRepository(it).leggTil(JobbInput(TullTestJobbUtfører).medPayload(randomString))
+        }
+
+        val svar = ventPåSvarITestTabell {
+            it.queryFirstOrNull("SELECT value FROM TEST_TABLE") {
+                setRowMapper { rad -> rad.getString("value") }
+            }
+        }
+
+        assertThat(svar).isEqualTo(randomString)
 
         motor.stop()
     }

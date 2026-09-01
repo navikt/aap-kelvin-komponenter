@@ -74,9 +74,12 @@ public class MotorImpl(
     private val antallJobberKlar = AtomicInteger()
     private val antallJobberFeilet = AtomicInteger()
 
+    private val schedulerSistFullført = AtomicLong(Instant.now().epochSecond)
+
     init {
         prometheus.gauge("motor_antall_jobber_klar", antallJobberKlar)
         prometheus.gauge("motor_antall_jobber_feilet", antallJobberFeilet)
+        Gauge.builder("motor_scheduler_siste_kjoring_timestamp_seconds") { schedulerSistFullført.get().toDouble() }.register(prometheus)
         JobbLogInfoProviderHolder.set(logInfoProvider)
         for (oppgave in jobber) {
             JobbType.leggTil(oppgave)
@@ -139,6 +142,7 @@ public class MotorImpl(
         stopped = true
         watchdogExecutor.shutdownNow()
         metricExecutor.shutdownNow()
+        schedulerExecutor.shutdownNow()
         executor.shutdown()
         val res = executor.awaitTermination(timeout.inWholeSeconds, TimeUnit.SECONDS)
         if (!res) {
@@ -295,25 +299,41 @@ public class MotorImpl(
         }
     }
 
-    private inner class Scheduler: Runnable {
+    private inner class Scheduler : Runnable {
         private val logger = LoggerFactory.getLogger(Scheduler::class.java)
         private var lastErrorLog = Instant.MIN
+
         override fun run() {
+            if (stopped) {
+                logger.info("Stopper skjedulering av jobber")
+                return
+            }
             try {
                 if (enableV2()) {
-                    dataSource.transaction {
-                        val antallSkjedulert = JobbRepository(it).skjedulerJobber()
-                        if (antallSkjedulert > 0) {
-                            logger.info("markerte $antallSkjedulert jobber som klare for å kjøre")
+                    val millis = measureTimeMillis {
+                        dataSource.transaction {
+                            val antallSkjedulert = JobbRepository(it).skjedulerJobber()
+                            if (antallSkjedulert > 0) {
+                                logger.info("markerte $antallSkjedulert jobber som klare for å kjøre")
+                            }
                         }
                     }
+                    prometheus.motorSchedulerTimer().record(millis, TimeUnit.MILLISECONDS)
+                    if (millis > TREG_SKJEDULERING_TERSKEL.inWholeMilliseconds) {
+                        logger.warn(
+                            "Skjedulering tok $millis ms. Sjekk radlåser og indekser på JOBB (pg_stat_activity)."
+                        )
+                    }
                 }
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
+                prometheus.motorSchedulerFeiletTeller().increment()
                 val now = Instant.now()
                 if (lastErrorLog.plusSeconds(60) < now) {
                     logger.error("Scheduler feilet: {}", e.message, e)
                     lastErrorLog = now
                 }
+            } finally {
+                schedulerSistFullført.set(Instant.now().epochSecond)
             }
         }
     }
@@ -352,10 +372,25 @@ public class MotorImpl(
                         lastWatchdogLog = LocalDateTime.now()
                     }
                 }
+
+                sjekkScheduler()
             } catch (exception: Throwable) {
                 logger.warn("Ukjent feil under watchdog-aktivitet.", exception)
             }
             watchdogExecutor.schedule(Watchdog(), 1, TimeUnit.MINUTES)
+        }
+
+        private fun sjekkScheduler() {
+            if (stopped || !enableV2()) {
+                return
+            }
+            val sekunderSiden = Instant.now().epochSecond - schedulerSistFullført.get()
+            if (sekunderSiden > SCHEDULER_STILLE_TERSKEL.inWholeSeconds) {
+                logger.error(
+                    "Scheduler har ikke fullført en kjøring på $sekunderSiden sekunder. " +
+                            "Sannsynligvis blokkert på en radlås eller en treg spørring mot JOBB."
+                )
+            }
         }
     }
 
@@ -368,7 +403,9 @@ public class MotorImpl(
                     antallJobberKlar.set(repository.antallJobber(JobbStatus.KLAR))
                     antallJobberFeilet.set(repository.antallJobber(JobbStatus.FEILET))
                 }
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
+                // Se kommentaren i Scheduler.run() - scheduleWithFixedDelay kansellerer permanent
+                // hvis noe propagerer ut herfra.
                 log.warn("Ukjent feil ved oppdatering av motor-metrics: {}", e.javaClass.name, e)
             }
         }
@@ -376,5 +413,14 @@ public class MotorImpl(
 
     public companion object {
         private val forbrenningskammerId = AtomicInteger()
+
+        /** Skjedulering som tar lenger tid enn dette logges som advarsel. */
+        private val TREG_SKJEDULERING_TERSKEL = 30.seconds
+
+        /** Hvor lenge Scheduler kan være uten en fullført kjøring før watchdog slår alarm. */
+        private val SCHEDULER_STILLE_TERSKEL = 2.minutes
+
+        /** Minste tid mellom to feillogger fra Scheduler, slik at et vedvarende problem ikke spammer loggen. */
+        private val FEILLOGG_INTERVALL = 1.minutes
     }
 }
