@@ -328,7 +328,7 @@ public class MotorImpl(
             } catch (e: Throwable) {
                 prometheus.motorSchedulerFeiletTeller().increment()
                 val now = Instant.now()
-                if (lastErrorLog.plusSeconds(60) < now) {
+                if (lastErrorLog.plusSeconds(FEILLOGG_INTERVALL.inWholeSeconds) < now) {
                     logger.error("Scheduler feilet: {}", e.message, e)
                     lastErrorLog = now
                 }
