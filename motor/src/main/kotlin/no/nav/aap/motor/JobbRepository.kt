@@ -298,13 +298,8 @@ public class JobbRepository(private val connection: DBConnection) {
                 forfremmet (den kan uansett ikke plukkes av `plukkJobbV2`, som krever
                 status='KLAR').
 
-                Spørringen har bevisst verken `limit` eller `for update skip locked`.
                 Advisory-låsen i `skjedulerJobber` gjør at bare én skjedulering kjører om
-                gangen, og `kjorbar` skrives kun her. Kandidatmengden (`KLAR` og
-                `not kjorbar`) er derfor disjunkt fra alt andre transaksjoner tar radlås på:
-                `plukkJobbV2` låser kun `kjorbar`-rader, `RetryFeiledeJobberRepository` kun
-                `FEILET`, og arkiveringen kun `FERDIG`. Uten kolliderende låser er det
-                ingenting å hoppe over.
+                gangen.
          */
         val query = """
             with grupper_blokkert as (

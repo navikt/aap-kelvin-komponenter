@@ -304,10 +304,7 @@ public class MotorImpl(
         private var lastErrorLog = Instant.MIN
 
         /**
-         * Når vi tapte kappløpet om advisory locken, er det ingen vits i å prøve igjen hvert
-         * 100. ms. Uten denne ville hver pod brukt en connection fra poolen ti ganger i sekundet
-         * bare for å få vite at en annen pod holder låsen - merkbart med `maximumPoolSize` på 3.
-         * Sjekken er ren minnesjekk og koster ingenting.
+         * Ved låst advisory lock, er det ingen vits i å prøve igjen hvert 100. ms.
          */
         private var nesteForsøkTidligst = Instant.MIN
 
@@ -460,9 +457,7 @@ public class MotorImpl(
         private val FEILLOGG_INTERVALL = 1.minutes
 
         /**
-         * Hvor lenge en pod venter før den prøver på advisory locken igjen etter å ha tapt
-         * kappløpet. Setter taket på hvor lenge skjeduleringen står stille etter at den
-         * forrige podden er ferdig.
+         * Hvor lenge en pod venter før den prøver på advisory locken igjen etter å ha fått avslag mot advisory lock.
          */
         private val LÅS_OPPTATT_BACKOFF = 1.seconds
     }
