@@ -22,3 +22,11 @@ internal fun MeterRegistry.motorSchedulerTimer(): Timer =
 
 internal fun MeterRegistry.motorSchedulerFeiletTeller(): Counter =
     this.counter("motor_scheduler_feilet")
+
+/**
+ * Teller runder der en annen pod holdt skjedulerings-låsen. Forventet å være høy - det er
+ * normaltilstanden for alle podder utenom én. Blir den null over tid samtidig som
+ * motor_scheduler_timer også er tom, skjeduleres ingenting i det hele tatt.
+ */
+internal fun MeterRegistry.motorSchedulerHoppetOverTeller(): Counter =
+    this.counter("motor_scheduler_hoppet_over")

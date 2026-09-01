@@ -232,8 +232,37 @@ public class JobbRepository(private val connection: DBConnection) {
         return plukketJobb
     }
 
-    public fun skjedulerJobber(): Int {
-        return skjedulerSelvstendigeJobber() + skjedulerEkskluderendeJobber()
+    /**
+     * Forfremmer jobber til `kjorbar = true` slik at [plukkJobbV2] kan plukke dem.
+     *
+     * Serialisert med en advisory lock: kun én skjedulering kan kjøre om gangen på tvers av
+     * alle podder. Uten den kjører alle poddene identisk spørring hvert 100. ms, og de
+     * blokkerer hverandre på de samme radene.
+     */
+    public fun skjedulerJobber(): SkjeduleringResultat {
+        if (!prøvÅTaSkjeduleringslås()) {
+            return SkjeduleringResultat.HoppetOver
+        }
+        return SkjeduleringResultat.Utført(
+            skjedulerSelvstendigeJobber() + skjedulerEkskluderendeJobber()
+        )
+    }
+
+    /**
+     * `pg_try_advisory_xact_lock` venter aldri - den returnerer false med én gang låsen er
+     * opptatt. Låsen slippes automatisk ved commit eller rollback, så den kan ikke lekke
+     * selv om transaksjonen avbrytes.
+     *
+     * Advisory locks er tellende innenfor samme transaksjon, så gjentatte kall i samme
+     * transaksjon (typisk i tester) returnerer true hver gang.
+     */
+    private fun prøvÅTaSkjeduleringslås(): Boolean {
+        return connection.queryFirst("select pg_try_advisory_xact_lock(?) as fikk_laas") {
+            setParams {
+                setLong(1, SKJEDULERING_LÅS_ID)
+            }
+            setRowMapper { row -> row.getBoolean("fikk_laas") }
+        }
     }
 
     private fun skjedulerEkskluderendeJobber(): Int {
@@ -268,6 +297,14 @@ public class JobbRepository(private val connection: DBConnection) {
                 for å bevare rekkefølge-garantien – men en FEILET-rad skal aldri selv bli
                 forfremmet (den kan uansett ikke plukkes av `plukkJobbV2`, som krever
                 status='KLAR').
+
+                Spørringen har bevisst verken `limit` eller `for update skip locked`.
+                Advisory-låsen i `skjedulerJobber` gjør at bare én skjedulering kjører om
+                gangen, og `kjorbar` skrives kun her. Kandidatmengden (`KLAR` og
+                `not kjorbar`) er derfor disjunkt fra alt andre transaksjoner tar radlås på:
+                `plukkJobbV2` låser kun `kjorbar`-rader, `RetryFeiledeJobberRepository` kun
+                `FEILET`, og arkiveringen kun `FERDIG`. Uten kolliderende låser er det
+                ingenting å hoppe over.
          */
         val query = """
             with grupper_blokkert as (
@@ -475,4 +512,21 @@ public class JobbRepository(private val connection: DBConnection) {
         }
 
     }
+
+    public companion object {
+        /**
+         * Nøkkel for advisory locken som serialiserer skjedulering.
+         *
+         * Advisory locks deler ett globalt navnerom per database, så verdien må være unik nok
+         * til at ingen annen bruker kolliderer med den. Verdien er ASCII for «MOTORSKJ».
+         */
+        private const val SKJEDULERING_LÅS_ID: Long = 0x4D4F544F52534B4AL
+    }
+}
+
+public sealed interface SkjeduleringResultat {
+
+    public data class Utført(val antallSkjedulert: Int) : SkjeduleringResultat
+
+    public data object HoppetOver : SkjeduleringResultat
 }
