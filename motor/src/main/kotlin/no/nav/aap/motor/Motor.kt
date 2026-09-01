@@ -330,8 +330,6 @@ public class MotorImpl(
                     håndterResultat(resultat, millis)
                 }
             } catch (e: Throwable) {
-                /* DBConnection setter queryTimeout til 30 sekunder, så en låst eller treg
-                   spørring VIL kaste hit før eller siden i stedet for å henge for alltid. */
                 prometheus.motorSchedulerFeiletTeller().increment()
                 val now = Instant.now()
                 if (lastErrorLog.plusSeconds(FEILLOGG_INTERVALL.inWholeSeconds) < now) {
