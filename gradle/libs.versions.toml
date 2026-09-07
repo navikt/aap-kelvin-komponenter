@@ -24,9 +24,14 @@ ktor-server-metrics-micrometer = { module = "io.ktor:ktor-server-metrics-microme
 ktor-server-netty = { module = "io.ktor:ktor-server-netty", version.ref = "ktor" }
 ktor-server-status-pages = { module = "io.ktor:ktor-server-status-pages", version.ref = "ktor" }
 ktor-server-test-host = { module = "io.ktor:ktor-server-test-host", version.ref = "ktor" }
+ktor-server-call-logging-jvm = { module = "io.ktor:ktor-server-call-logging-jvm", version.ref = "ktor" }
+ktor-client-auth = { module = "io.ktor:ktor-client-auth", version.ref = "ktor" }
+ktor-client-jackson = { module = "io.ktor:ktor-client-jackson", version.ref = "ktor" }
+ktor-client-logging = { module = "io.ktor:ktor-client-logging", version.ref = "ktor" }
 
 caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version = "3.2.4" }
 commons-codec = { module = "commons-codec:commons-codec", version = "1.22.1" }
+commons-compress = { module = "org.apache.commons:commons-compress", version = "1.28.0" }
 flyway-postgresql = { module = "org.flywaydb:flyway-database-postgresql", version = "13.3.0" }
 hikaricp = { module = "com.zaxxer:HikariCP", version = "7.1.0" }
 jackson-annotations = { module = "com.fasterxml.jackson.core:jackson-annotations", version.ref = "jackson-annotations" }
@@ -35,17 +40,38 @@ jackson-datatype-jsr310 = { module = "com.fasterxml.jackson.datatype:jackson-dat
 jackson-module-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version.ref = "jackson" }
 logback-classic = { module = "ch.qos.logback:logback-classic", version = "1.6.3" }
 logstash-logback-encoder = { module = "net.logstash.logback:logstash-logback-encoder", version = "9.0" }
+jul-to-slf4j = { module = "org.slf4j:jul-to-slf4j", version = "2.0.18" }
+logback-syslog = { module = "com.papertrailapp:logback-syslog4j", version = "1.0.0" }
 micrometer-prometheus = { module = "io.micrometer:micrometer-registry-prometheus", version = "1.17.1" }
 opentelemetry-annotations = { module = "io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations", version = "2.31.1" }
 opentelemetry-api = { module = "io.opentelemetry.instrumentation:opentelemetry-instrumentation-api", version = "2.31.1" }
+opentelemetry-logback-mdc = { module = "io.opentelemetry.instrumentation:opentelemetry-logback-mdc-1.0", version = "2.30.0-alpha" }
+opentelemetry-ktor = { module = "io.opentelemetry.instrumentation:opentelemetry-ktor-3.0", version = "2.30.0-alpha" }
+nimbus-jose-jwt = { module = "com.nimbusds:nimbus-jose-jwt", version = "10.9.1" }
 postgresql = { module = "org.postgresql:postgresql", version = "42.7.13" }
 reflections = { module = "org.reflections:reflections", version = "0.10.2" }
 slf4j-api = { module = "org.slf4j:slf4j-api", version = "2.0.18" }
 swagger-ui = { module = "org.webjars:swagger-ui", version = "5.32.14" }
+avro = { module = "org.apache.avro:avro", version = "1.12.1" }
+kafka-avro-serializer = { module = "io.confluent:kafka-avro-serializer", version = "7.6.0" }
+kafka-clients = { module = "org.apache.kafka:kafka-clients", version = "4.3.1" }
+coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version = "1.11.0" }
+unleash-client-java = { module = "io.getunleash:unleash-client-java", version = "12.2.3" }
 
 junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junit-jupiter" }
 junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junit-jupiter" }
 junit-jupiter-params = { module = "org.junit.jupiter:junit-jupiter-params", version.ref = "junit-jupiter" }
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher", version.ref = "junit-jupiter" }
 assertj-core = { module = "org.assertj:assertj-core", version = "3.27.7" }
+tabletest = { module = "org.tabletest:tabletest-junit", version = "1.2.2" }
 testcontainers = { module = "org.testcontainers:testcontainers", version.ref = "testcontainers" }
 testcontainers-postgresql = { module = "org.testcontainers:testcontainers-postgresql", version.ref = "testcontainers" }
+testcontainers-kafka = { module = "org.testcontainers:testcontainers-kafka", version.ref = "testcontainers" }
+mock-oauth2-server = { module = "no.nav.security:mock-oauth2-server", version = "6.0.1" }
+mockk = { module = "io.mockk:mockk", version = "1.14.11" }
+
+[bundles]
+junit = ["junit-jupiter-api", "junit-jupiter-engine", "junit-jupiter-params", "assertj-core"]
+
+[plugins]
+ktor = { id = "io.ktor.plugin", version.ref = "ktor" }
