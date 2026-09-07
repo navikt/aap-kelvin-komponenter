@@ -4,9 +4,11 @@ plugins {
 }
 
 dependencies {
-    rootProject.subprojects.forEach { subproject ->
-        dokka(project(":" + subproject.name))
-    }
+    rootProject.subprojects
+        .filterNot { it.name == "version-catalog" } // ren version-catalog-modul, ikke et JVM/dokka-bibliotek
+        .forEach { subproject ->
+            dokka(project(":" + subproject.name))
+        }
 }
 
 val detektReportMergeSarif = tasks.register<dev.detekt.gradle.report.ReportMergeTask>("detektReportMergeSarif") {
