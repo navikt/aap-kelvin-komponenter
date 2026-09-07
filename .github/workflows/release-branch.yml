@@ -63,12 +63,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: actions/create-release@v1.1.4
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.version }}
-          release_name: ${{ steps.version.outputs.version }}
+          name: ${{ steps.version.outputs.version }}
           prerelease: true # Sikrer at den ikke markeres som en stabil release (latest)
           body: |
             Branch: `${{ github.ref_name }}`
