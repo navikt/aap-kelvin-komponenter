@@ -33,5 +33,6 @@ include(
     "server",
     "verdityper",
     "tidslinje",
-    "ktor-openapi-generator"
+    "ktor-openapi-generator",
+    "version-catalog"
 )
