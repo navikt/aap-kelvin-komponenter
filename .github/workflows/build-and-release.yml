@@ -35,6 +35,13 @@ jobs:
                 with:
                     gradle-version: wrapper
 
+            -   name: Sjekk at workflow kun kjøres på main
+                run: |
+                    if [ "${GITHUB_REF_NAME}" != "main" ]; then
+                      echo "❌ Denne workflow-en skal kun kjøres på main. Bruk release-branch.yml for å release fra en annen branch."
+                      exit 1
+                    fi
+
             -   name: Build and run tests
                 run: ./gradlew clean build --continue --info -x publish
             -   uses: dorny/test-reporter@v3.0.0
