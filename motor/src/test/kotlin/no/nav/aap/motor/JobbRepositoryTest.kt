@@ -263,6 +263,36 @@ class JobbRepositoryTest {
     }
 
     @Test
+    fun `skal skjedulere ekskluderende jobber i batcher`() {
+        val antallJobber = 60
+        val nå = LocalDateTime.now().minusMinutes(1)
+
+        dataSource.transaction { connection ->
+            val jobbRepository = JobbRepository(connection)
+            repeat(antallJobber) { indeks ->
+                jobbRepository.leggTil(
+                    JobbInput(AsynkronTullJobbUtfører)
+                        .forSak(indeks.toLong() + 1)
+                        .medNesteKjøring(nå)
+                )
+            }
+        }
+
+        dataSource.transaction { connection ->
+            val jobbRepository = JobbRepository(connection)
+            assertThat(jobbRepository.skjedulerJobber()).isEqualTo(SkjeduleringResultat.Utført(50))
+            assertThat(jobbRepository.skjedulerJobber()).isEqualTo(SkjeduleringResultat.Utført(10))
+        }
+
+        dataSource.transaction { connection ->
+            val antallKjørbare = connection.queryFirst("select count(*) as antall from jobb where kjorbar = true") {
+                setRowMapper { row -> row.getInt("antall") }
+            }
+            assertThat(antallKjørbare).isEqualTo(antallJobber)
+        }
+    }
+
+    @Test
     fun `kan telle riktig antall jobber`() {
         val typer = listOf(TøysOgTullTestJobbUtfører, TullTestJobbUtfører, TøysTestJobbUtfører)
 

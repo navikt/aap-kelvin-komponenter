@@ -323,6 +323,7 @@ public class JobbRepository(private val connection: DBConnection) {
                         and g.behandling_id is not distinct from j.behandling_id
                   )
                 order by j.sak_id, j.behandling_id, j.type, j.neste_kjoring
+                limit ?
             )
             update jobb
             set kjorbar = true
@@ -333,6 +334,7 @@ public class JobbRepository(private val connection: DBConnection) {
         return connection.executeReturnUpdated(query) {
             setParams {
                 setLocalDateTime(1, LocalDateTime.now())
+                setInt(2, MAKS_EKSKLUDERENDE_JOBBER_PER_SKJEDULERING)
             }
         }
     }
@@ -516,6 +518,7 @@ public class JobbRepository(private val connection: DBConnection) {
          * til at ingen annen bruker kolliderer med den. Verdien er ASCII for «MOTORSKJ».
          */
         private const val SKJEDULERING_LÅS_ID: Long = 0x4D4F544F52534B4AL
+        private const val MAKS_EKSKLUDERENDE_JOBBER_PER_SKJEDULERING: Int = 50
     }
 }
 
