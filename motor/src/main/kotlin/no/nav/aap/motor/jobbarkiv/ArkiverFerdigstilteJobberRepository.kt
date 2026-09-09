@@ -125,7 +125,7 @@ internal class ArkiverFerdigstilteJobberRepository(private val connection: DBCon
     }
 
     private companion object {
-        const val DAGER_FOR_ARKIVERING = 60L
+        const val DAGER_FOR_ARKIVERING = 30L
     }
 
 }
