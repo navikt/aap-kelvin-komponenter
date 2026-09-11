@@ -52,7 +52,7 @@ jobs:
                     reporter: java-junit
                     token: ${{ secrets.GITHUB_TOKEN }}
 
-            -   uses: paulhatch/semantic-version@v6.0.3
+            -   uses: paulhatch/semantic-version@v6.0.4
                 id: tag
                 with:
                     bump_each_commit: true
