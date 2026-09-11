@@ -14,6 +14,11 @@ version = project.findProperty("version")?.toString() ?: "0.0.0"
 val jacksonVersion = the<VersionCatalogsExtension>().named("libs").findVersion("jackson3").get().requiredVersion
 
 dependencies {
+    constraints {
+        add("implementation", "io.netty:netty-handler:4.2.17.Final") {
+            because("Sikkerhetsfiks for GHSA-c4c3-7fpv-j4q5 / CVE-2026-75595")
+        }
+    }
 //    constraints {
 //        // Sikkerhetspin – sårbarhet i tools.jackson.core 3.1.1
 //        add("implementation", "tools.jackson.core:jackson-databind") {
