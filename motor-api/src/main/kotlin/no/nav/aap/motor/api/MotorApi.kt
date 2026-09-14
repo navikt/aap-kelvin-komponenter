@@ -29,12 +29,19 @@ private enum class Tags(override val description: String) : APITag {
     ),
 }
 
-public fun NormalOpenAPIRoute.motorApi(dataSource: DataSource, godkjenteRoller: List<String> = emptyList()) {
+public fun NormalOpenAPIRoute.motorApi(
+    dataSource: DataSource,
+    godkjenteRoller: List<String> = emptyList(),
+    godkjentLeseRoller: List<String> = emptyList()
+) {
     val modules = TagModule(listOf(Tags.MotorAPI))
+
+    val leseOgSkriveRoller = (godkjentLeseRoller + godkjenteRoller).distinct()
+
     route("/drift/api/jobb") {
         route("/feilende") {
             get<Unit, List<JobbInfoDto>>(modules) { _ ->
-                autoriser(godkjenteRoller) {
+                autoriser(leseOgSkriveRoller) {
                     val saker: List<JobbInfoDto> = dataSource.transaction(readOnly = true) { connection ->
                         DriftJobbRepositoryExposed(connection).hentAlleFeilende()
                             .map { (jobbInput, jobbStatus) ->
@@ -47,9 +54,8 @@ public fun NormalOpenAPIRoute.motorApi(dataSource: DataSource, godkjenteRoller: 
             }
         }
         route("/feilende/antall") {
-
             get<Unit, Int>(modules) { _ ->
-                autoriser(godkjenteRoller) {
+                autoriser(leseOgSkriveRoller) {
                     val antallFeilendeJobber: Int = dataSource.transaction(readOnly = true) { connection ->
                         DriftJobbRepositoryExposed(connection).hentAntallFeilende()
                     }
@@ -59,7 +65,7 @@ public fun NormalOpenAPIRoute.motorApi(dataSource: DataSource, godkjenteRoller: 
         }
         route("/planlagte-jobber") {
             get<Unit, List<JobbInfoDto>>(modules) { _ ->
-                autoriser(godkjenteRoller) {
+                autoriser(leseOgSkriveRoller) {
                     val saker: List<JobbInfoDto> = dataSource.transaction(readOnly = true) { connection ->
                         DriftJobbRepositoryExposed(connection).hentInfoOmGjentagendeJobber().map { info ->
                             JobbInfoDto(
@@ -174,7 +180,7 @@ public fun NormalOpenAPIRoute.motorApi(dataSource: DataSource, godkjenteRoller: 
         }
         route("/sisteKjørte") {
             get<Unit, List<JobbInfoDto>>(modules) { _ ->
-                autoriser(godkjenteRoller) {
+                autoriser(leseOgSkriveRoller) {
                     val saker: List<JobbInfoDto> = dataSource.transaction(readOnly = true) { connection ->
                         DriftJobbRepositoryExposed(connection).hentSisteJobber(150)
                             .map { (jobbInput, feilmelding) ->
