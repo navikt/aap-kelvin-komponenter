@@ -263,6 +263,18 @@ class ValidationHandler private constructor(
                         }
                     }
 
+                    // Kotlin unsigned value classes (UByte/UShort/UInt/ULong) are backed on the JVM by their
+                    // unboxed underlying primitive. java.lang.reflect.Field.set cannot unbox a boxed instance
+                    // of one of these types into that primitive field, so any direct field write must convert
+                    // it first.
+                    fun unboxUnsigned(value: Any?): Any? = when (value) {
+                        is UByte -> value.toByte()
+                        is UShort -> value.toShort()
+                        is UInt -> value.toInt()
+                        is ULong -> value.toLong()
+                        else -> value
+                    }
+
                     when {
                         handled.isNotEmpty() && shouldTransform -> {
                             transformFun = { t: Any? ->
@@ -270,7 +282,7 @@ class ValidationHandler private constructor(
                                     handled.forEach { (handler, field, sourceProp) ->
                                         val accessible = field.canAccess(t)
                                         field.setAccessible(true)
-                                        field.set(t, handler.handle(readValue(sourceProp, t)))
+                                        field.set(t, unboxUnsigned(handler.handle(readValue(sourceProp, t))))
                                         field.setAccessible(accessible)
                                     }
                                 }
@@ -304,10 +316,15 @@ class ValidationHandler private constructor(
                                                     mutableProp.isAccessible = accessible
                                                 }
                                             } else {
+                                                // Read-only (val) property with no copy(): the backing field's
+                                                // JVM type is the unboxed primitive for unsigned value classes
+                                                // (e.g. `int` for UInt), so Field.set must be given that
+                                                // primitive rather than the boxed UInt/ULong/UShort/UByte
+                                                // instance, which it cannot unbox on its own.
                                                 // TODO convert this to canAccess and only change status if false
                                                 val accessible = field.canAccess(t)
                                                 field.setAccessible(true)
-                                                field.set(t, newValue)
+                                                field.set(t, unboxUnsigned(newValue))
                                                 field.setAccessible(accessible)
                                             }
                                         }

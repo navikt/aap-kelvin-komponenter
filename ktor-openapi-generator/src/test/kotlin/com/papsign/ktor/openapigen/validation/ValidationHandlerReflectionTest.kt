@@ -24,6 +24,11 @@ class ValidationHandlerReflectionTest {
         fun getValue() = value
     }
 
+    // A regular (non-data) class with a read-only (val) unsigned property and no copy()
+    // function, so the validator falls back to java.lang.reflect.Field.set and must unbox
+    // the boxed UInt to the field's underlying `int` representation itself.
+    class ReadOnlyUIntHolder(@Min(1) val value: UInt)
+
     @Test
     fun `validerer og oppdaterer mutable UInt-egenskap uten copy()`() {
         val handler = ValidationHandler.build(MutableUIntHolder::class)
@@ -55,6 +60,23 @@ class ValidationHandlerReflectionTest {
     fun `kaster ved brudd på @Min for privat egenskap`() {
         val handler = ValidationHandler.build(PrivatePropertyHolder::class)
         val holder = PrivatePropertyHolder(0)
+        assertFailsWith<Exception> {
+            handler.handle(holder)
+        }
+    }
+
+    @Test
+    fun `validerer og oppdaterer read-only UInt-egenskap uten copy()`() {
+        val handler = ValidationHandler.build(ReadOnlyUIntHolder::class)
+        val holder = ReadOnlyUIntHolder(5u)
+        val result = handler.handle(holder)
+        assertEquals(5u, result.value)
+    }
+
+    @Test
+    fun `kaster ved brudd på @Min for read-only UInt-egenskap uten copy()`() {
+        val handler = ValidationHandler.build(ReadOnlyUIntHolder::class)
+        val holder = ReadOnlyUIntHolder(0u)
         assertFailsWith<Exception> {
             handler.handle(holder)
         }
