@@ -290,6 +290,7 @@ class ValidationHandler private constructor(
                                             val param = copy.parameters.first { it.name == field.name }
                                             copyParams[param] = newValue
                                         } else {
+                                            @Suppress("UNCHECKED_CAST")
                                             val mutableProp = sourceProp as? KMutableProperty1<Any, Any?>
                                             if (mutableProp != null) {
                                                 // Use the Kotlin property setter (not java.lang.reflect.Field.set)
