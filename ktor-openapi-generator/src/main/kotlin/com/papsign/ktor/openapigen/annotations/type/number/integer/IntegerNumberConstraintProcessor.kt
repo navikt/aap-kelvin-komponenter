@@ -7,5 +7,9 @@ abstract class IntegerNumberConstraintProcessor<A: Annotation>: NumberConstraint
     getKType<Int>(),
     getKType<Long>(),
     getKType<Float>(),
-    getKType<Double>()
+    getKType<Double>(),
+    getKType<UByte>(),
+    getKType<UShort>(),
+    getKType<UInt>(),
+    getKType<ULong>()
 ))

@@ -241,7 +241,7 @@ class ValidationHandler private constructor(
                                     log.warn("Field ${prop.source} could not be processed because delegated properties are not supported")
                                 }
                             }?.let {
-                                validator to it
+                                Triple(validator, it, prop.source)
                             }
                         } else {
                             null
@@ -251,8 +251,8 @@ class ValidationHandler private constructor(
                         handled.isNotEmpty() && shouldTransform -> {
                             transformFun = { t: Any? ->
                                 if (t != null) {
-                                    handled.forEach { (handler, field) ->
-                                        field.set(t, handler.handle(field.get(t)))
+                                    handled.forEach { (handler, field, sourceProp) ->
+                                        field.set(t, handler.handle(sourceProp.getter.call(t)))
                                     }
                                 }
                                 transform(t)
@@ -265,16 +265,19 @@ class ValidationHandler private constructor(
                                     val copy = t.javaClass.kotlin.memberFunctions.find { it.name == "copy" }
                                     val copyParams =
                                         copy?.instanceParameter?.let { mutableMapOf<KParameter, Any?>(it to t) }
-                                    handled.forEach { (handler, field) ->
-                                        val getter = field.kotlinProperty?.javaGetter
-                                        if (copy != null && copyParams != null && getter != null) {
+                                    handled.forEach { (handler, field, sourceProp) ->
+                                        // Use the Kotlin property getter (not raw java.lang.reflect.Field/Method
+                                        // access) so that value classes (e.g. UInt/ULong/UShort/UByte, or custom
+                                        // inline classes) get properly boxed instead of leaking their unboxed
+                                        // underlying representation, which would fail type checks in copy.callBy.
+                                        if (copy != null && copyParams != null) {
                                             val param = copy.parameters.first { it.name == field.name }
-                                            copyParams[param] = handler.handle(getter(t))
+                                            copyParams[param] = handler.handle(sourceProp.getter.call(t))
                                         } else {
                                             // TODO convert this to canAccess and only change status if false
                                             val accessible = field.canAccess(t)
                                             field.setAccessible(true)
-                                            field.set(t, handler.handle(field.get(t)))
+                                            field.set(t, handler.handle(sourceProp.getter.call(t)))
                                             field.setAccessible(accessible)
                                         }
                                     }
@@ -316,7 +319,7 @@ class ValidationHandler private constructor(
 
         /**
          * needed because a type is equal to another no matter the annotations
-         * @param annotations, be careful that it contains everything, the code may fully rely on it
+         * @property annotations, be careful that it contains everything, the code may fully rely on it
          */
         data class AnnotatedKType(
             val type: KType,
@@ -354,11 +357,9 @@ class ValidationHandler private constructor(
          */
         fun build(type: AnnotatedKType): ValidationHandler {
             val str = type.toString()
-            return map[str] ?: {
-                ValidationHandler(type) {
-                    map[str] = it
-                }
-            }()
+            return map[str] ?: ValidationHandler(type) {
+                map[str] = it
+            }
         }
 
         fun <T : Any> build(tClass: KClass<T>, annotations: List<Annotation> = listOf()): ValidationHandler {

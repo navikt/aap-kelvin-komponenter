@@ -40,6 +40,14 @@ internal class ConstraintValidationTest {
 
     @Request("Forespørsel")
     @Response("Svar")
+    data class MedUsignertHeltallsgrenser(
+        @Min(1) val nedre: UInt,
+        @Max(99) val øvre: UInt,
+        @Clamp(5, 50) val mellom: UInt,
+    )
+
+    @Request("Forespørsel")
+    @Response("Svar")
     data class MedDesimalgrenser(
         @FMin(0.0) val nedre: Double,
         @FMax(1.0) val øvre: Double,
@@ -56,6 +64,7 @@ internal class ConstraintValidationTest {
     )
 
     @Language("JSON") private val gyldigHeltall = """{"nedre":5,"øvre":50,"mellom":25}"""
+    @Language("JSON") private val gyldigUsignertHeltall = """{"nedre":5,"øvre":50,"mellom":25}"""
     @Language("JSON") private val gyldigDesimal = """{"nedre":0.5,"øvre":0.5,"mellom":0.5}"""
     @Language("JSON") private val gyldigTekst = """{"kortNedre":"abc","kortØvre":"ab","mellom":"ab","mønster":"abc"}"""
 
@@ -113,6 +122,28 @@ internal class ConstraintValidationTest {
         val gyldig = postJson(client, "/test", gyldigHeltall).status
         assertThat(forLav).isEqualTo(HttpStatusCode.BadRequest)
         assertThat(forHøy).isEqualTo(HttpStatusCode.BadRequest)
+        assertThat(gyldig).isEqualTo(HttpStatusCode.OK)
+    }
+
+    @Test
+    fun `@Min, @Max og @Clamp virker på usignerte heltall (UInt)`() = testApplication {
+        application {
+            setupBaseTestServer()
+            apiRouting {
+                route("test") {
+                    post<Unit, MedUsignertHeltallsgrenser, MedUsignertHeltallsgrenser> { _, body -> respond(body) }
+                }
+            }
+        }
+        val underMin = postJson(client, "/test", """{"nedre":0,"øvre":50,"mellom":25}""").status
+        val overMax = postJson(client, "/test", """{"nedre":1,"øvre":100,"mellom":25}""").status
+        val forLavClamp = postJson(client, "/test", """{"nedre":1,"øvre":50,"mellom":4}""").status
+        val forHøyClamp = postJson(client, "/test", """{"nedre":1,"øvre":50,"mellom":51}""").status
+        val gyldig = postJson(client, "/test", gyldigUsignertHeltall).status
+        assertThat(underMin).isEqualTo(HttpStatusCode.BadRequest)
+        assertThat(overMax).isEqualTo(HttpStatusCode.BadRequest)
+        assertThat(forLavClamp).isEqualTo(HttpStatusCode.BadRequest)
+        assertThat(forHøyClamp).isEqualTo(HttpStatusCode.BadRequest)
         assertThat(gyldig).isEqualTo(HttpStatusCode.OK)
     }
 

@@ -17,6 +17,7 @@ import java.time.*
 import java.util.*
 import kotlin.reflect.KType
 
+@Suppress("unused")
 object DefaultPrimitiveSchemaProvider : SchemaBuilderProviderModule, OpenAPIGenModuleExtension,
     DefaultOpenAPIModule {
 
@@ -45,21 +46,23 @@ object DefaultPrimitiveSchemaProvider : SchemaBuilderProviderModule, OpenAPIGenM
                 type: DataType,
                 format: DataFormat? = null,
                 pattern: String? = null,
-                example: T? = null
+                example: T? = null,
+                minimum: T? = null
             ): Builder {
                 return Builder(
-                    SchemaModel.SchemaModelLitteral<T>(
+                    SchemaModel.SchemaModelLitteral(
                         type,
                         format,
                         pattern = pattern,
-                        example = example
+                        example = example,
+                        minimum = minimum
                     )
                 )
             }
         }
     }
 
-    val førsteApril = ZonedDateTime.of(
+    val førsteApril: ZonedDateTime = ZonedDateTime.of(
         LocalDateTime.of(2025, 4, 1, 12, 30, 0),
         ZoneId.systemDefault()
     )
@@ -77,6 +80,24 @@ object DefaultPrimitiveSchemaProvider : SchemaBuilderProviderModule, OpenAPIGenM
         ),
         Builder<BigInteger>(
             DataType.integer
+        ),
+        Builder<UByte>(
+            DataType.integer,
+            minimum = 0u
+        ),
+        Builder<UShort>(
+            DataType.integer,
+            minimum = 0u
+        ),
+        Builder<UInt>(
+            DataType.integer,
+            DataFormat.int32,
+            minimum = 0u
+        ),
+        Builder<ULong>(
+            DataType.integer,
+            DataFormat.int64,
+            minimum = 0u
         ),
         Builder<String>(
             DataType.string
