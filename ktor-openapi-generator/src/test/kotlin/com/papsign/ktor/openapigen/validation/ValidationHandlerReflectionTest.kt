@@ -6,7 +6,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
 /**
- * Regression tests for the reflection-based property access used to apply validators
+ * Tests for the reflection-based property access used to apply validators
  * (e.g. @Min/@Max/@Clamp) to properties on plain (non-data) classes and private properties.
  *
  * Kotlin value classes (like the unsigned integer types UInt/ULong/UShort/UByte) are stored
