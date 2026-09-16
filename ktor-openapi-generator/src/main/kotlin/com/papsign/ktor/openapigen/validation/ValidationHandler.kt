@@ -247,12 +247,31 @@ class ValidationHandler private constructor(
                             null
                         }
                     }
+
+                    // Reads via the Kotlin property getter (not raw java.lang.reflect.Field/Method access) so
+                    // that value classes (e.g. UInt/ULong/UShort/UByte, or custom inline classes) get properly
+                    // boxed instead of leaking their unboxed underlying representation. The property is forced
+                    // accessible first so private properties keep working, matching the previous Field-based
+                    // behaviour.
+                    fun readValue(sourceProp: KProperty1<*, *>, t: Any): Any? {
+                        val accessible = sourceProp.isAccessible
+                        sourceProp.isAccessible = true
+                        return try {
+                            sourceProp.getter.call(t)
+                        } finally {
+                            sourceProp.isAccessible = accessible
+                        }
+                    }
+
                     when {
                         handled.isNotEmpty() && shouldTransform -> {
                             transformFun = { t: Any? ->
                                 if (t != null) {
                                     handled.forEach { (handler, field, sourceProp) ->
-                                        field.set(t, handler.handle(sourceProp.getter.call(t)))
+                                        val accessible = field.canAccess(t)
+                                        field.setAccessible(true)
+                                        field.set(t, handler.handle(readValue(sourceProp, t)))
+                                        field.setAccessible(accessible)
                                     }
                                 }
                                 transform(t)
@@ -266,19 +285,30 @@ class ValidationHandler private constructor(
                                     val copyParams =
                                         copy?.instanceParameter?.let { mutableMapOf<KParameter, Any?>(it to t) }
                                     handled.forEach { (handler, field, sourceProp) ->
-                                        // Use the Kotlin property getter (not raw java.lang.reflect.Field/Method
-                                        // access) so that value classes (e.g. UInt/ULong/UShort/UByte, or custom
-                                        // inline classes) get properly boxed instead of leaking their unboxed
-                                        // underlying representation, which would fail type checks in copy.callBy.
+                                        val newValue = handler.handle(readValue(sourceProp, t))
                                         if (copy != null && copyParams != null) {
                                             val param = copy.parameters.first { it.name == field.name }
-                                            copyParams[param] = handler.handle(sourceProp.getter.call(t))
+                                            copyParams[param] = newValue
                                         } else {
-                                            // TODO convert this to canAccess and only change status if false
-                                            val accessible = field.canAccess(t)
-                                            field.setAccessible(true)
-                                            field.set(t, handler.handle(sourceProp.getter.call(t)))
-                                            field.setAccessible(accessible)
+                                            val mutableProp = sourceProp as? KMutableProperty1<Any, Any?>
+                                            if (mutableProp != null) {
+                                                // Use the Kotlin property setter (not java.lang.reflect.Field.set)
+                                                // so value classes are correctly unboxed to their underlying JVM
+                                                // representation before being written to the backing field.
+                                                val accessible = mutableProp.isAccessible
+                                                mutableProp.isAccessible = true
+                                                try {
+                                                    mutableProp.setter.call(t, newValue)
+                                                } finally {
+                                                    mutableProp.isAccessible = accessible
+                                                }
+                                            } else {
+                                                // TODO convert this to canAccess and only change status if false
+                                                val accessible = field.canAccess(t)
+                                                field.setAccessible(true)
+                                                field.set(t, newValue)
+                                                field.setAccessible(accessible)
+                                            }
                                         }
                                     }
                                     if (copy != null && copyParams != null) {

@@ -47,7 +47,8 @@ object DefaultPrimitiveSchemaProvider : SchemaBuilderProviderModule, OpenAPIGenM
                 format: DataFormat? = null,
                 pattern: String? = null,
                 example: T? = null,
-                minimum: T? = null
+                minimum: T? = null,
+                maximum: T? = null
             ): Builder {
                 return Builder(
                     SchemaModel.SchemaModelLitteral(
@@ -55,7 +56,8 @@ object DefaultPrimitiveSchemaProvider : SchemaBuilderProviderModule, OpenAPIGenM
                         format,
                         pattern = pattern,
                         example = example,
-                        minimum = minimum
+                        minimum = minimum,
+                        maximum = maximum
                     )
                 )
             }
@@ -83,21 +85,23 @@ object DefaultPrimitiveSchemaProvider : SchemaBuilderProviderModule, OpenAPIGenM
         ),
         Builder<UByte>(
             DataType.integer,
-            minimum = 0u
+            minimum = 0u,
+            maximum = UByte.MAX_VALUE
         ),
         Builder<UShort>(
             DataType.integer,
-            minimum = 0u
+            minimum = 0u,
+            maximum = UShort.MAX_VALUE
         ),
         Builder<UInt>(
             DataType.integer,
-            DataFormat.int32,
-            minimum = 0u
+            minimum = 0u,
+            maximum = UInt.MAX_VALUE
         ),
         Builder<ULong>(
             DataType.integer,
-            DataFormat.int64,
-            minimum = 0u
+            minimum = 0u,
+            maximum = ULong.MAX_VALUE
         ),
         Builder<String>(
             DataType.string

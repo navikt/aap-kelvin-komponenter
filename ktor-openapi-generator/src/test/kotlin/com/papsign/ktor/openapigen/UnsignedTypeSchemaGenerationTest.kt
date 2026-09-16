@@ -41,23 +41,25 @@ internal class UnsignedTypeSchemaGenerationTest {
         val body = response.bodyAsText()
 
         assertTrue(body.contains(""""enUByte" : {
+            "maximum" : 255,
             "minimum" : 0,
             "nullable" : false,
             "type" : "integer"
           }"""))
         assertTrue(body.contains(""""enUShort" : {
+            "maximum" : 65535,
             "minimum" : 0,
             "nullable" : false,
             "type" : "integer"
           }"""))
         assertTrue(body.contains(""""enUInt" : {
-            "format" : "int32",
+            "maximum" : 4294967295,
             "minimum" : 0,
             "nullable" : false,
             "type" : "integer"
           }"""))
         assertTrue(body.contains(""""enULong" : {
-            "format" : "int64",
+            "maximum" : 18446744073709551615,
             "minimum" : 0,
             "nullable" : false,
             "type" : "integer"
