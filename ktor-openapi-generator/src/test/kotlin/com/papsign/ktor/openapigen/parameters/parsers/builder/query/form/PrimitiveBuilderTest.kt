@@ -19,6 +19,46 @@ class PrimitiveBuilderTest {
     }
 
     @Test
+    fun testUInt() {
+        val key = "key"
+        val expected = 1u
+        val parse = mapOf(
+            key to listOf("1")
+        )
+        FormBuilderFactory.testSelector(expected, key, parse, true)
+    }
+
+    @Test
+    fun testULong() {
+        val key = "key"
+        val expected = 1uL
+        val parse = mapOf(
+            key to listOf("1")
+        )
+        FormBuilderFactory.testSelector(expected, key, parse, true)
+    }
+
+    @Test
+    fun testUShort() {
+        val key = "key"
+        val expected: UShort = 1u
+        val parse = mapOf(
+            key to listOf("1")
+        )
+        FormBuilderFactory.testSelector(expected, key, parse, true)
+    }
+
+    @Test
+    fun testUByte() {
+        val key = "key"
+        val expected: UByte = 1u
+        val parse = mapOf(
+            key to listOf("1")
+        )
+        FormBuilderFactory.testSelector(expected, key, parse, true)
+    }
+
+    @Test
     fun testLocalDate() {
         val key = "key"
         val expected: LocalDate = LocalDate.of(2021, Month.FEBRUARY, 27)

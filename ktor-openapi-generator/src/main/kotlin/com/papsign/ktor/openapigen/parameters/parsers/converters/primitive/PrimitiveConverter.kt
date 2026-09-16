@@ -37,6 +37,14 @@ object PrimitiveConverter : ConverterSelector {
             it.toLongOrNull() ?: 0
         },
         primitive { it.toLongOrNull() },
+        primitive { it.toUByteOrNull() ?: 0u },
+        primitive { it.toUByteOrNull() },
+        primitive { it.toUShortOrNull() ?: 0u },
+        primitive { it.toUShortOrNull() },
+        primitive { it.toUIntOrNull() ?: 0u },
+        primitive { it.toUIntOrNull() },
+        primitive { it.toULongOrNull() ?: 0u },
+        primitive { it.toULongOrNull() },
         primitive<BigInteger> {
             it.toBigIntegerOrNull() ?: BigInteger.ZERO
         },

@@ -241,18 +241,49 @@ class ValidationHandler private constructor(
                                     log.warn("Field ${prop.source} could not be processed because delegated properties are not supported")
                                 }
                             }?.let {
-                                validator to it
+                                Triple(validator, it, prop.source)
                             }
                         } else {
                             null
                         }
                     }
+
+                    // Reads via the Kotlin property getter (not raw java.lang.reflect.Field/Method access) so
+                    // that value classes (e.g. UInt/ULong/UShort/UByte, or custom inline classes) get properly
+                    // boxed instead of leaking their unboxed underlying representation. The property is forced
+                    // accessible first so private properties keep working, matching the previous Field-based
+                    // behaviour.
+                    fun readValue(sourceProp: KProperty1<*, *>, t: Any): Any? {
+                        val accessible = sourceProp.isAccessible
+                        sourceProp.isAccessible = true
+                        return try {
+                            sourceProp.getter.call(t)
+                        } finally {
+                            sourceProp.isAccessible = accessible
+                        }
+                    }
+
+                    // Kotlin unsigned value classes (UByte/UShort/UInt/ULong) are backed on the JVM by their
+                    // unboxed underlying primitive. java.lang.reflect.Field.set cannot unbox a boxed instance
+                    // of one of these types into that primitive field, so any direct field write must convert
+                    // it first.
+                    fun unboxUnsigned(value: Any?): Any? = when (value) {
+                        is UByte -> value.toByte()
+                        is UShort -> value.toShort()
+                        is UInt -> value.toInt()
+                        is ULong -> value.toLong()
+                        else -> value
+                    }
+
                     when {
                         handled.isNotEmpty() && shouldTransform -> {
                             transformFun = { t: Any? ->
                                 if (t != null) {
-                                    handled.forEach { (handler, field) ->
-                                        field.set(t, handler.handle(field.get(t)))
+                                    handled.forEach { (handler, field, sourceProp) ->
+                                        val accessible = field.canAccess(t)
+                                        field.setAccessible(true)
+                                        field.set(t, unboxUnsigned(handler.handle(readValue(sourceProp, t))))
+                                        field.setAccessible(accessible)
                                     }
                                 }
                                 transform(t)
@@ -265,17 +296,37 @@ class ValidationHandler private constructor(
                                     val copy = t.javaClass.kotlin.memberFunctions.find { it.name == "copy" }
                                     val copyParams =
                                         copy?.instanceParameter?.let { mutableMapOf<KParameter, Any?>(it to t) }
-                                    handled.forEach { (handler, field) ->
-                                        val getter = field.kotlinProperty?.javaGetter
-                                        if (copy != null && copyParams != null && getter != null) {
+                                    handled.forEach { (handler, field, sourceProp) ->
+                                        val newValue = handler.handle(readValue(sourceProp, t))
+                                        if (copy != null && copyParams != null) {
                                             val param = copy.parameters.first { it.name == field.name }
-                                            copyParams[param] = handler.handle(getter(t))
+                                            copyParams[param] = newValue
                                         } else {
-                                            // TODO convert this to canAccess and only change status if false
-                                            val accessible = field.canAccess(t)
-                                            field.setAccessible(true)
-                                            field.set(t, handler.handle(field.get(t)))
-                                            field.setAccessible(accessible)
+                                            @Suppress("UNCHECKED_CAST")
+                                            val mutableProp = sourceProp as? KMutableProperty1<Any, Any?>
+                                            if (mutableProp != null) {
+                                                // Use the Kotlin property setter (not java.lang.reflect.Field.set)
+                                                // so value classes are correctly unboxed to their underlying JVM
+                                                // representation before being written to the backing field.
+                                                val accessible = mutableProp.isAccessible
+                                                mutableProp.isAccessible = true
+                                                try {
+                                                    mutableProp.setter.call(t, newValue)
+                                                } finally {
+                                                    mutableProp.isAccessible = accessible
+                                                }
+                                            } else {
+                                                // Read-only (val) property with no copy(): the backing field's
+                                                // JVM type is the unboxed primitive for unsigned value classes
+                                                // (e.g. `int` for UInt), so Field.set must be given that
+                                                // primitive rather than the boxed UInt/ULong/UShort/UByte
+                                                // instance, which it cannot unbox on its own.
+                                                // TODO convert this to canAccess and only change status if false
+                                                val accessible = field.canAccess(t)
+                                                field.setAccessible(true)
+                                                field.set(t, unboxUnsigned(newValue))
+                                                field.setAccessible(accessible)
+                                            }
                                         }
                                     }
                                     if (copy != null && copyParams != null) {
@@ -316,7 +367,7 @@ class ValidationHandler private constructor(
 
         /**
          * needed because a type is equal to another no matter the annotations
-         * @param annotations, be careful that it contains everything, the code may fully rely on it
+         * @property annotations, be careful that it contains everything, the code may fully rely on it
          */
         data class AnnotatedKType(
             val type: KType,
@@ -354,11 +405,9 @@ class ValidationHandler private constructor(
          */
         fun build(type: AnnotatedKType): ValidationHandler {
             val str = type.toString()
-            return map[str] ?: {
-                ValidationHandler(type) {
-                    map[str] = it
-                }
-            }()
+            return map[str] ?: ValidationHandler(type) {
+                map[str] = it
+            }
         }
 
         fun <T : Any> build(tClass: KClass<T>, annotations: List<Annotation> = listOf()): ValidationHandler {

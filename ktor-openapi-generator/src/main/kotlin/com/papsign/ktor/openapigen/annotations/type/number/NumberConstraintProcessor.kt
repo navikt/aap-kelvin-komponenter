@@ -10,32 +10,48 @@ import java.math.BigDecimal
 import kotlin.reflect.KType
 import kotlin.reflect.full.withNullability
 
-abstract class NumberConstraintProcessor<A: Annotation>(allowedTypes: Iterable<KType>): SchemaProcessor<A>, ValidatorBuilder<A> {
+abstract class NumberConstraintProcessor<A : Annotation>(allowedTypes: Iterable<KType>) : SchemaProcessor<A>,
+    ValidatorBuilder<A> {
 
     private val log = classLogger()
 
     val types = allowedTypes.flatMap { listOf(it.withNullability(true), it.withNullability(false)) }
 
-    abstract fun process(modelLitteral: SchemaModel.SchemaModelLitteral<*>, annotation: A): SchemaModel.SchemaModelLitteral<*>
+    abstract fun process(
+        modelLitteral: SchemaModel.SchemaModelLitteral<*>,
+        annotation: A
+    ): SchemaModel.SchemaModelLitteral<*>
 
 
     abstract fun getConstraint(annotation: A): NumberConstraint
 
 
-    private class NumberConstraintValidator(private val constraint: NumberConstraint): Validator {
-        override fun <T> validate(subject: T?): T? {
-            if (subject is Number) {
-                val value = BigDecimal(subject.toString())
-                if (constraint.min != null) {
-                    if (constraint.minInclusive && value < constraint.min) throw NumberConstraintViolation(value, constraint)
-                    if (!constraint.minInclusive && value <= constraint.min) throw NumberConstraintViolation(value, constraint)
-                }
-                if (constraint.max != null) {
-                    if (constraint.maxInclusive && value > constraint.max) throw NumberConstraintViolation(value, constraint)
-                    if (!constraint.maxInclusive && value >= constraint.max) throw NumberConstraintViolation(value, constraint)
-                }
-            } else {
-                throw NotANumberViolationViolation(subject)
+    private class NumberConstraintValidator(private val constraint: NumberConstraint) : Validator {
+        override fun <T> validate(subject: T?): T {
+            val value = when (subject) {
+                is Number, is UByte, is UShort, is UInt, is ULong -> BigDecimal(subject.toString())
+
+                else -> throw NotANumberViolationViolation(subject)
+            }
+            if (constraint.min != null) {
+                if (constraint.minInclusive && value < constraint.min) throw NumberConstraintViolation(
+                    value,
+                    constraint
+                )
+                if (!constraint.minInclusive && value <= constraint.min) throw NumberConstraintViolation(
+                    value,
+                    constraint
+                )
+            }
+            if (constraint.max != null) {
+                if (constraint.maxInclusive && value > constraint.max) throw NumberConstraintViolation(
+                    value,
+                    constraint
+                )
+                if (!constraint.maxInclusive && value >= constraint.max) throw NumberConstraintViolation(
+                    value,
+                    constraint
+                )
             }
             return subject
         }
@@ -59,19 +75,28 @@ abstract class NumberConstraintProcessor<A: Annotation>(allowedTypes: Iterable<K
     }
 }
 
-data class NumberConstraint(val min: BigDecimal? = null, val max: BigDecimal? = null, val minInclusive: Boolean = true, val maxInclusive: Boolean = true, val errorMessage: String)
+data class NumberConstraint(
+    val min: BigDecimal? = null,
+    val max: BigDecimal? = null,
+    val minInclusive: Boolean = true,
+    val maxInclusive: Boolean = true,
+    val errorMessage: String
+)
 
-class NumberConstraintViolation(val actual: Number?, val constraint: NumberConstraint): ConstraintViolation("Constraint violation: $actual should be ${
-{
-    val min = "${constraint.min} ${if (constraint.minInclusive) "inclusive" else "exclusive"}"
-    val max = "${constraint.max} ${if (constraint.maxInclusive) "inclusive" else "exclusive"}"
-    when {
-        constraint.min != null && constraint.max != null -> "between $min and $max"
-        constraint.min != null -> "at least $min"
-        constraint.max != null -> "at most $max"
-        else -> "anything"
-    }
-}()
-}", constraint.errorMessage)
+class NumberConstraintViolation(val actual: Number?, val constraint: NumberConstraint) : ConstraintViolation(
+    "Constraint violation: $actual should be ${
+        run {
+            val min1 = "${constraint.min} ${if (constraint.minInclusive) "inclusive" else "exclusive"}"
+            val max1 = "${constraint.max} ${if (constraint.maxInclusive) "inclusive" else "exclusive"}"
+            when {
+                constraint.min != null && constraint.max != null -> "between $min1 and $max1"
+                constraint.min != null -> "at least $min1"
+                constraint.max != null -> "at most $max1"
+                else -> "anything"
+            }
+        }
+    }", constraint.errorMessage
+)
 
-class NotANumberViolationViolation(val value: Any?): ConstraintViolation("Constraint violation: $value is not a number")
+class NotANumberViolationViolation(val value: Any?) :
+    ConstraintViolation("Constraint violation: $value is not a number")
