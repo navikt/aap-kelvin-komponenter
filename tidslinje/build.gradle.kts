@@ -7,7 +7,6 @@ plugins {
 kotlin.explicitApi = ExplicitApiMode.Warning
 
 dependencies {
-    implementation(project(":dbconnect")) // Periode
     implementation(libs.jackson.annotations)
     implementation(project(":verdityper"))
     testImplementation(libs.junit.jupiter.api)
