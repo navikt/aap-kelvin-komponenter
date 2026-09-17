@@ -33,12 +33,8 @@ dependencies {
 
     // testing
     testImplementation(libs.ktor.server.netty)
-    testImplementation(libs.ktor.server.core)
     testImplementation(libs.ktor.server.test.host)
-    testImplementation(libs.ktor.server.auth)
     testImplementation(libs.ktor.server.auth.jwt)
-    testImplementation(libs.ktor.server.content.negotiation)
-    testImplementation(libs.ktor.serialization.jackson)
     testImplementation(libs.ktor.client.content.negotiation)
 
     testImplementation(kotlin("test"))
