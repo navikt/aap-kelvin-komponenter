@@ -1,10 +1,23 @@
 package com.papsign.ktor.openapigen.validation
 
-import com.papsign.ktor.openapigen.*
+import com.papsign.ktor.openapigen.KTypeProperty
 import com.papsign.ktor.openapigen.classLogger
-import kotlin.reflect.*
-import kotlin.reflect.full.*
-import kotlin.reflect.jvm.*
+import com.papsign.ktor.openapigen.getKType
+import com.papsign.ktor.openapigen.isInterface
+import com.papsign.ktor.openapigen.memberProperties
+import kotlin.reflect.KClass
+import kotlin.reflect.KMutableProperty1
+import kotlin.reflect.KParameter
+import kotlin.reflect.KProperty1
+import kotlin.reflect.KType
+import kotlin.reflect.full.findAnnotation
+import kotlin.reflect.full.instanceParameter
+import kotlin.reflect.full.isSubtypeOf
+import kotlin.reflect.full.memberFunctions
+import kotlin.reflect.full.starProjectedType
+import kotlin.reflect.jvm.isAccessible
+import kotlin.reflect.jvm.javaField
+import kotlin.reflect.jvm.jvmErasure
 
 
 /**
@@ -30,7 +43,12 @@ class ValidationHandler private constructor(
         val validators = annotations.mapNotNull { annot ->
             annot.annotationClass.findAnnotation<ValidatorAnnotation>()
                 // Safe: ValidatorAnnotation guarantees the handler's declared annotation type matches `annot`'s class.
-                ?.let { @Suppress("UNCHECKED_CAST") (it.getHandlerInstance() as ValidatorBuilder<Annotation>).build(type, annot) }
+                ?.let {
+                    @Suppress("UNCHECKED_CAST") (it.getHandlerInstance() as ValidatorBuilder<Annotation>).build(
+                        type,
+                        annot
+                    )
+                }
         }
         val shouldTransform = validators.isNotEmpty()
         val transform: (Any?) -> Any? = { source: Any? ->
@@ -39,146 +57,51 @@ class ValidationHandler private constructor(
         when {
             type.isSubtypeOf(arrayType) -> {
                 val contentType = type.arguments[0].type!!
-                val handler =
-                    build(
-                        contentType
-                    )
-                when {
-                    handler.isUseful() && shouldTransform -> {
-                        transformFun = { t: Any? ->
-                            if (t != null) {
-                                val size = java.lang.reflect.Array.getLength(t)
-                                for (i in 0 until size) {
-                                    val value = java.lang.reflect.Array.get(t, i)
-                                    java.lang.reflect.Array.set(t, i, handler.handle(value))
-                                }
-                            }
-                            transform(t)
+                val handler = build(contentType)
+
+                transformFun = combine(handler.isUseful(), shouldTransform, transform) { t ->
+                    if (t != null) {
+                        val size = java.lang.reflect.Array.getLength(t)
+                        for (i in 0 until size) {
+                            val value = java.lang.reflect.Array.get(t, i)
+                            java.lang.reflect.Array.set(t, i, handler.handle(value))
                         }
                     }
-
-                    handler.isUseful() -> {
-                        transformFun = { t: Any? ->
-                            if (t != null) {
-                                val size = java.lang.reflect.Array.getLength(t)
-                                for (i in 0 until size) {
-                                    val value = java.lang.reflect.Array.get(t, i)
-                                    java.lang.reflect.Array.set(t, i, handler.handle(value))
-                                }
-                            }
-                            t
-                        }
-                    }
-
-                    shouldTransform -> {
-                        transformFun = transform
-                    }
-
-                    else -> {
-                        transformFun = null
-                    }
+                    t
                 }
             }
 
             type.isSubtypeOf(iterableType) -> {
                 val contentType = type.arguments[0].type!!
-                val handler =
-                    build(
-                        contentType
-                    )
+                val handler = build(contentType)
                 if (type.jvmErasure.isInterface) {
-                    when {
-                        handler.isUseful() && shouldTransform -> when {
-                            type.isSubtypeOf(setType) -> {
-                                transformFun = { t: Any? ->
-                                    transform(
-                                        if (t != null) {
-                                            (t as Iterable<Any?>).map { handler.handle(it) }.toSet()
-                                        } else {
-                                            t
-                                        }
-                                    )
-                                }
-                            }
-
-                            type.isSubtypeOf(listType) -> {
-                                transformFun = { t: Any? ->
-                                    transform(if (t != null) {
-                                        (t as Iterable<Any?>).map { handler.handle(it) }
-                                    } else {
-                                        t
-                                    })
-                                }
-                            }
-
-                            else -> error("Iterable interface $type is not supported, please use List or Set")
+                    // The set/list dispatch (and its `else -> error`) is only ever evaluated once the content
+                    // handler is actually useful, matching the original branching: an unsupported Iterable
+                    // interface (e.g. plain `Collection`) is tolerated as long as its elements need no handling.
+                    val handleCollection: (Any?) -> Any? = when {
+                        !handler.isUseful() -> { t -> t }
+                        type.isSubtypeOf(setType) -> { t ->
+                            if (t != null) (t as Iterable<Any?>).map { handler.handle(it) }.toSet() else t
                         }
 
-                        handler.isUseful() -> when {
-                            type.isSubtypeOf(setType) -> {
-                                transformFun = { t: Any? ->
-                                    if (t != null) {
-                                        (t as Iterable<Any?>).map { handler.handle(it) }.toSet()
-                                    } else {
-                                        t
-                                    }
-
-                                }
-                            }
-
-                            type.isSubtypeOf(listType) -> {
-                                transformFun = { t: Any? ->
-                                    if (t != null) {
-                                        (t as Iterable<Any?>).map { handler.handle(it) }
-                                    } else {
-                                        t
-                                    }
-                                }
-                            }
-
-                            else -> error("Iterable interface $type is not supported, please use List or Set")
+                        type.isSubtypeOf(listType) -> { t ->
+                            if (t != null) (t as Iterable<Any?>).map {
+                                handler.handle(
+                                    it
+                                )
+                            } else t
                         }
 
-                        shouldTransform -> {
-                            transformFun = transform
-                        }
-
-                        else -> {
-                            transformFun = null
-                        }
+                        else -> error("Iterable interface $type is not supported, please use List or Set")
                     }
+                    transformFun = combine(handler.isUseful(), shouldTransform, transform, handleCollection)
                 } else {
                     val appropriateConstructor = type.jvmErasure.constructors.find {
                         it.parameters.size == 1 && it.parameters[0].type.isSubtypeOf(iterableType)
                     } ?: error("Unsupported Iterable type $type, must have a constructor that takes an iterable")
-                    when {
-                        handler.isUseful() && shouldTransform -> {
-                            transformFun = { t: Any? ->
-                                if (t != null) {
-                                    appropriateConstructor.call((t as Iterable<Any?>).map { handler.handle(it) })
-                                } else {
-                                    t
-                                }.let(transform)
-                            }
-                        }
 
-                        handler.isUseful() -> {
-                            transformFun = { t: Any? ->
-                                if (t != null) {
-                                    appropriateConstructor.call((t as Iterable<Any?>).map { handler.handle(it) })
-                                } else {
-                                    t
-                                }
-                            }
-                        }
-
-                        shouldTransform -> {
-                            transformFun = transform
-                        }
-
-                        else -> {
-                            transformFun = null
-                        }
+                    transformFun = combine(handler.isUseful(), shouldTransform, transform) { t ->
+                        if (t != null) appropriateConstructor.call((t as Iterable<Any?>).map { handler.handle(it) }) else t
                     }
                 }
             }
@@ -192,39 +115,14 @@ class ValidationHandler private constructor(
                     )
                 }
                 val useful = handlers.values.any { it.isUseful() }
-                when {
-                    useful && shouldTransform -> {
-                        transformFun = { t: Any? ->
-                            transform(
-                                if (t != null) {
-                                    (handlers[t::class] ?: error("No handler for sealed class ${t::class.starProjectedType}, supposed child of $type")).handle(
-                                        t
-                                    )
-                                } else {
-                                    t
-                                }
-                            )
-                        }
-                    }
 
-                    useful -> {
-                        transformFun = { t: Any? ->
-                            if (t != null) {
-                                (handlers[t::class] ?: error("No handler for sealed class ${t::class.starProjectedType}, supposed child of $type")).handle(
-                                    t
-                                )
-                            } else {
-                                t
-                            }
-                        }
-                    }
-
-                    shouldTransform -> {
-                        transformFun = transform
-                    }
-
-                    else -> {
-                        transformFun = null
+                transformFun = combine(useful, shouldTransform, transform) { t ->
+                    if (t != null) {
+                        (handlers[t::class]
+                            ?: error("No handler for sealed class ${t::class.starProjectedType}, supposed child of $type"))
+                            .handle(t)
+                    } else {
+                        t
                     }
                 }
             }
@@ -353,6 +251,23 @@ class ValidationHandler private constructor(
         return type.isSubtypeOf(getKType<Function<*>>())
     }
 
+    /**
+     * Combines an optional element/child [handle] step with this type's own constraint [transform], matching
+     * the "useful && shouldTransform" / "useful only" / "shouldTransform only" / "neither" branching that used
+     * to be repeated for every content kind (array, iterable, sealed class).
+     */
+    private fun combine(
+        useful: Boolean,
+        shouldTransform: Boolean,
+        transform: (Any?) -> Any?,
+        handle: (Any?) -> Any?
+    ): ((Any?) -> Any?)? = when {
+        useful && shouldTransform -> { t -> transform(handle(t)) }
+        useful -> handle
+        shouldTransform -> transform
+        else -> null
+    }
+
     fun <T> handle(t: T): T {
         // Safe: transformFun is built from the same type T that this handler was constructed for.
         @Suppress("UNCHECKED_CAST")
@@ -379,8 +294,10 @@ class ValidationHandler private constructor(
                 get() = classAnnotation + typeAnnotation + additionalAnnotations
 
             companion object {
-                operator fun <T : Any> invoke(tClass: KClass<T>,
-                                              annotations: List<Annotation> = listOf()): AnnotatedKType {
+                operator fun <T : Any> invoke(
+                    tClass: KClass<T>,
+                    annotations: List<Annotation> = listOf()
+                ): AnnotatedKType {
                     val type = tClass.starProjectedType
                     return AnnotatedKType(
                         type,
