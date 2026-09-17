@@ -37,8 +37,12 @@ jobs:
           gradle-version: wrapper
 
       - name: Run Detekt
-        run: ./gradlew detekt detektReportMergeSarif --continue
-        continue-on-error: true
+        # Detekt is expected to find real style/lint issues in the codebase — that is
+        # its whole purpose here, surfaced via the SARIF upload below rather than by
+        # failing this job. `continue-on-error` alone does not stop GitHub from
+        # attaching a "Process completed with exit code 1" failure annotation to the
+        # step, so we swallow the exit code explicitly with `|| true`.
+        run: ./gradlew detekt detektReportMergeSarif --continue || true
 
       - name: Upload SARIF to GitHub
         if: always() && hashFiles('build/reports/detekt/merge.sarif') != ''
