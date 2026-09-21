@@ -26,6 +26,5 @@ dependencies {
     testImplementation(libs.ktor.server.netty)
     testImplementation(libs.ktor.serialization.jackson)
     testImplementation(libs.jackson.databind)
-    testImplementation(libs.jackson.datatype.jsr310)
     testImplementation(libs.ktor.server.content.negotiation)
 }
