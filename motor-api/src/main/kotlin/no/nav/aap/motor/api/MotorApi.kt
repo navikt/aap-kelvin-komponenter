@@ -32,7 +32,7 @@ private enum class Tags(override val description: String) : APITag {
 public fun NormalOpenAPIRoute.motorApi(
     dataSource: DataSource,
     godkjenteRoller: List<String> = emptyList(),
-    godkjentLeseRoller: List<String> = emptyList()
+    godkjentLeseRoller: List<String> = listOf(if (Miljø.erProd()) AAP_DRIFT_LES_PROD else AAP_DRIFT_LES_DEV)
 ) {
     val modules = TagModule(listOf(Tags.MotorAPI))
 
@@ -213,8 +213,7 @@ private fun jobbInfoDto(
         tilleggsinfo = jobbInput.tilleggsinfo(),
         prioritet = jobbInput.prioritet(),
         metadata = JobbLogInfoProviderHolder.get()
-            .hentInformasjon(connection, jobbInput)?.felterMedVerdi
-            ?: mapOf()
+            .hentInformasjon(connection, jobbInput)?.felterMedVerdi.orEmpty()
     )
 }
 
