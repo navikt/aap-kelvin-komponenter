@@ -27,6 +27,7 @@ import no.nav.aap.motor.JobbUtfører
 import no.nav.aap.motor.Motor
 import no.nav.aap.motor.api.JobbInfoDto
 import no.nav.aap.motor.api.motorApi
+import no.nav.aap.motor.api.AAP_DRIFT_LES_DEV
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.AutoClose
@@ -94,6 +95,31 @@ class MotorApiTest {
     }
 
     @Test
+    fun `skal gi 200 på lesing når bruker har lese-rolle, men ikke skriverolle`() {
+        testApplication {
+            application {
+                moduleWithRoller(
+                    dataSource,
+                    godkjenteRoller = listOf(PÅKREVD_TESTROLLE),
+                    godkjentLeseRoller = listOf(AAP_DRIFT_LES_DEV)
+                )
+            }
+
+            val token = lagTestToken(grupper = listOf(AAP_DRIFT_LES_DEV))
+
+            val leseResponse = client.get("/drift/api/jobb/planlagte-jobber") {
+                bearerAuth(token)
+            }
+            assertThat(leseResponse.status.value).isEqualTo(200)
+
+            val skriveResponse = client.get("/drift/api/jobb/rekjorAlleFeilede") {
+                bearerAuth(token)
+            }
+            assertThat(skriveResponse.status.value).isEqualTo(403)
+        }
+    }
+
+    @Test
     fun `kan hente opprettet tidspunkt i listen over kjørte jobber`() {
         val motor = Motor(dataSource, jobber = listOf(TøysTestJobbUtfører))
 
@@ -133,7 +159,7 @@ fun Application.module(dataSource: DataSource) {
     )
     routing {
         apiRouting {
-            motorApi(dataSource)
+            motorApi(dataSource, godkjentLeseRoller = emptyList())
         }
     }
 }
@@ -151,7 +177,11 @@ private fun lagTestToken(grupper: List<String>): String =
         .withExpiresAt(Date(System.currentTimeMillis() + 3_600_000))
         .sign(Algorithm.HMAC256(TEST_JWT_SECRET))
 
-fun Application.moduleWithRoller(dataSource: DataSource, godkjenteRoller: List<String>) {
+fun Application.moduleWithRoller(
+    dataSource: DataSource,
+    godkjenteRoller: List<String>,
+    godkjentLeseRoller: List<String> = emptyList()
+) {
     install(ContentNegotiation) {
         register(ContentType.Application.Json, JacksonConverter(DefaultJsonMapper.objectMapper(), true))
     }
@@ -173,7 +203,7 @@ fun Application.moduleWithRoller(dataSource: DataSource, godkjenteRoller: List<S
     routing {
         authenticate("azure") {
             apiRouting {
-                motorApi(dataSource, godkjenteRoller)
+                motorApi(dataSource, godkjenteRoller, godkjentLeseRoller)
             }
         }
     }
