@@ -18,9 +18,10 @@ public class DBConnection internal constructor(
         query: String,
         block: Execute.() -> Unit = {}
     ) {
-        return this.connection.prepareStatement(query).use { preparedStatement ->
+        val parsed = NamedSql.parse(query)
+        return this.connection.prepareStatement(parsed.sql).use { preparedStatement ->
             preparedStatement.queryTimeout = QUERY_TIMEOUT_IN_SECONDS
-            val executeStatement = Execute(preparedStatement, this.connection)
+            val executeStatement = Execute(preparedStatement, this.connection, parsed.indexes)
             executeStatement.block()
             executeStatement.execute()
         }
@@ -35,10 +36,11 @@ public class DBConnection internal constructor(
         if (elements.none()) {
             return
         }
+        val parsed = NamedSql.parse(query)
         elements.chunked(8000).forEach { subelement ->
-            this.connection.prepareStatement(query).use { preparedStatement ->
+            this.connection.prepareStatement(parsed.sql).use { preparedStatement ->
                 preparedStatement.queryTimeout = QUERY_TIMEOUT_IN_SECONDS
-                val executeStatement = ExecuteBatch(preparedStatement, this.connection, subelement)
+                val executeStatement = ExecuteBatch(preparedStatement, this.connection, subelement, parsed.indexes)
                 executeStatement.block()
                 executeStatement.execute()
             }
@@ -70,9 +72,10 @@ public class DBConnection internal constructor(
         query: String,
         block: Execute.() -> Unit = {}
     ): Long {
-        return this.connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS).use { preparedStatement ->
+        val parsed = NamedSql.parse(query)
+        return this.connection.prepareStatement(parsed.sql, Statement.RETURN_GENERATED_KEYS).use { preparedStatement ->
             preparedStatement.queryTimeout = QUERY_TIMEOUT_IN_SECONDS
-            val executeStatement = Execute(preparedStatement, this.connection)
+            val executeStatement = Execute(preparedStatement, this.connection, parsed.indexes)
             executeStatement.block()
             return@use executeStatement.executeReturnKey()
         }
@@ -83,9 +86,10 @@ public class DBConnection internal constructor(
         query: String,
         block: Execute.() -> Unit = {}
     ): List<Long> {
-        return this.connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS).use { preparedStatement ->
+        val parsed = NamedSql.parse(query)
+        return this.connection.prepareStatement(parsed.sql, Statement.RETURN_GENERATED_KEYS).use { preparedStatement ->
             preparedStatement.queryTimeout = QUERY_TIMEOUT_IN_SECONDS
-            val executeStatement = Execute(preparedStatement, this.connection)
+            val executeStatement = Execute(preparedStatement, this.connection, parsed.indexes)
             executeStatement.block()
             return@use executeStatement.executeReturnKeys()
         }
@@ -96,9 +100,10 @@ public class DBConnection internal constructor(
         query: String,
         block: Execute.() -> Unit = {}
     ): Int {
-        return this.connection.prepareStatement(query).use { preparedStatement ->
+        val parsed = NamedSql.parse(query)
+        return this.connection.prepareStatement(parsed.sql).use { preparedStatement ->
             preparedStatement.queryTimeout = QUERY_TIMEOUT_IN_SECONDS
-            val executeStatement = Execute(preparedStatement, this.connection)
+            val executeStatement = Execute(preparedStatement, this.connection, parsed.indexes)
             executeStatement.block()
             return@use executeStatement.executeReturnUpdated()
         }
@@ -150,9 +155,10 @@ public class DBConnection internal constructor(
         block: Query<T>.() -> Unit,
         extractor: Sequence<T>.() -> U
     ): U {
-        return this.connection.prepareStatement(query).use { preparedStatement ->
+        val parsed = NamedSql.parse(query)
+        return this.connection.prepareStatement(parsed.sql).use { preparedStatement ->
             preparedStatement.queryTimeout = QUERY_TIMEOUT_IN_SECONDS
-            val queryStatement = Query<T>(preparedStatement, this.connection)
+            val queryStatement = Query<T>(preparedStatement, this.connection, parsed.indexes)
             queryStatement.block()
             val result = queryStatement.executeQuery()
             return@use result.extractor()
