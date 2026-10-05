@@ -65,7 +65,7 @@ public class TestDataSource : AutoCloseable, DataSource {
         // kan vi få for mange åpne connections for postgres-serveren totalt når mange tester kjører parallelt.
         internal const val PER_DB_POOL_SIZE = 32
 
-        // Postgres 16 korresponderer til versjon i nais.yaml
+        // Postgres-versjonen skal korrespondere til versjonen i nais.yaml
         private val postgres: PostgreSQLContainer = PostgreSQLContainer("postgres:18")
                 .withDatabaseName(templateDb)
                 .withLogConsumer(Slf4jLogConsumer(logger))
