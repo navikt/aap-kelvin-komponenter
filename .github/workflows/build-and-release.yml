@@ -67,7 +67,7 @@ jobs:
                     echo -e "$text" >> $GITHUB_OUTPUT
                     echo '$randomDelimiter' >> $GITHUB_OUTPUT
             -   name: Publish
-                run: ./gradlew -Pversion=${{ steps.tag.outputs.version }} publish
+                run: ./gradlew --max-workers=8 -Pversion=${{ steps.tag.outputs.version }} publish
                 env:
                     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

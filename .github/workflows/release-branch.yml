@@ -59,7 +59,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Publish
-        run: ./gradlew -Pversion=${{ steps.version.outputs.version }} publish
+        run: ./gradlew --max-workers=8 -Pversion=${{ steps.version.outputs.version }} publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
