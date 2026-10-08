@@ -5,12 +5,14 @@ import java.sql.PreparedStatement
 
 public class Execute internal constructor(
     private val preparedStatement: PreparedStatement,
-    private val connection: Connection
+    connection: Connection,
+    namedIndexes: Map<String, List<Int>> = emptyMap()
 ) {
     private var resultValidator: (Int) -> Unit = {}
+    private val params = Params(preparedStatement, connection, namedIndexes)
 
     public fun setParams(block: Params.() -> Unit) {
-        Params(preparedStatement, connection).block()
+        params.block()
     }
 
     public fun setResultValidator(block: (Int) -> Unit) {
@@ -18,11 +20,13 @@ public class Execute internal constructor(
     }
 
     internal fun execute() {
+        params.validateNamedParameters()
         val rowsUpdated = preparedStatement.executeUpdate()
         resultValidator(rowsUpdated)
     }
 
     internal fun executeReturnUpdated(): Int {
+        params.validateNamedParameters()
         val rowsUpdated = preparedStatement.executeUpdate()
         resultValidator(rowsUpdated)
         return rowsUpdated
@@ -37,6 +41,7 @@ public class Execute internal constructor(
     }
 
     private fun executeReturnKeysPrivate(): Sequence<Long> {
+        params.validateNamedParameters()
         val rowsUpdated = preparedStatement.executeUpdate()
         resultValidator(rowsUpdated)
         return preparedStatement
