@@ -100,6 +100,14 @@ object FinalSchemaBuilderProvider : FinalSchemaBuilderProviderModule, OpenAPIGen
         }
 
         private fun extractedType(type: KType): KType {
+            val erasure = type.jvmErasure
+            // Jackson serializes concrete Iterable beans as objects, unlike Collection implementations.
+            if (erasure.isSubclassOf(Iterable::class) &&
+                !erasure.isSubclassOf(Collection::class) &&
+                erasure != Iterable::class
+            ) {
+                return getKType<Any?>()
+            }
             if (type.isSubtypeOf(getKType<Enum<*>?>())) {
                 val jsonFormat = (type.javaType as Class<*>).getAnnotation(JsonFormat::class.java)
                 if (jsonFormat != null && jsonFormat.shape == JsonFormat.Shape.OBJECT) {
