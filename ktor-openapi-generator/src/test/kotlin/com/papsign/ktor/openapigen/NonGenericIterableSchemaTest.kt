@@ -42,9 +42,23 @@ internal class NonGenericIterableSchemaTest {
 
         val response = client.get("/openapi.json")
         assertEquals(HttpStatusCode.OK, response.status)
-        val periodSchemaType = ObjectMapper().readTree(response.bodyAsText())
-            .at("/components/schemas/ResponseWithPeriod/properties/period/type")
-            .asText()
-        assertThat(periodSchemaType).isEqualTo("array")
+        val specification = ObjectMapper().readTree(response.bodyAsText())
+        assertThat(specification.at("/components/schemas/ResponseWithPeriod/properties/period/\$ref").asText())
+            .isEqualTo("#/components/schemas/NonGenericPeriod")
+        val periodSchema = specification.at("/components/schemas/NonGenericPeriod")
+        assertThat(periodSchema.path("type").asText()).isEqualTo("object")
+        assertThat(periodSchema.path("properties").fieldNames().asSequence().toList())
+            .containsExactlyInAnyOrder("start", "end")
+        for (property in listOf("start", "end")) {
+            assertThat(periodSchema.at("/properties/$property/type").asText()).isEqualTo("string")
+            assertThat(periodSchema.at("/properties/$property/format").asText()).isEqualTo("date")
+        }
+
+        val endpointResponse = client.get("/test-iterable-period")
+        assertEquals(HttpStatusCode.OK, endpointResponse.status)
+        val objectMapper = ObjectMapper()
+        assertThat(objectMapper.readTree(endpointResponse.bodyAsText())).isEqualTo(
+            objectMapper.readTree("""{"period":{"start":"2025-01-01","end":"2025-01-14"}}""")
+        )
     }
 }

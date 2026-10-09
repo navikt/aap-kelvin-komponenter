@@ -10,7 +10,6 @@ import com.papsign.ktor.openapigen.schema.builder.FinalSchemaBuilder
 import com.papsign.ktor.openapigen.schema.builder.SchemaBuilder
 import kotlin.reflect.KType
 import kotlin.reflect.full.withNullability
-import kotlin.reflect.jvm.jvmErasure
 
 object DefaultCollectionSchemaProvider: SchemaBuilderProviderModule, OpenAPIGenModuleExtension, DefaultOpenAPIModule {
 
@@ -25,11 +24,6 @@ object DefaultCollectionSchemaProvider: SchemaBuilderProviderModule, OpenAPIGenM
         },
         getKType<Iterable<*>>() to { type: KType ->
             type.arguments.firstOrNull()?.type
-                ?: type.jvmErasure.supertypes
-                    .firstOrNull { it.jvmErasure == Iterable::class }
-                    ?.arguments
-                    ?.firstOrNull()
-                    ?.type
                 ?: error("bad type $type: star projected types are not supported")
         }
     ).mapKeys { (key, _) ->
