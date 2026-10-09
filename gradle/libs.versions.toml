@@ -1,5 +1,5 @@
 [versions]
-ktor = "3.5.2"
+ktor = "3.6.0"
 jackson = "2.22.3"
 jackson-annotations = "2.22"
 testcontainers = "2.0.5"
@@ -30,29 +30,29 @@ ktor-client-auth = { module = "io.ktor:ktor-client-auth", version.ref = "ktor" }
 ktor-client-jackson = { module = "io.ktor:ktor-client-jackson", version.ref = "ktor" }
 ktor-client-logging = { module = "io.ktor:ktor-client-logging", version.ref = "ktor" }
 
-caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version = "3.2.4" }
+caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version = "3.3.0" }
 commons-codec = { module = "commons-codec:commons-codec", version = "1.22.1" }
 commons-compress = { module = "org.apache.commons:commons-compress", version = "1.28.0" }
-flyway-postgresql = { module = "org.flywaydb:flyway-database-postgresql", version = "13.5.0" }
+flyway-postgresql = { module = "org.flywaydb:flyway-database-postgresql", version = "13.9.0" }
 hikaricp = { module = "com.zaxxer:HikariCP", version = "7.1.0" }
 jackson-annotations = { module = "com.fasterxml.jackson.core:jackson-annotations", version.ref = "jackson-annotations" }
 jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
 jackson-datatype-jsr310 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310", version.ref = "jackson" }
 jackson-module-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version.ref = "jackson" }
-logback-classic = { module = "ch.qos.logback:logback-classic", version = "1.6.3" }
+logback-classic = { module = "ch.qos.logback:logback-classic", version = "1.6.5" }
 logstash-logback-encoder = { module = "net.logstash.logback:logstash-logback-encoder", version = "9.0" }
-jul-to-slf4j = { module = "org.slf4j:jul-to-slf4j", version = "2.0.19" }
+jul-to-slf4j = { module = "org.slf4j:jul-to-slf4j", version = "2.0.20" }
 logback-syslog = { module = "com.papertrailapp:logback-syslog4j", version = "1.0.0" }
 micrometer-prometheus = { module = "io.micrometer:micrometer-registry-prometheus", version = "1.17.1" }
 opentelemetry-annotations = { module = "io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations", version = "2.31.1" }
 opentelemetry-api = { module = "io.opentelemetry.instrumentation:opentelemetry-instrumentation-api", version = "2.31.1" }
 opentelemetry-logback-mdc = { module = "io.opentelemetry.instrumentation:opentelemetry-logback-mdc-1.0", version = "2.31.1-alpha" }
 opentelemetry-ktor = { module = "io.opentelemetry.instrumentation:opentelemetry-ktor-3.0", version = "2.31.1-alpha" }
-nimbus-jose-jwt = { module = "com.nimbusds:nimbus-jose-jwt", version = "10.9.1" }
+nimbus-jose-jwt = { module = "com.nimbusds:nimbus-jose-jwt", version = "10.10" }
 postgresql = { module = "org.postgresql:postgresql", version = "42.7.13" }
 reflections = { module = "org.reflections:reflections", version = "0.10.2" }
-slf4j-api = { module = "org.slf4j:slf4j-api", version = "2.0.19" }
-swagger-ui = { module = "org.webjars:swagger-ui", version = "5.32.14" }
+slf4j-api = { module = "org.slf4j:slf4j-api", version = "2.0.20" }
+swagger-ui = { module = "org.webjars:swagger-ui", version = "5.32.15" }
 avro = { module = "org.apache.avro:avro", version = "1.12.2" }
 kafka-avro-serializer = { module = "io.confluent:kafka-avro-serializer", version = "7.6.0" }
 kafka-clients = { module = "org.apache.kafka:kafka-clients", version.ref = "kafka" }
@@ -71,7 +71,7 @@ testcontainers = { module = "org.testcontainers:testcontainers", version.ref = "
 testcontainers-junit-jupiter = { module = "org.testcontainers:testcontainers-junit-jupiter", version.ref = "testcontainers" }
 testcontainers-postgresql = { module = "org.testcontainers:testcontainers-postgresql", version.ref = "testcontainers" }
 testcontainers-kafka = { module = "org.testcontainers:testcontainers-kafka", version.ref = "testcontainers" }
-mock-oauth2-server = { module = "no.nav.security:mock-oauth2-server", version = "6.0.2" }
+mock-oauth2-server = { module = "no.nav.security:mock-oauth2-server", version = "6.0.4" }
 mockk = { module = "io.mockk:mockk", version = "1.14.11" }
 
 [bundles]
