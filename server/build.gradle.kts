@@ -33,7 +33,6 @@ dependencies {
     implementation(libs.ktor.client.cio)
     implementation(libs.ktor.client.content.negotiation)
 
-    testImplementation(libs.ktor.client.content.negotiation)
     testImplementation(libs.ktor.serialization.jackson)
     testImplementation(libs.ktor.client.mock)
     testImplementation(libs.ktor.server.test.host)
