@@ -1,7 +1,11 @@
 package com.papsign.ktor.openapigen.schema.builder.provider
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonValue
+import com.fasterxml.jackson.databind.jsontype.TypeSerializer
+import no.nav.aap.komponenter.json.DefaultJsonMapper
+import com.papsign.ktor.openapigen.model.schema.Discriminator
 import com.papsign.ktor.openapigen.*
 import com.papsign.ktor.openapigen.model.schema.SchemaModel
 import com.papsign.ktor.openapigen.modules.DefaultOpenAPIModule
@@ -63,14 +67,24 @@ object DefaultObjectSchemaProvider : SchemaBuilderProviderModule, OpenAPIGenModu
             refs[nonNullType] = ref // needed to prevent infinite recursion
 
             val new = if (erasure.isSealed) {
-                SchemaModel.OneSchemaModelOf(erasure.sealedSubclasses.map {
-                    builder.build(
-                        branches(
-                            nonNullType,
-                            it
+                SchemaModel.OneSchemaModelOf(
+                    erasure.sealedSubclasses.map {
+                        builder.build(
+                            branches(
+                                nonNullType,
+                                it
+                            )
                         )
-                    )
-                })
+                    },
+                    discriminator = typeDiscriminator(erasure)?.let { typeDiscriminator ->
+                        Discriminator<Any?>(
+                            typeDiscriminator.property,
+                            leafTypes(nonNullType).associate { leaf ->
+                                typeDiscriminator.typeId(leaf.jvmErasure) to "#/components/schemas/${namer[leaf]}"
+                            }
+                        )
+                    }
+                )
             } else {
                 val props =
                     type.memberProperties.filter { it.source.visibility == KVisibility.PUBLIC }
@@ -90,9 +104,17 @@ object DefaultObjectSchemaProvider : SchemaBuilderProviderModule, OpenAPIGenModu
                 if (jsonValueProperty != null) {
                     builder.build(jsonValueProperty.type, jsonValueProperty.source.annotations)
                 } else {
+                    val typeDiscriminator = typeDiscriminator(erasure)
                     SchemaModel.SchemaModelObj(
                         props.associate {
-                            Pair(it.name, builder.build(it.type, it.source.annotations))
+                            if (typeDiscriminator != null && it.name == typeDiscriminator.property) {
+                                Pair(
+                                    it.name,
+                                    SchemaModel.SchemaModelEnum<String>(listOf(typeDiscriminator.typeId(erasure)))
+                                )
+                            } else {
+                                Pair(it.name, builder.build(it.type, it.source.annotations))
+                            }
                         },
                         props.filter {
                             !it.type.isMarkedNullable
@@ -107,6 +129,30 @@ object DefaultObjectSchemaProvider : SchemaBuilderProviderModule, OpenAPIGenModu
             return ref
         }
     }
+
+    /** Jackson sin egen tolkning av @JsonTypeInfo/@JsonTypeName for typen, slik at skjemaet matcher serialiseringen. */
+    private class TypeDiscriminator(val property: String, private val typeSerializer: TypeSerializer) {
+        fun typeId(klass: KClass<*>): String = typeSerializer.typeIdResolver.idFromValueAndType(null, klass.java)
+    }
+
+    private fun typeDiscriminator(klass: KClass<*>): TypeDiscriminator? {
+        val mapper = DefaultJsonMapper.objectMapper()
+        val typeSerializer = mapper.serializerFactory
+            .createTypeSerializer(mapper.serializationConfig, mapper.constructType(klass.java)) ?: return null
+        val property = typeSerializer.propertyName ?: return null
+        val storedAsProperty = typeSerializer.typeInclusion == JsonTypeInfo.As.PROPERTY ||
+                typeSerializer.typeInclusion == JsonTypeInfo.As.EXISTING_PROPERTY
+        return if (storedAsProperty && typeSerializer.typeIdResolver.mechanism == JsonTypeInfo.Id.NAME) {
+            TypeDiscriminator(property, typeSerializer)
+        } else null
+    }
+
+    /** Flater ut nøstede sealed-typer til konkrete subtyper. */
+    private fun leafTypes(parentType: KType): List<KType> =
+        parentType.jvmErasure.sealedSubclasses.flatMap {
+            val sub = branches(parentType, it)
+            if (it.isSealed) leafTypes(sub) else listOf(sub)
+        }
 
     /**
      * Gitt følgende kode
