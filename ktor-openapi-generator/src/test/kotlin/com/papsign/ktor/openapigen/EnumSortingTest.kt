@@ -42,3 +42,25 @@ class EnumSortingTest {
         }
     }
 }
+
+enum class RenamedEnum {
+    @com.fasterxml.jackson.annotation.JsonProperty("z-verdi")
+    A,
+    B,
+}
+
+class EnumSerializedNamesTest {
+    @Test
+    fun `enum values follow Jackson serialization`() = testApplication {
+        application {
+            setupBaseTestServer()
+            apiRouting {
+                route("renamed-enum") {
+                    get<Unit, RenamedEnum> { respond(RenamedEnum.A) }
+                }
+            }
+        }
+        val body = client.get("http://localhost/openapi.json").bodyAsText()
+        assertTrue(body.replace(Regex("\\s"), "").contains("""["B","z-verdi"]"""), body)
+    }
+}

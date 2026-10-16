@@ -1,6 +1,7 @@
 package com.papsign.ktor.openapigen.schema.builder.provider
 
-import com.fasterxml.jackson.annotation.JsonFormat
+import com.fasterxml.jackson.databind.JsonNode
+import no.nav.aap.komponenter.json.DefaultJsonMapper
 import com.papsign.ktor.openapigen.OpenAPIGen
 import com.papsign.ktor.openapigen.OpenAPIGenModuleExtension
 import com.papsign.ktor.openapigen.getKType
@@ -23,18 +24,11 @@ object DefaultEnumSchemaProvider : SchemaBuilderProviderModule, OpenAPIGenModule
             finalize: (SchemaModel<*>) -> SchemaModel<*>
         ): SchemaModel<*> {
             checkType(type)
-            val jsonFormat = type.javaClass.getAnnotation(JsonFormat::class.java)
-            if (jsonFormat != null && jsonFormat.shape == JsonFormat.Shape.OBJECT) {
-                return finalize(
-                    SchemaModel.SchemaModelEnum<Any?>(
-                        type.jvmErasure.java.enumConstants.map { (it as Enum<*>).name }.sorted(),
-                        type.isMarkedNullable
-                    )
-                )
-            }
+            // Verdiene serialiseres av Jackson slik at @JsonProperty/@JsonValue på konstantene respekteres
+            val mapper = DefaultJsonMapper.objectMapper()
             return finalize(
                 SchemaModel.SchemaModelEnum<Any?>(
-                    type.jvmErasure.java.enumConstants.map { (it as Enum<*>).name }.sorted(),
+                    type.jvmErasure.java.enumConstants.map { mapper.valueToTree<JsonNode>(it).asText() }.sorted(),
                     type.isMarkedNullable
                 )
             )
