@@ -22,6 +22,7 @@ dependencies {
     implementation(libs.ktor.server.content.negotiation)
     implementation(libs.ktor.server.status.pages)
 
+    implementation(project(":json"))
     implementation(libs.slf4j.api)
 
     implementation(libs.jackson.datatype.jsr310) // needed for multipart parsing
