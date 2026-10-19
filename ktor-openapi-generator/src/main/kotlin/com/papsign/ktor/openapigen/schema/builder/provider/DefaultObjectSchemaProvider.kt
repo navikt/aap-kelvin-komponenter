@@ -1,7 +1,10 @@
 package com.papsign.ktor.openapigen.schema.builder.provider
 
 import com.fasterxml.jackson.annotation.JsonIgnore
-import com.fasterxml.jackson.annotation.JsonValue
+import com.fasterxml.jackson.annotation.JsonTypeInfo
+import com.fasterxml.jackson.databind.jsontype.TypeSerializer
+import no.nav.aap.komponenter.json.DefaultJsonMapper
+import com.papsign.ktor.openapigen.model.schema.Discriminator
 import com.papsign.ktor.openapigen.*
 import com.papsign.ktor.openapigen.model.schema.SchemaModel
 import com.papsign.ktor.openapigen.modules.DefaultOpenAPIModule
@@ -14,9 +17,12 @@ import com.papsign.ktor.openapigen.schema.namer.DefaultSchemaNamer
 import com.papsign.ktor.openapigen.schema.namer.SchemaNamer
 import kotlin.reflect.*
 import kotlin.reflect.full.createType
+import kotlin.reflect.full.allSuperclasses
 import kotlin.reflect.full.hasAnnotation
 import kotlin.reflect.full.starProjectedType
 import kotlin.reflect.full.withNullability
+import kotlin.reflect.jvm.javaField
+import kotlin.reflect.jvm.javaGetter
 import kotlin.reflect.jvm.jvmErasure
 
 object DefaultObjectSchemaProvider : SchemaBuilderProviderModule, OpenAPIGenModuleExtension,
@@ -44,6 +50,10 @@ object DefaultObjectSchemaProvider : SchemaBuilderProviderModule, OpenAPIGenModu
         override val superType: KType = getKType<Any?>()
 
         private val refs = HashMap<KType, SchemaModel.SchemaModelRef<*>>()
+        private val discriminators = HashMap<KClass<*>, TypeDiscriminator?>()
+
+        private fun discriminator(klass: KClass<*>): TypeDiscriminator? =
+            discriminators.getOrPut(klass) { typeDiscriminator(klass) }
 
         override fun build(
             type: KType,
@@ -63,42 +73,9 @@ object DefaultObjectSchemaProvider : SchemaBuilderProviderModule, OpenAPIGenModu
             refs[nonNullType] = ref // needed to prevent infinite recursion
 
             val new = if (erasure.isSealed) {
-                SchemaModel.OneSchemaModelOf(erasure.sealedSubclasses.map {
-                    builder.build(
-                        branches(
-                            nonNullType,
-                            it
-                        )
-                    )
-                })
+                buildSealed(nonNullType, builder)
             } else {
-                val props =
-                    type.memberProperties.filter { it.source.visibility == KVisibility.PUBLIC }
-                        .filterNot { it.type.hasAnnotation<JsonIgnore>() }
-
-                val jsonValueProperty = props.firstOrNull { prop ->
-                    prop.source.hasAnnotation<JsonValue>() ||
-                            prop.source.annotations.any { it is JsonValue } ||
-                            try {
-                                erasure.java.getDeclaredField(prop.name)
-                                    .isAnnotationPresent(JsonValue::class.java)
-                            } catch (_: Exception) {
-                                false
-                            }
-                }
-
-                if (jsonValueProperty != null) {
-                    builder.build(jsonValueProperty.type, jsonValueProperty.source.annotations)
-                } else {
-                    SchemaModel.SchemaModelObj(
-                        props.associate {
-                            Pair(it.name, builder.build(it.type, it.source.annotations))
-                        },
-                        props.filter {
-                            !it.type.isMarkedNullable
-                        }.map { it.name }
-                    )
-                }
+                buildObject(type, builder)
             }
             val final = finalize(new)
             val existing = apiGen.api.components.schemas[name]
@@ -106,7 +83,108 @@ object DefaultObjectSchemaProvider : SchemaBuilderProviderModule, OpenAPIGenModu
             apiGen.api.components.schemas[name] = final
             return ref
         }
+
+        private fun buildSealed(type: KType, builder: FinalSchemaBuilder): SchemaModel<*> {
+            val erasure = type.jvmErasure
+            return SchemaModel.OneSchemaModelOf<Any?>(
+                erasure.sealedSubclasses.map { builder.build(branches(type, it)) },
+                discriminator = buildDiscriminator(type, builder)
+            )
+        }
+
+        private fun buildDiscriminator(type: KType, builder: FinalSchemaBuilder): Discriminator<Any?>? =
+            discriminator(type.jvmErasure)?.let { discriminator ->
+                val mapping = mutableMapOf<String, String>()
+                for (leaf in leafTypes(type)) {
+                    val ref = builder.build(leaf) as? SchemaModel.SchemaModelRef<*>
+                    val component = ref?.`$ref`?.removePrefix("#/components/schemas/")
+                        ?.let { apiGen.api.components.schemas[it] } as? SchemaModel.SchemaModelObj<*>
+                    val id = discriminator.typeId(leaf.jvmErasure)
+                    val tag = component?.properties?.get(discriminator.property) as? SchemaModel.SchemaModelEnum<*>
+                    if (component == null || !leaf.jvmErasure.isFinal ||
+                        discriminator.property !in component.required || tag?.enum?.contains(id) != true
+                    ) {
+                        log.warn("Omitting discriminator for {}: {} is not a tagged object component", type, leaf)
+                        return null
+                    }
+                    mapping[id] = ref.`$ref`
+                }
+                Discriminator(discriminator.property, mapping)
+            }
+
+        private fun buildObject(type: KType, builder: FinalSchemaBuilder): SchemaModel<*> {
+            val erasure = type.jvmErasure
+            val props =
+                type.memberProperties.filter { it.source.visibility == KVisibility.PUBLIC }
+                    .filterNot { it.type.hasAnnotation<JsonIgnore>() }
+
+            val mapper = DefaultJsonMapper.objectMapper()
+            val jsonValueMember = mapper.serializationConfig
+                .introspect(mapper.constructType(erasure.java))
+                .findJsonValueAccessor()?.member
+            val jsonValueProperty = props.firstOrNull {
+                jsonValueMember != null &&
+                    (it.source.javaField == jsonValueMember || it.source.javaGetter == jsonValueMember)
+            }
+            if (jsonValueProperty != null) {
+                return builder.build(jsonValueProperty.type, jsonValueProperty.source.annotations)
+            }
+
+            val properties = props.associate {
+                it.name to builder.build(it.type, it.source.annotations)
+            }.toMutableMap()
+            val required = props.filter { !it.type.isMarkedNullable }.map { it.name }.toMutableList()
+            addTags(erasure, properties, required)
+            return SchemaModel.SchemaModelObj<Any?>(
+                properties,
+                required
+            )
+        }
+
+        private fun addTags(
+            klass: KClass<*>,
+            properties: MutableMap<String, SchemaModel<*>>,
+            required: MutableList<String>
+        ) {
+            if (klass.isFinal) {
+                // A component can be used through several declared base types, each with its own Jackson IDs.
+                val contexts = (listOf(klass) + klass.allSuperclasses).mapNotNull { discriminator(it) }
+                for ((property, serializers) in contexts.groupBy { it.property }) {
+                    if (property in properties || serializers.any { it.injectsProperty }) {
+                        properties[property] = SchemaModel.SchemaModelEnum<String>(
+                            serializers.map { it.typeId(klass) }.distinct()
+                        )
+                        if (property !in required) required.add(property)
+                    }
+                }
+            }
+        }
     }
+
+    /** Jackson sin egen tolkning av @JsonTypeInfo/@JsonTypeName for typen, slik at skjemaet matcher serialiseringen. */
+    private class TypeDiscriminator(val property: String, private val typeSerializer: TypeSerializer) {
+        val injectsProperty: Boolean get() = typeSerializer.typeInclusion == JsonTypeInfo.As.PROPERTY
+        fun typeId(klass: KClass<*>): String = typeSerializer.typeIdResolver.idFromValueAndType(null, klass.java)
+    }
+
+    private fun typeDiscriminator(klass: KClass<*>): TypeDiscriminator? {
+        val mapper = DefaultJsonMapper.objectMapper()
+        val typeSerializer = mapper.serializerFactory
+            .createTypeSerializer(mapper.serializationConfig, mapper.constructType(klass.java))
+        val property = typeSerializer?.propertyName
+        val storedAsProperty = typeSerializer?.typeInclusion == JsonTypeInfo.As.PROPERTY ||
+                typeSerializer?.typeInclusion == JsonTypeInfo.As.EXISTING_PROPERTY
+        return if (property != null && storedAsProperty &&
+            typeSerializer.typeIdResolver.mechanism == JsonTypeInfo.Id.NAME
+        ) TypeDiscriminator(property, typeSerializer) else null
+    }
+
+    /** Flater ut nøstede sealed-typer til konkrete subtyper. */
+    private fun leafTypes(parentType: KType): List<KType> =
+        parentType.jvmErasure.sealedSubclasses.flatMap {
+            val sub = branches(parentType, it)
+            if (it.isSealed) leafTypes(sub) else listOf(sub)
+        }
 
     /**
      * Gitt følgende kode

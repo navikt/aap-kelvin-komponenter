@@ -1,6 +1,8 @@
 package com.papsign.ktor.openapigen.schema.builder.provider
 
-import com.fasterxml.jackson.annotation.JsonFormat
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.util.TokenBuffer
+import no.nav.aap.komponenter.json.DefaultJsonMapper
 import com.papsign.ktor.openapigen.OpenAPIGen
 import com.papsign.ktor.openapigen.OpenAPIGenModuleExtension
 import com.papsign.ktor.openapigen.getKType
@@ -23,21 +25,26 @@ object DefaultEnumSchemaProvider : SchemaBuilderProviderModule, OpenAPIGenModule
             finalize: (SchemaModel<*>) -> SchemaModel<*>
         ): SchemaModel<*> {
             checkType(type)
-            val jsonFormat = type.javaClass.getAnnotation(JsonFormat::class.java)
-            if (jsonFormat != null && jsonFormat.shape == JsonFormat.Shape.OBJECT) {
-                return finalize(
-                    SchemaModel.SchemaModelEnum<Any?>(
-                        type.jvmErasure.java.enumConstants.map { (it as Enum<*>).name }.sorted(),
-                        type.isMarkedNullable
-                    )
-                )
-            }
             return finalize(
                 SchemaModel.SchemaModelEnum<Any?>(
-                    type.jvmErasure.java.enumConstants.map { (it as Enum<*>).name }.sorted(),
+                    type.jvmErasure.java.enumConstants.map { serializedValue(it) }.sorted(),
                     type.isMarkedNullable
                 )
             )
+        }
+
+        private fun serializedValue(value: Any): String {
+            val mapper = DefaultJsonMapper.objectMapper()
+            val provider = mapper.serializerProviderInstance
+            // Serialize the enum value, not its enclosing polymorphic type wrapper.
+            val node = TokenBuffer(mapper, false).use { buffer ->
+                provider.findValueSerializer(value.javaClass).serialize(value, buffer, provider)
+                buffer.asParser().use { mapper.readTree<JsonNode>(it) }
+            }
+            require(node.isTextual) {
+                "Only string enum values are supported: ${value.javaClass.name}.$value serialized as $node"
+            }
+            return node.textValue()
         }
     }
 

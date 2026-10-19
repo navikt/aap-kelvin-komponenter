@@ -1,6 +1,7 @@
 import TestServer.setupBaseTestServer
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.papsign.ktor.openapigen.annotations.type.number.integer.clamp.Clamp
 import com.papsign.ktor.openapigen.annotations.type.number.integer.max.Max
 import com.papsign.ktor.openapigen.annotations.type.number.integer.min.Min
@@ -92,29 +93,12 @@ internal class OneOfLegacyGenerationTests {
         }"""
                 )
             )
-            assertTrue(
-                bodyAsText.contains(
-                    """"A" : {
-        "discriminator" : {
-          "propertyName" : "type"
-        },
-        "nullable" : false,
-        "properties" : {
-          "str" : {
-            "nullable" : false,
-            "type" : "string"
-          },
-          "type" : {
-            "format" : "string",
-            "nullable" : false,
-            "type" : "string"
-          }
-        },
-        "required" : [ "str" ],
-        "type" : "object"
-      }"""
-                )
-            )
+            val schema = ObjectMapper().readTree(bodyAsText).at("/components/schemas/A")
+            assertEquals("type", schema.at("/discriminator/propertyName").asText())
+            assertEquals("string", schema.at("/properties/str/type").asText())
+            assertEquals("string", schema.at("/properties/type/type").asText())
+            assertEquals(listOf("A"), schema.at("/properties/@type/enum").map { it.asText() })
+            assertEquals(setOf("str", "@type"), schema.path("required").map { it.asText() }.toSet())
         }
     }
 }
