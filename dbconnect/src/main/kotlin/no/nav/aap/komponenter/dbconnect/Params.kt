@@ -14,10 +14,50 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.*
 
+/**
+ * Typed JDBC parameter setters. Use an index for `?` placeholders or a name for `:name` placeholders.
+ * Named setters bind every occurrence of the name, regardless of setter order.
+ */
 public class Params internal constructor(
     private val preparedStatement: PreparedStatement,
-    private val connection: Connection
+    private val connection: Connection,
+    private val namedIndexes: Map<String, List<Int>> = emptyMap()
 ) {
+    private val boundNames = mutableSetOf<String>()
+
+    private fun bind(name: String, setter: (Int) -> Unit) {
+        val indexes = requireNotNull(namedIndexes[name]) { "Unknown SQL parameter: $name" }
+        indexes.forEach(setter)
+        boundNames.add(name)
+    }
+
+    internal fun validateNamedParameters() {
+        val missing = namedIndexes.keys - boundNames
+        require(missing.isEmpty()) { "Missing SQL parameters: ${missing.joinToString()}" }
+    }
+
+    public fun setBytes(name: String, bytes: ByteArray?): Unit = bind(name) { setBytes(it, bytes) }
+    public fun setString(name: String, value: String?): Unit = bind(name) { setString(it, value) }
+    public fun setEnumName(name: String, value: Enum<*>?): Unit = bind(name) { setEnumName(it, value) }
+    public fun setInt(name: String, value: Int?): Unit = bind(name) { setInt(it, value) }
+    public fun setLong(name: String, value: Long?): Unit = bind(name) { setLong(it, value) }
+    public fun setDouble(name: String, value: Double?): Unit = bind(name) { setDouble(it, value) }
+    public fun setBigDecimal(name: String, value: BigDecimal?): Unit = bind(name) { setBigDecimal(it, value) }
+    public fun setUUID(name: String, uuid: UUID?): Unit = bind(name) { setUUID(it, uuid) }
+    public fun setBoolean(name: String, value: Boolean?): Unit = bind(name) { setBoolean(it, value) }
+    public fun setPeriode(name: String, periode: Periode?): Unit = bind(name) { setPeriode(it, periode) }
+    public fun setLocalDate(name: String, localDate: LocalDate?): Unit = bind(name) { setLocalDate(it, localDate) }
+    public fun setLocalDateTime(name: String, localDateTime: LocalDateTime?): Unit =
+        bind(name) { setLocalDateTime(it, localDateTime) }
+    public fun setInstant(name: String, instant: Instant?): Unit = bind(name) { setInstant(it, instant) }
+    public fun setTidspunkt(name: String, tidspunkt: Tidspunkt?): Unit = bind(name) { setTidspunkt(it, tidspunkt) }
+    public fun setProperties(name: String, properties: Properties?): Unit = bind(name) { setProperties(it, properties) }
+    public fun setBruker(name: String, bruker: Bruker?): Unit = bind(name) { setBruker(it, bruker) }
+    public fun setArray(name: String, strings: List<String>): Unit = bind(name) { setArray(it, strings) }
+    public fun setLongArray(name: String, longs: List<Long>): Unit = bind(name) { setLongArray(it, longs) }
+    public fun setPeriodeArray(name: String, perioder: List<Periode>?): Unit = bind(name) { setPeriodeArray(it, perioder) }
+    public fun setUUIDArray(name: String, uuids: List<UUID>): Unit = bind(name) { setUUIDArray(it, uuids) }
+
     public fun setBytes(index: Int, bytes: ByteArray?) {
         preparedStatement.setBytes(index, bytes)
     }
