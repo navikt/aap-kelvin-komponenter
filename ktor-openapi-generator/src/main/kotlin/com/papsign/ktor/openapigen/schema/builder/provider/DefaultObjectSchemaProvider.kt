@@ -2,7 +2,6 @@ package com.papsign.ktor.openapigen.schema.builder.provider
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonTypeInfo
-import com.fasterxml.jackson.annotation.JsonValue
 import com.fasterxml.jackson.databind.jsontype.TypeSerializer
 import no.nav.aap.komponenter.json.DefaultJsonMapper
 import com.papsign.ktor.openapigen.model.schema.Discriminator
@@ -18,6 +17,7 @@ import com.papsign.ktor.openapigen.schema.namer.DefaultSchemaNamer
 import com.papsign.ktor.openapigen.schema.namer.SchemaNamer
 import kotlin.reflect.*
 import kotlin.reflect.full.createType
+import kotlin.reflect.full.allSuperclasses
 import kotlin.reflect.full.hasAnnotation
 import kotlin.reflect.full.starProjectedType
 import kotlin.reflect.full.withNullability
@@ -50,6 +50,10 @@ object DefaultObjectSchemaProvider : SchemaBuilderProviderModule, OpenAPIGenModu
         override val superType: KType = getKType<Any?>()
 
         private val refs = HashMap<KType, SchemaModel.SchemaModelRef<*>>()
+        private val discriminators = HashMap<KClass<*>, TypeDiscriminator?>()
+
+        private fun discriminator(klass: KClass<*>): TypeDiscriminator? =
+            discriminators.getOrPut(klass) { typeDiscriminator(klass) }
 
         override fun build(
             type: KType,
@@ -84,16 +88,29 @@ object DefaultObjectSchemaProvider : SchemaBuilderProviderModule, OpenAPIGenModu
             val erasure = type.jvmErasure
             return SchemaModel.OneSchemaModelOf<Any?>(
                 erasure.sealedSubclasses.map { builder.build(branches(type, it)) },
-                discriminator = typeDiscriminator(erasure)?.let { typeDiscriminator ->
-                    Discriminator<Any?>(
-                        typeDiscriminator.property,
-                        leafTypes(type).associate { leaf ->
-                            typeDiscriminator.typeId(leaf.jvmErasure) to "#/components/schemas/${namer[leaf]}"
-                        }
-                    )
-                }
+                discriminator = buildDiscriminator(type, builder)
             )
         }
+
+        private fun buildDiscriminator(type: KType, builder: FinalSchemaBuilder): Discriminator<Any?>? =
+            discriminator(type.jvmErasure)?.let { discriminator ->
+                val mapping = mutableMapOf<String, String>()
+                for (leaf in leafTypes(type)) {
+                    val ref = builder.build(leaf) as? SchemaModel.SchemaModelRef<*>
+                    val component = ref?.`$ref`?.removePrefix("#/components/schemas/")
+                        ?.let { apiGen.api.components.schemas[it] } as? SchemaModel.SchemaModelObj<*>
+                    val id = discriminator.typeId(leaf.jvmErasure)
+                    val tag = component?.properties?.get(discriminator.property) as? SchemaModel.SchemaModelEnum<*>
+                    if (component == null || !leaf.jvmErasure.isFinal ||
+                        discriminator.property !in component.required || tag?.enum?.contains(id) != true
+                    ) {
+                        log.warn("Omitting discriminator for {}: {} is not a tagged object component", type, leaf)
+                        return null
+                    }
+                    mapping[id] = ref.`$ref`
+                }
+                Discriminator(discriminator.property, mapping)
+            }
 
         private fun buildObject(type: KType, builder: FinalSchemaBuilder): SchemaModel<*> {
             val erasure = type.jvmErasure
@@ -106,31 +123,47 @@ object DefaultObjectSchemaProvider : SchemaBuilderProviderModule, OpenAPIGenModu
                 .introspect(mapper.constructType(erasure.java))
                 .findJsonValueAccessor()?.member
             val jsonValueProperty = props.firstOrNull {
-                it.source.javaField == jsonValueMember || it.source.javaGetter == jsonValueMember
+                jsonValueMember != null &&
+                    (it.source.javaField == jsonValueMember || it.source.javaGetter == jsonValueMember)
             }
             if (jsonValueProperty != null) {
                 return builder.build(jsonValueProperty.type, jsonValueProperty.source.annotations)
             }
 
-            val typeDiscriminator = typeDiscriminator(erasure)
+            val properties = props.associate {
+                it.name to builder.build(it.type, it.source.annotations)
+            }.toMutableMap()
+            val required = props.filter { !it.type.isMarkedNullable }.map { it.name }.toMutableList()
+            addTags(erasure, properties, required)
             return SchemaModel.SchemaModelObj<Any?>(
-                props.associate {
-                    if (typeDiscriminator != null && it.name == typeDiscriminator.property) {
-                        Pair(
-                            it.name,
-                            SchemaModel.SchemaModelEnum<String>(listOf(typeDiscriminator.typeId(erasure)))
-                        )
-                    } else {
-                        Pair(it.name, builder.build(it.type, it.source.annotations))
-                    }
-                },
-                props.filter { !it.type.isMarkedNullable }.map { it.name }
+                properties,
+                required
             )
+        }
+
+        private fun addTags(
+            klass: KClass<*>,
+            properties: MutableMap<String, SchemaModel<*>>,
+            required: MutableList<String>
+        ) {
+            if (klass.isFinal) {
+                // A component can be used through several declared base types, each with its own Jackson IDs.
+                val contexts = (listOf(klass) + klass.allSuperclasses).mapNotNull { discriminator(it) }
+                for ((property, serializers) in contexts.groupBy { it.property }) {
+                    if (property in properties || serializers.any { it.injectsProperty }) {
+                        properties[property] = SchemaModel.SchemaModelEnum<String>(
+                            serializers.map { it.typeId(klass) }.distinct()
+                        )
+                        if (property !in required) required.add(property)
+                    }
+                }
+            }
         }
     }
 
     /** Jackson sin egen tolkning av @JsonTypeInfo/@JsonTypeName for typen, slik at skjemaet matcher serialiseringen. */
     private class TypeDiscriminator(val property: String, private val typeSerializer: TypeSerializer) {
+        val injectsProperty: Boolean get() = typeSerializer.typeInclusion == JsonTypeInfo.As.PROPERTY
         fun typeId(klass: KClass<*>): String = typeSerializer.typeIdResolver.idFromValueAndType(null, klass.java)
     }
 

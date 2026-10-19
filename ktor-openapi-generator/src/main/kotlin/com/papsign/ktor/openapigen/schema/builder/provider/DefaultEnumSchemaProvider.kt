@@ -1,6 +1,7 @@
 package com.papsign.ktor.openapigen.schema.builder.provider
 
 import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.util.TokenBuffer
 import no.nav.aap.komponenter.json.DefaultJsonMapper
 import com.papsign.ktor.openapigen.OpenAPIGen
 import com.papsign.ktor.openapigen.OpenAPIGenModuleExtension
@@ -24,14 +25,26 @@ object DefaultEnumSchemaProvider : SchemaBuilderProviderModule, OpenAPIGenModule
             finalize: (SchemaModel<*>) -> SchemaModel<*>
         ): SchemaModel<*> {
             checkType(type)
-            // Verdiene serialiseres av Jackson slik at @JsonProperty/@JsonValue på konstantene respekteres
-            val mapper = DefaultJsonMapper.objectMapper()
             return finalize(
                 SchemaModel.SchemaModelEnum<Any?>(
-                    type.jvmErasure.java.enumConstants.map { mapper.valueToTree<JsonNode>(it).asText() }.sorted(),
+                    type.jvmErasure.java.enumConstants.map { serializedValue(it) }.sorted(),
                     type.isMarkedNullable
                 )
             )
+        }
+
+        private fun serializedValue(value: Any): String {
+            val mapper = DefaultJsonMapper.objectMapper()
+            val provider = mapper.serializerProviderInstance
+            // Serialize the enum value, not its enclosing polymorphic type wrapper.
+            val node = TokenBuffer(mapper, false).use { buffer ->
+                provider.findValueSerializer(value.javaClass).serialize(value, buffer, provider)
+                buffer.asParser().use { mapper.readTree<JsonNode>(it) }
+            }
+            require(node.isTextual) {
+                "Only string enum values are supported: ${value.javaClass.name}.$value serialized as $node"
+            }
+            return node.textValue()
         }
     }
 

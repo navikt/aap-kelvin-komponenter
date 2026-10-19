@@ -3,6 +3,17 @@
 A Ktor plugin that automatically generates an OpenAPI 3 specification from your
 route definitions.
 
+## Jackson schema support
+
+Schema generation uses `DefaultJsonMapper` for Jackson type IDs and enum values.
+Final object schemas accept the type IDs resolved through their base types as
+well as their concrete type. Open and abstract types are not narrowed to one ID.
+Discriminators are emitted only when every leaf has a tagged object component.
+
+Enum schemas support string values, including `@JsonProperty` and string-valued
+`@JsonValue`. Non-string enum representations are rejected rather than coerced
+to string literals. Polymorphic wrappers are not part of the enum value itself.
+
 ## Documentation
 
 - [Setup](https://github.com/navikt/aap-kelvin-komponenter/blob/master/ktor-openapi-generator/docs/Setup.md) — Installation and initial configuration

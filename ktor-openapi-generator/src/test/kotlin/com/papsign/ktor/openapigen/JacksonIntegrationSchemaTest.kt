@@ -19,8 +19,11 @@ import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.testing.testApplication
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import no.nav.aap.komponenter.json.DefaultJsonMapper
 
 private const val PKG = "com.papsign.ktor.openapigen"
 
@@ -49,6 +52,7 @@ data class GetterValue(private val intern: String) {
 }
 
 enum class MedJsonValue(@get:JsonValue val kode: String) { EN("1"), TO("2") }
+enum class NumericJsonValue(@get:JsonValue val code: Int) { ONE(1) }
 
 enum class OmdøptKonstant {
     @JsonProperty("omdøpt")
@@ -58,7 +62,74 @@ enum class OmdøptKonstant {
 
 data class Boks<T>(val verdi: T)
 
+data class ComputedProperties(val value: String) {
+    val computed: String get() = value
+}
+
+class FieldProperties(@JvmField val value: String)
+
+interface AbstractProperties {
+    val value: String
+}
+
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "tag")
+sealed interface InjectedTag
+
+@JsonTypeName("first")
+data class FirstTag(val value: String) : InjectedTag
+
+@JsonTypeName("second")
+data class SecondTag(val value: String) : InjectedTag
+
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "tag")
+sealed interface ExistingTag
+
+@JsonTypeName("existing")
+data class DeclaredTag(val tag: String = "existing") : ExistingTag
+
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "tag")
+sealed interface MissingExistingTag
+
+data class UndeclaredTag(val value: String) : MissingExistingTag
+
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "tag")
+sealed interface EnumLeafUnion
+
+enum class EnumLeaf : EnumLeafUnion { VALUE }
+data class ObjectLeaf(val value: String) : EnumLeafUnion
+
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "tag")
+@JsonTypeName("base")
+sealed interface ContextualTag
+
+data class ContextualChild(val value: String) : ContextualTag
+
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "tag")
+abstract class OpenBase(val value: String)
+
+@JsonTypeName("child")
+class OpenChild(value: String) : OpenBase(value)
+
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "tag")
+sealed interface OpenBranchUnion
+
+open class OpenBranch(val value: String) : OpenBranchUnion
+
+data class PlainEnumContext(@get:JsonTypeInfo(use = JsonTypeInfo.Id.NONE) val value: EnumLeaf)
+
 data class Brukere(
+    val contextual: ContextualTag,
+    val contextualChild: ContextualChild,
+    val openBase: OpenBase,
+    val openBranch: OpenBranchUnion,
+    val plainEnum: PlainEnumContext,
+    val computed: ComputedProperties,
+    val field: FieldProperties,
+    val abstract: AbstractProperties,
+    val injected: InjectedTag,
+    val existing: ExistingTag,
+    val missingExisting: MissingExistingTag,
+    val enumLeaf: EnumLeafUnion,
     val blandet: Blandet?,
     val klasse: KlasseId?,
     val innpakket: Innpakket?,
@@ -90,6 +161,105 @@ class JacksonIntegrationSchemaTest {
     }
 
     private val schemas get() = openApi().at("/components/schemas")
+
+    @Test
+    fun `shared child schema accepts parent and standalone Jackson type ids`() {
+        val mapper = DefaultJsonMapper.objectMapper()
+        val child = ContextualChild("value")
+        val parentJson = mapper.readTree(mapper.writerFor(ContextualTag::class.java).writeValueAsString(child))
+        val childJson = mapper.valueToTree<JsonNode>(child)
+        assertNotEquals(parentJson.path("tag").asText(), childJson.path("tag").asText())
+        val schemas = schemas
+        val ids = schemas.at("/$PKG.ContextualChild/properties/tag/enum").map { it.asText() }
+        assertTrue(parentJson.path("tag").asText() in ids, ids.toString())
+        assertTrue(childJson.path("tag").asText() in ids, ids.toString())
+        assertEquals(
+            "#/components/schemas/$PKG.ContextualChild",
+            schemas.at("/$PKG.ContextualTag/discriminator/mapping").path(parentJson.path("tag").asText()).asText()
+        )
+    }
+
+    @Test
+    fun `open types are not constrained to a singleton type id`() {
+        val schemas = schemas
+        val mapper = DefaultJsonMapper.objectMapper()
+        val json = mapper.readTree(mapper.writerFor(OpenBase::class.java).writeValueAsString(OpenChild("value")))
+        assertEquals("child", json.path("tag").asText())
+        assertTrue(schemas.at("/$PKG.OpenBase/properties/tag").isMissingNode)
+        assertTrue(schemas.at("/$PKG.OpenBranch/properties/tag").isMissingNode)
+        assertTrue(schemas.at("/$PKG.OpenBranchUnion/discriminator").isMissingNode)
+    }
+
+    @Test
+    fun `polymorphic enums retain value names rather than empty strings`() {
+        val schemas = schemas
+        val enumSchema = schemas.at("/$PKG.EnumLeafUnion/oneOf").single { it.has("enum") }
+        assertEquals(listOf("VALUE"), enumSchema.path("enum").map { it.asText() })
+        assertEquals(
+            listOf("VALUE"),
+            schemas.at("/$PKG.PlainEnumContext/properties/value/enum").map { it.asText() }
+        )
+        val mapper = DefaultJsonMapper.objectMapper()
+        assertEquals("VALUE", mapper.valueToTree<JsonNode>(PlainEnumContext(EnumLeaf.VALUE)).path("value").asText())
+    }
+
+    @Test
+    fun `non-string enum representations fail explicitly`() {
+        val error = assertFailsWith<IllegalArgumentException> {
+            testApplication {
+                application {
+                    install(OpenAPIGen) { }
+                    apiRouting {
+                        route("/numeric-enum") {
+                            post<Unit, Unit, NumericJsonValue> { _, _ -> respond(Unit) }
+                        }
+                    }
+                }
+                startApplication()
+            }
+        }
+        assertTrue(error.message.orEmpty().contains("Only string enum values are supported"))
+    }
+
+    @Test
+    fun `ordinary properties without JsonValue preserve object schemas`() {
+        val schemas = schemas
+        for (name in listOf("ComputedProperties", "FieldProperties", "AbstractProperties")) {
+            val schema = schemas.path("$PKG.$name")
+            assertEquals("object", schema.path("type").asText(), name)
+            assertEquals("string", schema.at("/properties/value/type").asText(), name)
+        }
+        assertEquals("string", schemas.at("/$PKG.ComputedProperties/properties/computed/type").asText())
+    }
+
+    @Test
+    fun `injected tags are required and mapping targets exist`() {
+        val schemas = schemas
+        val mapping = schemas.at("/$PKG.InjectedTag/discriminator/mapping")
+        assertEquals(2, mapping.size())
+        for ((id, target) in mapping.properties()) {
+            val schema = schemas.path(target.asText().removePrefix("#/components/schemas/"))
+            assertEquals(listOf(id), schema.at("/properties/tag/enum").map { it.asText() })
+            assertTrue("tag" in schema.path("required").map { it.asText() })
+        }
+    }
+
+    @Test
+    fun `existing property is narrowed but missing property is not synthesized`() {
+        val schemas = schemas
+        assertEquals(listOf("existing"), schemas.at("/$PKG.DeclaredTag/properties/tag/enum").map { it.asText() })
+        assertEquals("tag", schemas.at("/$PKG.ExistingTag/discriminator/propertyName").asText())
+        assertTrue(schemas.at("/$PKG.UndeclaredTag/properties/tag").isMissingNode)
+        assertTrue(schemas.at("/$PKG.MissingExistingTag/discriminator").isMissingNode)
+    }
+
+    @Test
+    fun `enum leaves do not produce dangling discriminator mappings`() {
+        val union = schemas.path("$PKG.EnumLeafUnion")
+        assertEquals(2, union.path("oneOf").size())
+        assertTrue(union.path("discriminator").isMissingNode)
+        assertTrue(union.path("oneOf").any { it.has("enum") })
+    }
 
     @Test
     fun `blandet hierarki bruker Jacksons type-id for alle subtyper`() {
