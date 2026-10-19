@@ -110,11 +110,15 @@ public class RestClient<K>(
         try {
             return function()
         } catch (ex: Exception) {
-            if (retryExceptions.contains(ex::class) && retries - 1 > 0) {
-                log.info("Feilet kall mot $uri, retryer : {}", ex.message)
-                return retry(retries - 1, uri, function)
+            if (retryExceptions.contains(ex::class)) {
+                if (retries - 1 > 0) {
+                    log.info("Feilet kall mot $uri, retryer : {}", ex.message)
+                    return retry(retries - 1, uri, function)
+                } else {
+                    log.error("Rekjører ikke flere ganger mot $uri", ex)
+                    throw ex
+                }
             } else {
-                log.error("Rekjører ikke flere ganger mot $uri", ex)
                 throw ex
             }
         }
