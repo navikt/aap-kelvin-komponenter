@@ -1,6 +1,7 @@
 package no.nav.aap.motor
 
 import io.micrometer.core.instrument.Gauge
+import io.micrometer.core.instrument.LongTaskTimer
 import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import io.opentelemetry.api.trace.Span
@@ -20,7 +21,6 @@ import java.io.Closeable
 import java.time.Instant
 import java.time.LocalDateTime
 import java.util.*
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
@@ -163,21 +163,14 @@ public class MotorImpl(
         private val log = LoggerFactory.getLogger(Forbrenningskammer::class.java)
         private val kammerId = forbrenningskammerId.getAndIncrement().toString()
 
-        // Én AtomicLong per jobb-type, registrert én gang i prometheus for å unngå DuplicateLabelsException
-        private val sistePlukketTimestamps = ConcurrentHashMap<String, AtomicLong>()
-
-        private fun oppdaterSistePlukk(jobbType: String) {
-            sistePlukketTimestamps
-                .getOrPut(jobbType) {
-                    AtomicLong(Instant.now().epochSecond).also { tidspunkt ->
-                        Gauge.builder("motor_siste_plukk_timestamp_seconds") { tidspunkt.get().toDouble() }
-                            .tag("forbrenningskammer", kammerId)
-                            .tag("jobb_type", jobbType)
-                            .register(prometheus)
-                    }
-                }
-                .set(Instant.now().epochSecond)
-        }
+        /** Hvor lenge aktiv jobb har kjørt.
+         *
+         * Kan ikke bruker vanlig Timer, for den rapporterer tiden *etter* at jobben har kjørt ferdig,
+         * men vi er interessert i hvor lenge den kjørende jobben har kjørt (LongTaskTimer).
+         */
+        private val jobbKjøringTimer = LongTaskTimer.builder("job.execution")
+            .tag("forbrenningskammer", kammerId)
+            .withRegistry(prometheus)
 
         override fun run() {
             while (!stopped) {
@@ -189,33 +182,23 @@ public class MotorImpl(
                             val repository = JobbRepository(connection)
                             val plukketJobb = if (enableV2()) repository.plukkJobbV2() else repository.plukkJobb()
 
-                            /* Ønsker å oppdage trege jobber før jobben har kjørt ferdig (f.eks. pga deadlock).
-                            * Registrerer derfor hvert (potensielle) start-tidspunkt for en jobb, slikt at vi i
-                            * grafana kan regne ut hvor lenge siden vi sist prøvde å plukke en jobb.
-                            *
-                            * Metricen gir mening først når jobber tar lenger tid (>= 1 sekund, gitt
-                            * Thread.sleep(500) nedenfor).
-                            *
-                            * Tenkt bruk:
-                            * timestamp(motor_siste_plukk_timestamp_seconds) - motor_siste_plukk_timestamp_seconds
-                            **/
-
                             if (plukketJobb != null) {
-                                Span.current().updateName("jobbPlukk + ${plukketJobb.type()}")
-                                oppdaterSistePlukk(plukketJobb.type())
-                                log.info("Plukket jobb $plukketJobb.")
-                                val behandlingId = plukketJobb.behandlingIdOrNull()
-                                val sakId = plukketJobb.sakIdOrNull()
-                                OpentelemetryUtil.span(
-                                    navn = "jobb + ${plukketJobb.type()}",
-                                    behandlingId = behandlingId,
-                                    sakId = sakId,
-                                    jobbStatus = plukketJobb.status().toString(),
-                                    jobbId = plukketJobb.id.toString(),
-                                    spanBuilderTransformer = JobbInfoSpanBuilder.jobbAttributter(plukketJobb)
-                                ) {
-                                    utfør(plukketJobb, connection)
-                                }
+                                jobbKjøringTimer.withTag("jobb_type", plukketJobb.type()).record(Runnable {
+                                    Span.current().updateName("jobbPlukk + ${plukketJobb.type()}")
+                                    log.info("Plukket jobb $plukketJobb.")
+                                    val behandlingId = plukketJobb.behandlingIdOrNull()
+                                    val sakId = plukketJobb.sakIdOrNull()
+                                    OpentelemetryUtil.span(
+                                        navn = "jobb + ${plukketJobb.type()}",
+                                        behandlingId = behandlingId,
+                                        sakId = sakId,
+                                        jobbStatus = plukketJobb.status().toString(),
+                                        jobbId = plukketJobb.id.toString(),
+                                        spanBuilderTransformer = JobbInfoSpanBuilder.jobbAttributter(plukketJobb)
+                                    ) {
+                                        utfør(plukketJobb, connection)
+                                    }
+                                })
                             } else {
                                 Span.current().updateName("jobbPlukk + ingenJobb")
                                 plukker = false
@@ -226,9 +209,6 @@ public class MotorImpl(
                     log.error("Feil under plukking av jobber", exception)
                 }
                 log.debug("Ingen flere jobber å plukke, hviler litt")
-                // Nullstill til nå slik at query-en viser ~0 når kammeret er ledig
-                val nå = Instant.now().epochSecond
-                sistePlukketTimestamps.values.forEach { it.set(nå) }
                 if (!stopped) {
                     Thread.sleep(500)
                 }
