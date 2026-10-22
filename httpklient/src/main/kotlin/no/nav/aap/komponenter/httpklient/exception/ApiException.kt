@@ -1,6 +1,6 @@
 package no.nav.aap.komponenter.httpklient.exception
 
-import io.ktor.http.*
+import io.ktor.http.HttpStatusCode
 
 public enum class ApiErrorCode {
     INTERNFEIL,
