@@ -75,7 +75,23 @@ sealed class SchemaModel<T> : DataModel {
         override var examples: List<T>? = null
         override var description: String? = null
         override var deprecated: Boolean? = null
+
+        internal fun asSchemaObject(): AllSchemaModelOf<T> = AllSchemaModelOf(
+            allOf = listOf(SchemaModelRef<T>(`$ref`)),
+            example = example,
+            examples = examples,
+            description = description,
+            deprecated = deprecated
+        )
     }
+
+    data class AllSchemaModelOf<T>(
+        val allOf: List<SchemaModel<out T>>,
+        override var example: T? = null,
+        override var examples: List<T>? = null,
+        override var description: String? = null,
+        override var deprecated: Boolean? = null
+    ) : SchemaModel<T>()
 
     data class OneSchemaModelOf<T>(
         val oneOf: List<SchemaModel<out T>>,
