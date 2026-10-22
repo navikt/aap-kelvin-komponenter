@@ -277,6 +277,10 @@ class JacksonIntegrationSchemaTest {
         val schemas = schemas
         assertTrue(schemas.at("/$PKG.KlasseId").has("oneOf"))
         assertTrue(schemas.at("/$PKG.KlasseId/discriminator").isMissingNode)
+        assertEquals(
+            listOf("#/components/schemas/$PKG.KlasseIdA2"),
+            schemas.at("/$PKG.KlasseId/oneOf").map { it.path("\$ref").asText() }
+        )
         assertTrue(schemas.at("/$PKG.Innpakket/discriminator").isMissingNode)
     }
 

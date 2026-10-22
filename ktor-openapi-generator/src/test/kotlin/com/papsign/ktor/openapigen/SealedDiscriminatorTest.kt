@@ -68,6 +68,10 @@ class SealedDiscriminatorTest {
     fun `sealed union har discriminator med mapping, også gjennom nested sealed`() {
         val union = openApi().at("/components/schemas/$schemaPrefix.Løsning")
         assertEquals("kode", union.at("/discriminator/propertyName").asText())
+        assertEquals(
+            setOf("A", "B", "C").map { "#/components/schemas/$schemaPrefix.Løsning$it" }.toSet(),
+            union.path("oneOf").map { it.path("\$ref").asText() }.toSet()
+        )
         for (n in listOf("A", "B", "C")) {
             assertEquals(
                 "#/components/schemas/$schemaPrefix.Løsning$n",
