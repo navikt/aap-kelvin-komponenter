@@ -2,6 +2,7 @@ package com.papsign.ktor.openapigen
 
 import TestServer.setupBaseTestServer
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.papsign.ktor.openapigen.annotations.properties.description.Description
 import com.papsign.ktor.openapigen.route.apiRouting
 import com.papsign.ktor.openapigen.route.path.normal.post
 import com.papsign.ktor.openapigen.route.response.respond
@@ -19,7 +20,9 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
+@Suppress("DEPRECATION")
 internal class ValueClassRouteTest {
 
     @JvmInline
@@ -31,6 +34,74 @@ internal class ValueClassRouteTest {
     }
 
     data class Vedtak(val id: VedtakId, val name: WrappedValue<String>, val ids: List<VedtakId>)
+
+    data class Payload(val text: String)
+
+    @Deprecated("Use Payload directly")
+    @JvmInline
+    value class LegacyPayload(val value: Payload)
+
+    @Deprecated("Use VedtakId directly")
+    @JvmInline
+    value class LegacyId(val value: VedtakId)
+
+    @JvmInline
+    value class AnnotatedPayload(
+        @property:Description("Backing property description")
+        @Deprecated("Backing property deprecation")
+        val value: Payload
+    )
+
+    data class MetadataUses(
+        val aPlainPayload: Payload,
+        val bLegacyPayload: LegacyPayload,
+        val cPlainPayload: Payload,
+        val dPlainId: VedtakId,
+        val eLegacyId: LegacyId,
+        val fPlainId: VedtakId,
+        val gAnnotatedPayload: AnnotatedPayload,
+        @property:Description("Usage description")
+        val hAnnotatedPayload: AnnotatedPayload
+    )
+
+    @Test
+    fun `wrapper annotations do not leak and backing property metadata is preserved`() = testApplication {
+        application {
+            setupBaseTestServer()
+            apiRouting {
+                route("metadata") {
+                    post<Unit, MetadataUses, MetadataUses> { _, body -> respond(body) }
+                }
+            }
+        }
+
+        val response = client.get("/openapi.json")
+        assertEquals(HttpStatusCode.OK, response.status)
+        val schemas = ObjectMapper().readTree(response.bodyAsText()).at("/components/schemas")
+        val properties = schemas.at("/MetadataUses/properties")
+        for (property in listOf("aPlainPayload", "cPlainPayload", "dPlainId", "fPlainId")) {
+            assertFalse(properties.path(property).has("deprecated"), property)
+            assertFalse(properties.path(property).has("description"), property)
+        }
+        for ((wrapper, backing, description) in listOf(
+            Triple("LegacyPayload", "Payload", "Use Payload directly"),
+            Triple("LegacyId", "VedtakId", "Use VedtakId directly")
+        )) {
+            val schema = schemas.path(wrapper)
+            assertEquals("#/components/schemas/$backing", schema.path("\$ref").asText())
+            assertTrue(schema.path("deprecated").asBoolean(), wrapper)
+            assertEquals(description, schema.path("description").asText())
+            assertFalse(schemas.path(backing).has("deprecated"), backing)
+            assertFalse(schemas.path(backing).has("description"), backing)
+        }
+        val annotated = schemas.path("AnnotatedPayload")
+        assertEquals("#/components/schemas/Payload", annotated.path("\$ref").asText())
+        assertTrue(annotated.path("deprecated").asBoolean())
+        assertEquals("Backing property deprecation", annotated.path("description").asText())
+        val usage = properties.path("hAnnotatedPayload")
+        assertEquals("Usage description", usage.path("description").asText())
+        assertFalse(usage.has("deprecated"))
+    }
 
     @ParameterizedTest
     @ValueSource(longs = [Long.MIN_VALUE, 0, 42, Long.MAX_VALUE])

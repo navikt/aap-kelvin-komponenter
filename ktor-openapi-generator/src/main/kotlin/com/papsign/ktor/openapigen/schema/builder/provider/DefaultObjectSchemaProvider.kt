@@ -78,12 +78,20 @@ object DefaultObjectSchemaProvider : SchemaBuilderProviderModule, OpenAPIGenModu
             } else {
                 buildObject(type, builder)
             }
-            val final = finalize(new)
+            val final = finalize(if (new is SchemaModel.SchemaModelRef<*>) new.copyWithMetadata() else new)
             val existing = apiGen.api.components.schemas[name]
             if (existing != null && existing != final) log.error("Schema with name $name already exists, and is not the same as the new one, replacing...")
             apiGen.api.components.schemas[name] = final
             return ref
         }
+
+        private fun <T> SchemaModel.SchemaModelRef<T>.copyWithMetadata(): SchemaModel.SchemaModelRef<T> =
+            copy().also {
+                it.example = example
+                it.examples = examples
+                it.description = description
+                it.deprecated = deprecated
+            }
 
         private fun buildSealed(type: KType, builder: FinalSchemaBuilder): SchemaModel<*> {
             val erasure = type.jvmErasure
