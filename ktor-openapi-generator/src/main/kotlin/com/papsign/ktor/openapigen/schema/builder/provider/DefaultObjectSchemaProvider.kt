@@ -86,9 +86,12 @@ object DefaultObjectSchemaProvider : SchemaBuilderProviderModule, OpenAPIGenModu
 
         private fun buildSealed(type: KType, builder: FinalSchemaBuilder): SchemaModel<*> {
             val erasure = type.jvmErasure
+            val subclasses = erasure.sealedSubclasses.map { builder.build(branches(type, it)) }
+            val discriminator = buildDiscriminator(type, builder)
+            // Discriminator consumers also infer mappings from oneOf, so use the same concrete leaves.
             return SchemaModel.OneSchemaModelOf<Any?>(
-                erasure.sealedSubclasses.map { builder.build(branches(type, it)) },
-                discriminator = buildDiscriminator(type, builder)
+                if (discriminator != null) leafTypes(type).distinct().map { builder.build(it) } else subclasses,
+                discriminator = discriminator
             )
         }
 
