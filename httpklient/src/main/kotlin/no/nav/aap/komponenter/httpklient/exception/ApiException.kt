@@ -68,7 +68,7 @@ public class TimeoutException(
     override val message: String,
     override val cause: Throwable? = null,
 ) : ApiException(
-    status = HttpStatusCode.RequestTimeout,
+    status = HttpStatusCode.GatewayTimeout,
     code = ApiErrorCode.TIMEOUT,
     message = message,
     cause = cause
