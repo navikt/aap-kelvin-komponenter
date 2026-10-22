@@ -3,6 +3,7 @@ package com.papsign.ktor.openapigen
 import TestServer.setupBaseTestServer
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.papsign.ktor.openapigen.annotations.properties.description.Description
+import com.papsign.ktor.openapigen.model.schema.SchemaModel
 import com.papsign.ktor.openapigen.route.apiRouting
 import com.papsign.ktor.openapigen.route.path.normal.post
 import com.papsign.ktor.openapigen.route.response.respond
@@ -65,6 +66,30 @@ internal class ValueClassRouteTest {
     )
 
     @Test
+    fun `reference composition preserves metadata without mutating the reference`() {
+        val ref = SchemaModel.SchemaModelRef<String>("#/components/schemas/Payload").apply {
+            example = "example"
+            examples = listOf("first", "second")
+            description = "description"
+            deprecated = true
+        }
+
+        val schema = ref.asSchemaObject()
+        assertEquals(ref.example, schema.example)
+        assertEquals(ref.examples, schema.examples)
+        assertEquals(ref.description, schema.description)
+        assertEquals(ref.deprecated, schema.deprecated)
+        assertEquals(
+            mapOf("\$ref" to "#/components/schemas/Payload"),
+            schema.allOf.single().serialize()
+        )
+        schema.description = "changed"
+        schema.deprecated = false
+        assertEquals("description", ref.description)
+        assertEquals(true, ref.deprecated)
+    }
+
+    @Test
     fun `wrapper annotations do not leak and backing property metadata is preserved`() = testApplication {
         application {
             setupBaseTestServer()
@@ -88,17 +113,26 @@ internal class ValueClassRouteTest {
             Triple("LegacyId", "VedtakId", "Use VedtakId directly")
         )) {
             val schema = schemas.path(wrapper)
-            assertEquals("#/components/schemas/$backing", schema.path("\$ref").asText())
+            assertFalse(schema.has("\$ref"))
+            assertEquals("#/components/schemas/$backing", schema.path("allOf").single().path("\$ref").asText())
+            assertEquals(listOf("\$ref"), schema.path("allOf").single().fieldNames().asSequence().toList())
             assertTrue(schema.path("deprecated").asBoolean(), wrapper)
             assertEquals(description, schema.path("description").asText())
             assertFalse(schemas.path(backing).has("deprecated"), backing)
             assertFalse(schemas.path(backing).has("description"), backing)
         }
         val annotated = schemas.path("AnnotatedPayload")
-        assertEquals("#/components/schemas/Payload", annotated.path("\$ref").asText())
+        assertFalse(annotated.has("\$ref"))
+        assertEquals("#/components/schemas/Payload", annotated.path("allOf").single().path("\$ref").asText())
+        assertEquals(listOf("\$ref"), annotated.path("allOf").single().fieldNames().asSequence().toList())
         assertTrue(annotated.path("deprecated").asBoolean())
         assertEquals("Backing property deprecation", annotated.path("description").asText())
         val usage = properties.path("hAnnotatedPayload")
+        assertFalse(usage.has("\$ref"))
+        assertEquals(
+            "#/components/schemas/AnnotatedPayload",
+            usage.path("allOf").single().path("\$ref").asText()
+        )
         assertEquals("Usage description", usage.path("description").asText())
         assertFalse(usage.has("deprecated"))
     }

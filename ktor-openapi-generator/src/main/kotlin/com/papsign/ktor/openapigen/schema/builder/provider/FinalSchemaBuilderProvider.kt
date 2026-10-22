@@ -91,10 +91,10 @@ object FinalSchemaBuilderProvider : FinalSchemaBuilderProviderModule, OpenAPIGen
                     .applyAnnotations(kType, kType.annotations)
             }
             // Property-annotasjoner legges på det returnerte skjemaet (ikke det bufrede globale).
-            // For SchemaModelRef (komplekse typer) lages en kopi for å unngå å mutere det delte ref-objektet.
+            // OpenAPI 3.0 ignorerer metadata ved siden av $ref, så referanser pakkes i allOf.
             return when {
                 annotations.isEmpty() -> built
-                built is SchemaModel.SchemaModelRef<*> -> built.copy().applyAnnotations(kType, annotations)
+                built is SchemaModel.SchemaModelRef<*> -> built.asSchemaObject().applyAnnotations(kType, annotations)
                 else -> built.applyAnnotations(kType, annotations)
             }
         }

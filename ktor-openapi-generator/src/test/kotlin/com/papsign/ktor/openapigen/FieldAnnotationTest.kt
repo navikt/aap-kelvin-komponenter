@@ -199,6 +199,12 @@ internal class FieldAnnotationTest {
             assertThat(deltTypeSchema.path("deprecated").isMissingNode)
                 .describedAs("DeltType skal ikke være deprecated globalt – bare propertyen i MedDeprecatedRef er deprecated")
                 .isTrue()
+            val property = tree.at("/components/schemas/MedDeprecatedRef/properties/element")
+            assertThat(property.has("\$ref")).isFalse()
+            assertThat(property.path("allOf").single().path("\$ref").asText())
+                .isEqualTo("#/components/schemas/DeltType")
+            assertThat(property.path("deprecated").asBoolean()).isTrue()
+            assertThat(property.path("description").asText()).isEqualTo("Ikke i bruk av konsument.")
         }
     }
 
