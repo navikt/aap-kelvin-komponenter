@@ -19,6 +19,7 @@ import kotlin.reflect.*
 import kotlin.reflect.full.createType
 import kotlin.reflect.full.allSuperclasses
 import kotlin.reflect.full.hasAnnotation
+import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.full.starProjectedType
 import kotlin.reflect.full.withNullability
 import kotlin.reflect.jvm.javaField
@@ -131,6 +132,12 @@ object DefaultObjectSchemaProvider : SchemaBuilderProviderModule, OpenAPIGenModu
             }
             if (jsonValueProperty != null) {
                 return builder.build(jsonValueProperty.type, jsonValueProperty.source.annotations)
+            }
+
+            if (erasure.isValue) {
+                val parameter = requireNotNull(erasure.primaryConstructor).parameters.single()
+                val property = type.memberProperties.single { it.name == parameter.name }
+                return builder.build(property.type, property.source.annotations)
             }
 
             val properties = props.associate {
