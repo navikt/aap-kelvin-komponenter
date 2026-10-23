@@ -54,12 +54,12 @@ class JobbRepositoryTest {
 
         dataSource.transaction { connection ->
             val jobbRepository = JobbRepository(connection)
-            jobbRepository.skjedulerJobber()
-            var plukket = jobbRepository.plukkJobbV2()
+            
+            var plukket = jobbRepository.plukkJobb()
             while (plukket != null) {
                 plukketIRekkefølge.add(plukket)
                 jobbRepository.markerSomFerdig(plukket)
-                plukket = jobbRepository.plukkJobbV2()
+                plukket = jobbRepository.plukkJobb()
             }
         }
 
@@ -74,8 +74,8 @@ class JobbRepositoryTest {
         val plukketIRekkefølge = LinkedList<JobbInput>()
 
         val last = LocalDateTime.now().minusMinutes(1)
-        val second = LocalDateTime.now().minusHours(1)
-        val first = LocalDateTime.now().minusDays(1)
+        val second = LocalDateTime.now().minusMinutes(2)
+        val first = LocalDateTime.now().minusMinutes(3)
 
         dataSource.transaction { connection ->
             val jobbRepository = JobbRepository(connection)
@@ -98,8 +98,8 @@ class JobbRepositoryTest {
 
         dataSource.transaction { connection ->
             val jobbRepository = JobbRepository(connection)
-            jobbRepository.skjedulerJobber()
-            var plukket = jobbRepository.plukkJobbV2()
+            
+            var plukket = jobbRepository.plukkJobb()
             while (plukket != null) {
                 plukketIRekkefølge.add(plukket)
                 if (plukket.type() == TullTestJobbUtfører.type()) {
@@ -107,7 +107,7 @@ class JobbRepositoryTest {
                 } else {
                     jobbRepository.markerSomFerdig(plukket)
                 }
-                plukket = jobbRepository.plukkJobbV2()
+                plukket = jobbRepository.plukkJobb()
             }
         }
 
@@ -131,12 +131,12 @@ class JobbRepositoryTest {
 
         dataSource.transaction { connection ->
             val jobbRepository = JobbRepository(connection)
-            jobbRepository.skjedulerJobber()
-            jobbRepository.plukkJobbV2()?.let {
+            
+            jobbRepository.plukkJobb()?.let {
                 jobbRepository.markerSomFeilet(it, IllegalStateException())
             }
-            jobbRepository.skjedulerJobber()
-            jobbRepository.plukkJobbV2()?.let {
+            
+            jobbRepository.plukkJobb()?.let {
                 jobbRepository.markerSomFeilet(it, IllegalStateException())
             }
         }
@@ -175,10 +175,10 @@ class JobbRepositoryTest {
         dataSource.transaction { connection ->
             val jobbRepository = JobbRepository(connection)
             jobbRepository.leggTil(
-                JobbInput(AsynkronTullJobbUtfører).forSak(sakId).medNesteKjøring(tidligst)
+                JobbInput(AsynkronTullJobbUtfører).forSak(sakId).medNesteKjøring(tidligst).medOpprettetTidspunkt(tidligst)
             )
             jobbRepository.leggTil(
-                JobbInput(AsynkronTullJobbUtfører).forSak(sakId).medNesteKjøring(senest)
+                JobbInput(AsynkronTullJobbUtfører).forSak(sakId).medNesteKjøring(senest).medOpprettetTidspunkt(senest)
             )
         }
 
@@ -197,8 +197,7 @@ class JobbRepositoryTest {
             val jobbRepository = JobbRepository(connection)
 
             // App1: skjedulerer og plukker X (den med tidligst neste_kjoring)
-            jobbRepository.skjedulerJobber()
-            val plukketX = jobbRepository.plukkJobbV2()
+            val plukketX = jobbRepository.plukkJobb()
             assertThat(plukketX).isNotNull
             assertThat(plukketX!!.jobbId()).isEqualTo(xId)
 
@@ -207,30 +206,58 @@ class JobbRepositoryTest {
 
             // App2 (simulert): skjedulerer på nytt. Y skal IKKE bli forfremmet selv om
             // X sin neste_kjoring nå er senere enn Y sin.
-            jobbRepository.skjedulerJobber()
-        }
-
-        dataSource.transaction { connection ->
-            val kjørbareRader = connection.queryList(
-                "select id, kjorbar from jobb where sak_id = ? order by id"
-            ) {
-                setParams { setLong(1, sakId) }
-                setRowMapper { row -> row.getLong("id") to row.getBoolean("kjorbar") }
-            }
-
-            val aktive = kjørbareRader.filter { it.second }
-            // Kun X skal fortsatt eie eksklusivitets-slotten, aldri begge samtidig.
-            assertThat(aktive).hasSize(1)
-            assertThat(aktive.single().first).isEqualTo(xId)
-
-            // Y skal fortsatt være blokkert (ikke kjørbar)
-            assertThat(kjørbareRader.first { it.first == yId }.second).isFalse()
+            
         }
 
         dataSource.transaction { connection ->
             val jobbRepository = JobbRepository(connection)
             // Ingen jobb skal kunne plukkes nå: X er ikke forfalt (backoff), Y er ikke kjørbar
-            assertThat(jobbRepository.plukkJobbV2()).isNull()
+            val actual = jobbRepository.plukkJobb()
+            assertThat(actual).isNull()
+        }
+    }
+
+    @Test
+    fun `skal ikke plukke andre jobber på samme sak+behandling kombo hvis backoff dytter jobben bak en senere i køen`() {
+        val sakId = 42L
+        val tidligst = LocalDateTime.now().minusDays(1)
+        val senest = LocalDateTime.now().minusHours(1)
+
+        dataSource.transaction { connection ->
+            val jobbRepository = JobbRepository(connection)
+            jobbRepository.leggTil(
+                JobbInput(AsynkronTullJobbUtfører).forSak(sakId).medNesteKjøring(tidligst)
+            )
+            jobbRepository.leggTil(
+                JobbInput(AsynkronTullJobbUtfører).forSak(sakId).medNesteKjøring(senest)
+            )
+        }
+
+        val ider = mutableListOf<Long>()
+        dataSource.transaction { connection ->
+            val testJobbRepository = TestJobbRepository(connection)
+            val jobber = testJobbRepository
+                .hentJobberAvTypeMedAttributter(AsynkronTullJobbUtfører.type, sakId, null)
+                .sortedBy { it.nesteKjøring() }
+            ider.addAll(jobber.map { it.jobbId() })
+        }
+        val xId = ider[0]
+
+        dataSource.transaction { connection ->
+            val jobbRepository = JobbRepository(connection)
+
+            val plukketX = jobbRepository.plukkJobb()
+            assertThat(plukketX).isNotNull
+            assertThat(plukketX!!.jobbId()).isEqualTo(xId)
+
+            jobbRepository.markerSomFeilet(plukketX, IllegalStateException("simulert feil"))
+        }
+
+        dataSource.transaction { connection ->
+            val jobbRepository = JobbRepository(connection)
+            // Ingen jobb skal kunne plukkes nå: X er ikke forfalt (backoff), Y er ikke kjørbar
+            val actual = jobbRepository.plukkJobb()
+            assertThat(actual).isNull()
         }
     }
 
@@ -246,7 +273,7 @@ class JobbRepositoryTest {
             // unique constraint violation.
             jobbRepository.leggTil(JobbInput(AsynkronTullJobbUtfører).medNesteKjøring(nå))
             jobbRepository.leggTil(JobbInput(AsynkronTullJobbUtfører).medNesteKjøring(nå))
-            jobbRepository.skjedulerJobber()
+            
         }
 
         dataSource.transaction { connection ->
