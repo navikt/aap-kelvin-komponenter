@@ -11,14 +11,15 @@ plugins {
 group = "no.nav.aap.kelvin"
 version = project.findProperty("version")?.toString() ?: "0.0.0"
 
-val jacksonVersion = the<VersionCatalogsExtension>().named("libs").findVersion("jackson3").get().requiredVersion
+val libs = the<VersionCatalogsExtension>().named("libs")
+val jacksonVersion = libs.findVersion("jackson3").get().requiredVersion
 
 dependencies {
     constraints {
-        add("dokkaHtmlGeneratorRuntime", "org.freemarker:freemarker:2.3.35") {
+        add("dokkaHtmlGeneratorRuntime", libs.findLibrary("freemarker").get()) {
             because("Sikkerhetsfiks for GHSA-27j2-h3m2-8237 / CVE-2026-84939")
         }
-        add("implementation", "io.netty:netty-handler:4.2.17.Final") {
+        add("implementation", libs.findLibrary("netty-handler").get()) {
             because("Sikkerhetsfiks for GHSA-c4c3-7fpv-j4q5 / CVE-2026-75595")
         }
     }

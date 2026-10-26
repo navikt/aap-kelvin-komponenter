@@ -34,6 +34,7 @@ caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version = "3.3.0
 commons-codec = { module = "commons-codec:commons-codec", version = "1.22.1" }
 commons-compress = { module = "org.apache.commons:commons-compress", version = "1.28.0" }
 flyway-postgresql = { module = "org.flywaydb:flyway-database-postgresql", version = "13.9.0" }
+freemarker = { module = "org.freemarker:freemarker", version = "2.3.35" }
 hikaricp = { module = "com.zaxxer:HikariCP", version = "7.1.0" }
 jackson-annotations = { module = "com.fasterxml.jackson.core:jackson-annotations", version.ref = "jackson-annotations" }
 jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
@@ -49,6 +50,7 @@ opentelemetry-api = { module = "io.opentelemetry.instrumentation:opentelemetry-i
 opentelemetry-logback-mdc = { module = "io.opentelemetry.instrumentation:opentelemetry-logback-mdc-1.0", version = "2.32.0-alpha" }
 opentelemetry-ktor = { module = "io.opentelemetry.instrumentation:opentelemetry-ktor-3.0", version = "2.32.0-alpha" }
 nimbus-jose-jwt = { module = "com.nimbusds:nimbus-jose-jwt", version = "10.10" }
+netty-handler = { module = "io.netty:netty-handler", version = "4.2.17.Final" }
 postgresql = { module = "org.postgresql:postgresql", version = "42.7.14" }
 reflections = { module = "org.reflections:reflections", version = "0.10.2" }
 slf4j-api = { module = "org.slf4j:slf4j-api", version = "2.0.20" }
