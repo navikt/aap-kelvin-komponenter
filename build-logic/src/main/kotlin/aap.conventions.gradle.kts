@@ -15,6 +15,9 @@ val jacksonVersion = the<VersionCatalogsExtension>().named("libs").findVersion("
 
 dependencies {
     constraints {
+        add("dokkaHtmlGeneratorRuntime", "org.freemarker:freemarker:2.3.35") {
+            because("Sikkerhetsfiks for GHSA-27j2-h3m2-8237 / CVE-2026-84939")
+        }
         add("implementation", "io.netty:netty-handler:4.2.17.Final") {
             because("Sikkerhetsfiks for GHSA-c4c3-7fpv-j4q5 / CVE-2026-75595")
         }
