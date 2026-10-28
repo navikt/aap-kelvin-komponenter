@@ -113,7 +113,8 @@ public class MotorImpl(
     private val watchdogExecutor =
         Executors.newScheduledThreadPool(1, Thread.ofVirtual().name("motor-watchdog").factory())
     private val metricExecutor = Executors.newScheduledThreadPool(1, Thread.ofVirtual().name("motor-metrics").factory())
-    private val schedulerExecutor = Executors.newScheduledThreadPool(1, Thread.ofVirtual().name("motor-scheduler").factory())
+    private val schedulerExecutor =
+        Executors.newScheduledThreadPool(1, Thread.ofVirtual().name("motor-scheduler").factory())
 
     @Volatile
     private var stopped = false
@@ -166,17 +167,33 @@ public class MotorImpl(
         // Én AtomicLong per jobb-type, registrert én gang i prometheus for å unngå DuplicateLabelsException
         private val sistePlukketTimestamps = ConcurrentHashMap<String, AtomicLong>()
 
-        private fun oppdaterSistePlukk(jobbType: String) {
-            sistePlukketTimestamps
+        /* Ønsker å oppdage trege jobber før jobben har kjørt ferdig (f.eks. pga deadlock).
+        * Registrerer derfor hvert (potensielle) start-tidspunkt for en jobb, slikt at vi i
+        * grafana kan regne ut hvor lenge siden vi sist prøvde å plukke en jobb.
+        *
+        * Metricen gir mening først når jobber tar lenger tid (>= 1 sekund, gitt
+        * Thread.sleep(500) nedenfor).
+        *
+        * Tenkt bruk:
+        * timestamp(motor_siste_plukk_timestamp_seconds > 0) - (motor_siste_plukk_timestamp_seconds  > 0)
+        **/
+        private fun målKjøretid(jobbType: String, body: () -> Unit) {
+            val startTime = sistePlukketTimestamps
                 .getOrPut(jobbType) {
                     AtomicLong(Instant.now().epochSecond).also { tidspunkt ->
                         Gauge.builder("motor_siste_plukk_timestamp_seconds") { tidspunkt.get().toDouble() }
+                            .description("Hvis det kjører en jobb av denne typen, er verdien når jobben begynte å kjøre (sekunder siden epoch). Hvis ingen jobb av denne typen kjører, er verdien 0.")
                             .tag("forbrenningskammer", kammerId)
                             .tag("jobb_type", jobbType)
                             .register(prometheus)
                     }
                 }
-                .set(Instant.now().epochSecond)
+            startTime.set(Instant.now().epochSecond)
+            try {
+                body()
+            } finally {
+                startTime.set(0)
+            }
         }
 
         override fun run() {
@@ -189,32 +206,22 @@ public class MotorImpl(
                             val repository = JobbRepository(connection)
                             val plukketJobb = if (enableV2()) repository.plukkJobbV2() else repository.plukkJobb()
 
-                            /* Ønsker å oppdage trege jobber før jobben har kjørt ferdig (f.eks. pga deadlock).
-                            * Registrerer derfor hvert (potensielle) start-tidspunkt for en jobb, slikt at vi i
-                            * grafana kan regne ut hvor lenge siden vi sist prøvde å plukke en jobb.
-                            *
-                            * Metricen gir mening først når jobber tar lenger tid (>= 1 sekund, gitt
-                            * Thread.sleep(500) nedenfor).
-                            *
-                            * Tenkt bruk:
-                            * timestamp(motor_siste_plukk_timestamp_seconds) - motor_siste_plukk_timestamp_seconds
-                            **/
-
                             if (plukketJobb != null) {
                                 Span.current().updateName("jobbPlukk + ${plukketJobb.type()}")
-                                oppdaterSistePlukk(plukketJobb.type())
-                                log.info("Plukket jobb $plukketJobb.")
-                                val behandlingId = plukketJobb.behandlingIdOrNull()
-                                val sakId = plukketJobb.sakIdOrNull()
-                                OpentelemetryUtil.span(
-                                    navn = "jobb + ${plukketJobb.type()}",
-                                    behandlingId = behandlingId,
-                                    sakId = sakId,
-                                    jobbStatus = plukketJobb.status().toString(),
-                                    jobbId = plukketJobb.id.toString(),
-                                    spanBuilderTransformer = JobbInfoSpanBuilder.jobbAttributter(plukketJobb)
-                                ) {
-                                    utfør(plukketJobb, connection)
+                                målKjøretid(plukketJobb.type()) {
+                                    log.info("Plukket jobb $plukketJobb.")
+                                    val behandlingId = plukketJobb.behandlingIdOrNull()
+                                    val sakId = plukketJobb.sakIdOrNull()
+                                    OpentelemetryUtil.span(
+                                        navn = "jobb + ${plukketJobb.type()}",
+                                        behandlingId = behandlingId,
+                                        sakId = sakId,
+                                        jobbStatus = plukketJobb.status().toString(),
+                                        jobbId = plukketJobb.id.toString(),
+                                        spanBuilderTransformer = JobbInfoSpanBuilder.jobbAttributter(plukketJobb)
+                                    ) {
+                                        utfør(plukketJobb, connection)
+                                    }
                                 }
                             } else {
                                 Span.current().updateName("jobbPlukk + ingenJobb")
@@ -226,9 +233,6 @@ public class MotorImpl(
                     log.error("Feil under plukking av jobber", exception)
                 }
                 log.debug("Ingen flere jobber å plukke, hviler litt")
-                // Nullstill til nå slik at query-en viser ~0 når kammeret er ledig
-                val nå = Instant.now().epochSecond
-                sistePlukketTimestamps.values.forEach { it.set(nå) }
                 if (!stopped) {
                     Thread.sleep(500)
                 }
