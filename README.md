@@ -58,6 +58,39 @@ modul må selv skrive f.eks. `implementation(kelvinLibs.caffeine)` for å ta det
 tvinger dermed ikke fram noen avhengigheter; den gjør det bare enklere å holde versjonene like på
 tvers av repoene.
 
+## Navngitte SQL-parametre i dbconnect
+
+SQL kan bruke `:navn` i stedet for posisjonelle `?`-parametre. Bruk de samme typede
+setterne i `setParams`, men send parameternavnet i stedet for indeksen:
+
+```kotlin
+dataSource.transaction(readOnly = true) { connection ->
+    connection.queryList("SELECT id FROM test WHERE id = ANY(:ids::bigint[])") {
+        setParams {
+            setLongArray("ids", listOf(1L, 2L))
+        }
+        setRowMapper { row -> row.getLong("id") }
+    }
+}
+```
+
+Dette fungerer for alle query- og execute-metoder, inkludert genererte nøkler og
+`executeBatch`. Rekkefølgen på setterne er valgfri, og et navn som forekommer flere
+ganger i SQL, bindes på alle plasseringene. Navn er case-sensitive og følger
+`[A-Za-z_][A-Za-z0-9_]*`. Eksisterende indeksbaserte settere fungerer som før.
+
+Navngitte og posisjonelle plassholdere kan ikke blandes i samme SQL-statement.
+Ukjente eller manglende navn gir en feil; i batch må hvert element binde alle navn,
+også når verdien er `null`. Verdiene bindes med JDBC, ikke ved tekstinterpolering.
+Lister ekspanderes ikke automatisk i `IN`; bruk array-setterne sammen med `ANY`.
+
+PostgreSQL-casts (`::`), strenger, dollar-quoting, identifikatorer og kommentarer
+bevares. Parsing bruker PostgreSQL-standardinnstillingen `standard_conforming_strings = on`;
+bruk `E'...'` for strenger med backslash-escapes. JSON-operatorer som inneholder `?`,
+må escapes som `??`, `??|` eller `??&`, som ellers ved bruk av pgJDBC.
+I array-subscripts bevares `:` som slice-syntaks; bruk parenteser rundt navngitte
+parametre, for eksempel `values[(:index)]` eller `values[(:low):(:high)]`.
+
 ## Bygge dokumentasjon
 
 ```

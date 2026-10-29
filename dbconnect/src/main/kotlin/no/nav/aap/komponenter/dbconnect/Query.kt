@@ -5,8 +5,10 @@ import java.sql.PreparedStatement
 
 public class Query<T> internal constructor(
     private val preparedStatement: PreparedStatement,
-    private val connection: Connection
+    connection: Connection,
+    namedIndexes: Map<String, List<Int>> = emptyMap()
 ) {
+    private val params = Params(preparedStatement, connection, namedIndexes)
     private lateinit var rowMapper: (Row) -> T
     private var queryTimeout = 30
 
@@ -18,7 +20,7 @@ public class Query<T> internal constructor(
 
     public fun setParams(block: Params.() -> Unit) {
         assertParams()
-        Params(preparedStatement, connection).block()
+        params.block()
     }
 
     public fun setRowMapper(block: (Row) -> T) {
@@ -31,6 +33,7 @@ public class Query<T> internal constructor(
     }
 
     internal fun executeQuery(): Sequence<T> {
+        params.validateNamedParameters()
         val resultSet = preparedStatement.executeQuery()
         preparedStatement.queryTimeout = queryTimeout
         return resultSet
