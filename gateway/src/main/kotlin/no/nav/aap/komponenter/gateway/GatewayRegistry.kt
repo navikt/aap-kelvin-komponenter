@@ -13,7 +13,7 @@ import kotlin.reflect.full.superclasses
 public open class GatewayRegistry {
 
     private val log = LoggerFactory.getLogger(javaClass)
-    private val registry = HashSet<KClass<Gateway>>()
+    private val registry = HashMap<KClass<Gateway>, Gateway?>()
     private val lock = Any()
 
     public inline fun <reified T : Gateway> register(): GatewayRegistry {
@@ -22,9 +22,21 @@ public open class GatewayRegistry {
 
     public fun <T : Gateway> register(repository: KClass<T>): GatewayRegistry {
         validater(repository)
+        return register(repository, null)
+    }
 
+    /**
+     * Registers an existing instance, including anonymous gateway implementations used in tests.
+     * The provider returns this same instance on every lookup.
+     * Replaces any registration sharing a gateway marker interface.
+     */
+    public fun register(gateway: Gateway): GatewayRegistry {
+        return register(gateway::class, gateway)
+    }
+
+    private fun register(repository: KClass<out Gateway>, instance: Gateway?): GatewayRegistry {
         synchronized(lock) {
-            val removedSomething = registry.removeIf { klass ->
+            val removedSomething = registry.keys.removeIf { klass ->
                 klass.markerInterfaces.any { it in repository.markerInterfaces }
             }
 
@@ -32,7 +44,7 @@ public open class GatewayRegistry {
                 log.warn("Gateway '{}' var allerede registrert", repository)
             }
             @Suppress("UNCHECKED_CAST")
-            registry.add(repository as KClass<Gateway>)
+            registry[repository as KClass<Gateway>] = instance
         }
         return this
     }
@@ -55,12 +67,19 @@ public open class GatewayRegistry {
 
     public fun fetch(ktype: KType): KClass<Gateway> {
         synchronized(lock) {
-            val singleOrNull = registry.singleOrNull { klass -> klass.starProjectedType.isSubtypeOf(ktype) }
+            val singleOrNull = registry.keys.singleOrNull { klass -> klass.starProjectedType.isSubtypeOf(ktype) }
             if (singleOrNull == null) {
-                log.warn("Gateway av typen '{}' er ikke registrert, har følgende '{}'", ktype, registry)
+                log.warn("Gateway av typen '{}' er ikke registrert, har følgende '{}'", ktype, registry.keys)
                 throw IllegalStateException("Gateway av typen '$ktype' er ikke registrert")
             }
             return singleOrNull
+        }
+    }
+
+    @PublishedApi
+    internal fun fetchInstance(klass: KClass<Gateway>): Gateway? {
+        synchronized(lock) {
+            return registry[klass]
         }
     }
 
@@ -68,7 +87,7 @@ public open class GatewayRegistry {
         log.info(
             "{} gateway registrert har følgende '{}'",
             registry.size,
-            registry.map { kclass -> kclass.starProjectedType })
+            registry.keys.map { kclass -> kclass.starProjectedType })
     }
 }
 
