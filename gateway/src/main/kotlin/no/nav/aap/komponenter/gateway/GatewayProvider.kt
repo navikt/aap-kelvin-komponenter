@@ -23,6 +23,8 @@ public open class GatewayProvider(
     }
 
     public inline fun <reified T : Gateway> internalCreate(gatewayKlass: KClass<Gateway>): T {
+        gatewayRegistry.fetchInstance(gatewayKlass)?.let { return it as T }
+
         val companionObjectType = gatewayKlass.companionObject
         if (companionObjectType == null && gatewayKlass.objectInstance != null
             && gatewayKlass.isSubclassOf(Gateway::class)
