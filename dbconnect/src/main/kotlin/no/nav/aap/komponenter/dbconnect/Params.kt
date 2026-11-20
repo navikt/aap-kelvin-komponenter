@@ -12,6 +12,7 @@ import java.sql.Types
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.ZoneOffset
 import java.util.*
 
 public class Params internal constructor(
@@ -91,7 +92,7 @@ public class Params internal constructor(
     }
 
     public fun setTidspunkt(index: Int, tidspunkt: Tidspunkt?) {
-        preparedStatement.setTimestamp(index, tidspunkt?.let { Timestamp.from(it.asInstant) })
+        preparedStatement.setObject(index, tidspunkt?.asInstant?.atOffset(ZoneOffset.UTC))
     }
 
     public fun setProperties(index: Int, properties: Properties?) {
