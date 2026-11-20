@@ -74,55 +74,51 @@ public class JobbRepository(private val connection: DBConnection) {
 	     * > returned to the client.
          */
         val query = """
-            with ekskluderende_jobb as (
-                select distinct on (sak_id, behandling_id, type) id, status, neste_kjoring
-                from jobb
-                where status IN ('${JobbStatus.FEILET.name}', '${JobbStatus.KLAR.name}')
-                  and (sak_id is not null or (sak_id is null and behandling_id is not null))
-                  and neste_kjoring < ?
-                order by sak_id, behandling_id, type, neste_kjoring asc
+            WITH ekskluderende_jobber AS (
+                SELECT id
+                FROM (
+                    SELECT DISTINCT ON (sak_id, behandling_id, type) 
+                           id, status, neste_kjoring
+                    FROM jobb
+                    WHERE status IN ('${JobbStatus.FEILET.name}', '${JobbStatus.KLAR.name}')
+                      AND (sak_id IS NOT NULL OR behandling_id IS NOT NULL)
+                    ORDER BY sak_id, behandling_id, type, opprettet_tid ASC, id ASC
+                ) sub
+                WHERE status = '${JobbStatus.KLAR.name}'
+                  AND neste_kjoring < ?
             ),
-            klar_ekskluderende_jobb as (
-                select id, neste_kjoring
-                from ekskluderende_jobb
-                where status = '${JobbStatus.KLAR.name}'
-                order by neste_kjoring
+            selvstendige_jobber AS (
+                SELECT id
+                FROM jobb
+                WHERE status = '${JobbStatus.KLAR.name}'
+                  AND sak_id IS NULL
+                  AND behandling_id IS NULL
+                  AND neste_kjoring < ?
             ),
-            klar_selvstendig_jobb as (
-                select id, neste_kjoring
-                from jobb
-                where status = '${JobbStatus.KLAR.name}'
-                  and sak_id is null
-                  and behandling_id is null
-                  and neste_kjoring < ?
-                  order by neste_kjoring
-            ),
-            jobb_kandidat as (
-                (select * from klar_ekskluderende_jobb)
-                union all
-                (select * from klar_selvstendig_jobb)
+            jobb_kandidater AS (
+                SELECT id FROM ekskluderende_jobber
+                UNION ALL
+                SELECT id FROM selvstendige_jobber
             )
-
-            select jobb.id,
-                   jobb.type,
-                   jobb.status,
-                   jobb.sak_id,
-                   jobb.behandling_id,
-                   jobb.neste_kjoring,
-                   jobb.prioritet,
-                   jobb.parameters,
-                   jobb.payload,
-                   jobb.opprettet_tid,
-                   (select count(1)
-                    from jobb_historikk
-                    where jobb_historikk.jobb_id = jobb.id
-                      and jobb_historikk.status = '${JobbStatus.FEILET.name}') as antall_feil
-            from jobb
-            inner join jobb_kandidat on jobb_kandidat.id = jobb.id
-            where jobb.status = '${JobbStatus.KLAR.name}'
-            order by jobb_kandidat.neste_kjoring asc
-            for update skip locked
-            limit 1
+            SELECT j.id,
+                   j.type,
+                   j.status,
+                   j.sak_id,
+                   j.behandling_id,
+                   j.neste_kjoring,
+                   j.prioritet,
+                   j.parameters,
+                   j.payload,
+                   j.opprettet_tid,
+                   (SELECT count(1)
+                    FROM jobb_historikk jh
+                    WHERE jh.jobb_id = j.id
+                      AND jh.status = '${JobbStatus.FEILET.name}') AS antall_feil
+            FROM jobb j
+            INNER JOIN jobb_kandidater k ON k.id = j.id
+            ORDER BY j.opprettet_tid ASC, id ASC -- Trenger en global prio + tie-breaker
+            FOR UPDATE OF j SKIP LOCKED
+            LIMIT 1
         """.trimIndent()
 
         val plukketJobb = connection.queryFirstOrNull(query) {
